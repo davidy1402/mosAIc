@@ -1,0 +1,1026 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ClearBox // AI-Defined Vehicle Incident Intelligence - Mercedes-Benz Vibathon</title>
+  
+  <!-- Fonts & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <style>
+    :root {
+      --bg-color: #03050a;
+      --mbux-frame-bg: #070a14;
+      --card-bg: rgba(12, 17, 30, 0.7);
+      --border-color: rgba(255, 255, 255, 0.07);
+      
+      --accent-cyan: #00ebd6;
+      --accent-cyan-glow: rgba(0, 235, 214, 0.3);
+      --accent-blue: #0088ff;
+      --accent-red: #ff3b30;
+      --accent-red-glow: rgba(255, 59, 48, 0.4);
+      --accent-orange: #ff9f0a;
+      
+      --font-primary: 'Outfit', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      --transition-standard: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+      --transition-fast: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: #e2e8f0;
+      font-family: var(--font-primary);
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+    }
+
+    /* Widescreen Ambient Lighting */
+    body::before {
+      content: '';
+      position: absolute;
+      width: 1000px;
+      height: 1000px;
+      background: radial-gradient(circle, rgba(0, 235, 214, 0.03) 0%, rgba(0,0,0,0) 70%);
+      bottom: -30%;
+      left: -10%;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    body::after {
+      content: '';
+      position: absolute;
+      width: 1000px;
+      height: 1000px;
+      background: radial-gradient(circle, rgba(0, 136, 255, 0.02) 0%, rgba(0,0,0,0) 70%);
+      top: -30%;
+      right: -10%;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Cyber grid background */
+    .bg-grid {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image: 
+        linear-gradient(to right, rgba(255, 255, 255, 0.005) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.005) 1px, transparent 1px);
+      background-size: 50px 50px;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* MBUX Hyperscreen Chassis frame */
+    .hyperscreen-container {
+      width: 98vw;
+      height: 96vh;
+      max-width: 1800px;
+      max-height: 950px;
+      background: rgba(6, 8, 12, 0.9);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 24px;
+      box-shadow: 
+        0 30px 80px rgba(0, 0, 0, 0.95),
+        inset 0 0 25px rgba(0, 0, 0, 0.8),
+        0 0 100px rgba(0, 235, 214, 0.01);
+      backdrop-filter: blur(40px);
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+      z-index: 10;
+    }
+
+    /* System Header Section */
+    .dashboard-header {
+      height: 90px;
+      border-bottom: 1px solid var(--border-color);
+      padding: 0 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(5, 7, 12, 0.5);
+      position: relative;
+      z-index: 20;
+    }
+
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    /* Mercedes Logo Representation */
+    .m-benz-logo {
+      width: 42px;
+      height: 42px;
+      border: 2px solid rgba(255, 255, 255, 0.8);
+      border-radius: 50%;
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      box-shadow: 0 0 12px rgba(255,255,255,0.1);
+      background: rgba(0,0,0,0.3);
+    }
+    .m-benz-logo::before {
+      content: '';
+      position: absolute;
+      width: 2px;
+      height: 16px;
+      top: 3px;
+      background: rgba(255,255,255,0.85);
+    }
+    .m-benz-logo-spokes {
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      transform: rotate(120deg);
+    }
+    .m-benz-logo-spokes::before {
+      content: '';
+      position: absolute;
+      width: 2px;
+      height: 16px;
+      left: 18px;
+      top: 3px;
+      background: rgba(255,255,255,0.85);
+    }
+    .m-benz-logo-spokes2 {
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      transform: rotate(240deg);
+    }
+    .m-benz-logo-spokes2::before {
+      content: '';
+      position: absolute;
+      width: 2px;
+      height: 16px;
+      left: 18px;
+      top: 3px;
+      background: rgba(255,255,255,0.85);
+    }
+
+    .title-area {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .main-title {
+      font-size: 1.45rem;
+      font-weight: 800;
+      letter-spacing: 2px;
+      background: linear-gradient(90deg, #fff 40%, var(--accent-cyan));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 0 0 10px rgba(0, 235, 214, 0.05);
+    }
+
+    .sub-title {
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      color: #64748b;
+      font-weight: 600;
+      margin-top: 2px;
+    }
+
+    /* Simulation Control Button */
+    .sim-button-wrap {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
+    .sim-btn {
+      padding: 12px 24px;
+      border-radius: 30px;
+      border: 1px solid var(--accent-red);
+      background: rgba(255, 59, 48, 0.08);
+      color: #fff;
+      font-family: var(--font-primary);
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: var(--transition-fast);
+      box-shadow: 
+        0 4px 15px rgba(255, 59, 48, 0.15),
+        inset 0 0 10px rgba(255, 59, 48, 0.05);
+    }
+
+    .sim-btn i {
+      font-size: 12px;
+      animation: alert-flash 1s infinite alternate;
+    }
+
+    .sim-btn:hover {
+      background: var(--accent-red);
+      box-shadow: 
+        0 0 25px var(--accent-red),
+        0 4px 15px rgba(255, 59, 48, 0.3);
+      transform: translateY(-1px);
+    }
+
+    .sim-btn:active {
+      transform: translateY(1px) scale(0.98);
+    }
+
+    .sim-btn.simulating {
+      border-color: var(--accent-cyan);
+      background: rgba(0, 235, 214, 0.08);
+      box-shadow: 
+        0 0 25px rgba(0, 235, 214, 0.2),
+        0 4px 15px rgba(0, 235, 214, 0.1);
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+
+    .sim-btn.simulating i {
+      animation: spin 2s infinite linear;
+    }
+
+    @keyframes spin {
+      100% { transform: rotate(360deg); }
+    }
+
+    @keyframes alert-flash {
+      0% { opacity: 0.3; }
+      100% { opacity: 1; }
+    }
+
+    /* System stats bar */
+    .system-status {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+
+    .sys-time {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: #94a3b8;
+    }
+
+    .sys-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      background: rgba(0, 235, 214, 0.04);
+      border: 1px solid rgba(0, 235, 214, 0.12);
+      border-radius: 20px;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--accent-cyan);
+      box-shadow: inset 0 0 8px rgba(0, 235, 214, 0.02);
+    }
+
+    .sys-badge.danger-badge {
+      background: rgba(255, 59, 48, 0.08);
+      border-color: rgba(255, 59, 48, 0.25);
+      color: var(--accent-red);
+      animation: alert-pulse-badge 1s infinite alternate;
+    }
+
+    @keyframes alert-pulse-badge {
+      0% { box-shadow: 0 0 2px var(--accent-red); }
+      100% { box-shadow: 0 0 10px var(--accent-red); }
+    }
+
+    .sys-badge-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent-cyan);
+      box-shadow: 0 0 6px var(--accent-cyan);
+    }
+
+    .sys-badge.danger-badge .sys-badge-dot {
+      background: var(--accent-red);
+      box-shadow: 0 0 6px var(--accent-red);
+    }
+
+    /* Main Console Workspace */
+    .workspace-area {
+      flex: 1;
+      padding: 20px 40px 10px 40px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      position: relative;
+      z-index: 10;
+      overflow: hidden;
+    }
+
+    /* Premium Menu Tabs */
+    .tab-bar-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.015);
+      border: 1px solid var(--border-color);
+      padding: 6px 16px;
+      border-radius: 16px;
+      backdrop-filter: blur(10px);
+    }
+
+    .tabs-group {
+      display: flex;
+      gap: 8px;
+    }
+
+    .tab-trigger {
+      padding: 10px 20px;
+      background: transparent;
+      border: none;
+      color: #64748b;
+      cursor: pointer;
+      font-family: var(--font-primary);
+      font-size: 13px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-radius: 10px;
+      transition: var(--transition-fast);
+      position: relative;
+    }
+
+    .tab-trigger i {
+      font-size: 14px;
+    }
+
+    .tab-trigger:hover {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .tab-trigger.active-tab {
+      color: #fff;
+      background: rgba(0, 235, 214, 0.05);
+      border: 1px solid rgba(0, 235, 214, 0.15);
+      box-shadow: 
+        0 0 15px rgba(0, 235, 214, 0.04),
+        inset 0 0 8px rgba(0, 235, 214, 0.02);
+    }
+
+    .tab-trigger.active-tab::after {
+      content: '';
+      position: absolute;
+      bottom: -7px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 40px;
+      height: 2px;
+      background: var(--accent-cyan);
+      border-radius: 2px;
+      box-shadow: 0 0 8px var(--accent-cyan);
+    }
+
+    /* Tab secondary controls */
+    .tab-controls {
+      display: flex;
+      gap: 12px;
+    }
+
+    .fullscreen-btn {
+      padding: 8px 16px;
+      border: 1px solid rgba(255,255,255,0.06);
+      background: rgba(255,255,255,0.02);
+      border-radius: 8px;
+      color: #94a3b8;
+      cursor: pointer;
+      font-family: var(--font-primary);
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: var(--transition-fast);
+    }
+
+    .fullscreen-btn:hover {
+      color: #fff;
+      background: rgba(255,255,255,0.05);
+      border-color: rgba(255,255,255,0.12);
+    }
+
+    /* Screen display housing the iframes */
+    .screen-panel {
+      flex: 1;
+      height: 75vh;
+      border-radius: 16px;
+      border: 1px solid var(--border-color);
+      background: rgba(0, 0, 0, 0.4);
+      position: relative;
+      overflow: hidden;
+      box-shadow: 
+        0 15px 45px rgba(0, 0, 0, 0.7),
+        inset 0 0 30px rgba(0, 0, 0, 0.9);
+    }
+
+    .module-iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      display: none;
+      background: transparent;
+      opacity: 0;
+      transition: opacity 0.5s ease;
+    }
+
+    .module-iframe.active-iframe {
+      display: block;
+      opacity: 1;
+    }
+
+    /* Expanded View Modal Overlay Styles */
+    .screen-panel.expanded-panel {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100% !important;
+      z-index: 500;
+      border: 1.5px solid var(--accent-cyan);
+      box-shadow: 
+        0 25px 60px rgba(0, 0, 0, 0.95),
+        0 0 35px rgba(0, 235, 214, 0.15);
+      border-radius: 16px;
+      transition: var(--transition-standard);
+    }
+
+    .exit-expand-btn {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      z-index: 1000;
+      padding: 10px 20px;
+      border: 1.5px solid var(--accent-cyan);
+      background: rgba(10, 14, 24, 0.9);
+      color: var(--accent-cyan);
+      border-radius: 8px;
+      cursor: pointer;
+      font-family: var(--font-primary);
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 0 15px rgba(0, 235, 214, 0.3);
+      transition: var(--transition-fast);
+      backdrop-filter: blur(10px);
+    }
+
+    .exit-expand-btn:hover {
+      background: var(--accent-cyan);
+      color: #03050a;
+      box-shadow: 0 0 25px var(--accent-cyan);
+    }
+
+    /* Widescreen simulation HUD overlay overlay */
+    .sim-hud-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(5, 7, 12, 0.75);
+      backdrop-filter: blur(12px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+      border-radius: 16px;
+    }
+
+    .sim-hud-overlay.show-overlay {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .hud-box {
+      width: 80%;
+      max-width: 650px;
+      background: rgba(18, 22, 33, 0.85);
+      border: 1.5px solid var(--accent-red);
+      box-shadow: 
+        0 20px 60px rgba(0, 0, 0, 0.9),
+        0 0 35px rgba(255, 59, 48, 0.15),
+        inset 0 0 20px rgba(255, 59, 48, 0.05);
+      border-radius: 20px;
+      padding: 30px 40px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    }
+
+    /* Grid overlay on alert */
+    .hud-box::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image: radial-gradient(rgba(255, 59, 48, 0.03) 1px, transparent 0);
+      background-size: 15px 15px;
+      pointer-events: none;
+    }
+
+    .hud-icon-wrap {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: rgba(255, 59, 48, 0.1);
+      border: 2px solid var(--accent-red);
+      color: var(--accent-red);
+      font-size: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: alert-pulse-hud 1s infinite alternate;
+      box-shadow: 0 0 15px rgba(255, 59, 48, 0.2);
+    }
+
+    @keyframes alert-pulse-hud {
+      0% { transform: scale(0.9); box-shadow: 0 0 10px rgba(255, 59, 48, 0.2); }
+      100% { transform: scale(1.1); box-shadow: 0 0 25px rgba(255, 59, 48, 0.5); }
+    }
+
+    .hud-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--accent-red);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .hud-msg {
+      font-size: 1.35rem;
+      font-weight: 600;
+      line-height: 1.5;
+      color: #fff;
+      min-height: 72px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Small diagnostic step indicator */
+    .step-indicator {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 16px;
+      margin-top: 10px;
+      border-top: 1px solid rgba(255, 255, 255, 0.04);
+      padding-top: 20px;
+      width: 100%;
+    }
+
+    .step-node {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: #475569;
+      position: relative;
+    }
+
+    .step-node::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #475569;
+    }
+
+    .step-node.step-active {
+      color: var(--accent-cyan);
+    }
+
+    .step-node.step-active::before {
+      background: var(--accent-cyan);
+      box-shadow: 0 0 8px var(--accent-cyan);
+      animation: alert-flash 0.5s infinite alternate;
+    }
+
+    .step-node.step-completed {
+      color: var(--accent-blue);
+    }
+
+    .step-node.step-completed::before {
+      background: var(--accent-blue);
+      box-shadow: 0 0 8px var(--accent-blue);
+    }
+
+    .step-connector {
+      width: 30px;
+      height: 1px;
+      background: #1e293b;
+    }
+
+    .step-connector.step-completed {
+      background: var(--accent-blue);
+    }
+
+    /* Subtle screen framing overlays */
+    .mbux-glare {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 35%;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.015) 0%, rgba(255, 255, 255, 0) 100%);
+      pointer-events: none;
+      z-index: 100;
+    }
+
+    /* HUD timeline loader bar */
+    .hud-progress-bar-wrap {
+      width: 100%;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 2px;
+      overflow: hidden;
+      margin-top: 10px;
+    }
+
+    .hud-progress-bar-inner {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--accent-red), var(--accent-cyan));
+      border-radius: 2px;
+      transition: width 3.5s linear;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="bg-grid"></div>
+
+  <!-- Hyperscreen Chassis frame -->
+  <div class="hyperscreen-container">
+    <div class="mbux-glare"></div>
+
+    <!-- Top Cockpit Header -->
+    <header class="dashboard-header">
+      <div class="brand-group">
+        <div class="m-benz-logo">
+          <div class="m-benz-logo-spokes"></div>
+          <div class="m-benz-logo-spokes2"></div>
+        </div>
+        <div class="title-area">
+          <h1 class="main-title">ClearBox</h1>
+          <span class="sub-title">AI-Defined Vehicle Incident Intelligence</span>
+        </div>
+      </div>
+
+      <!-- Main Action Button -->
+      <div class="sim-button-wrap">
+        <button class="sim-btn" id="sim-trigger">
+          <i class="fa-solid fa-triangle-exclamation"></i> Simulate Crash Event
+        </button>
+      </div>
+
+      <!-- Right stats -->
+      <div class="system-status">
+        <div class="sys-badge" id="system-status-badge">
+          <div class="sys-badge-dot"></div> <span id="system-status-text">Active Monitoring</span>
+        </div>
+        <div class="sys-time" id="clock-display">15:34:00</div>
+      </div>
+    </header>
+
+    <!-- Content Workspace -->
+    <main class="workspace-area">
+      
+      <!-- Interactive Menu Tabs -->
+      <div class="tab-bar-container">
+        <div class="tabs-group">
+          <button class="tab-trigger active-tab" onclick="switchTab('reconstruction')">
+            <i class="fa-solid fa-circle-nodes"></i> Crash Reconstruction
+          </button>
+          <button class="tab-trigger" onclick="switchTab('vitals')">
+            <i class="fa-solid fa-heart-pulse"></i> Vital Signs
+          </button>
+          <button class="tab-trigger" onclick="switchTab('road')">
+            <i class="fa-solid fa-chart-network"></i> Road Memory
+          </button>
+        </div>
+
+        <div class="tab-controls">
+          <button class="fullscreen-btn" id="full-screen-btn">
+            <i class="fa-solid fa-expand"></i> Expand View
+          </button>
+        </div>
+      </div>
+
+      <!-- Integrated Glass Screen Panel for Iframes -->
+      <div class="screen-panel" id="main-screen-panel">
+        <!-- Floating Exit Expanded View button -->
+        <button class="exit-expand-btn" id="exit-expand-btn" style="display: none;">
+          <i class="fa-solid fa-compress"></i> Exit Expanded View
+        </button>
+        <iframe id="iframe-reconstruction" class="module-iframe active-iframe" src="demos/crash-reconstruction.html"></iframe>
+        <iframe id="iframe-vitals" class="module-iframe" src="demos/vital-signs.html"></iframe>
+        <iframe id="iframe-road" class="module-iframe" src="demos/road-memory.html"></iframe>
+
+        <!-- Diagnostic Simulation HUD overlay overlay -->
+        <div class="sim-hud-overlay" id="sim-overlay">
+          <div class="hud-box">
+            <div class="hud-icon-wrap"><i class="fa-solid fa-triangle-exclamation"></i></div>
+            <div class="hud-title">DIAGNOSTIC SYSTEM INTRUSION</div>
+            <div class="hud-msg" id="hud-message">Impact detected. Reconstructing crash truth...</div>
+            
+            <div class="hud-progress-bar-wrap">
+              <div class="hud-progress-bar-inner" id="hud-bar"></div>
+            </div>
+
+            <!-- Simulation Diagnostics Step indicator -->
+            <div class="step-indicator">
+              <div class="step-node step-active" id="step-node-1">1. Truth</div>
+              <div class="step-connector" id="step-conn-1"></div>
+              <div class="step-node" id="step-node-2">2. Health</div>
+              <div class="step-connector" id="step-conn-2"></div>
+              <div class="step-node" id="step-node-3">3. Road Memory</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </main>
+  </div>
+
+  <script>
+    // --- State Management ---
+    let currentTab = 'reconstruction';
+    const tabs = {
+      reconstruction: {
+        iframeId: 'iframe-reconstruction',
+        filePath: 'demos/crash-reconstruction.html'
+      },
+      vitals: {
+        iframeId: 'iframe-vitals',
+        filePath: 'demos/vital-signs.html'
+      },
+      road: {
+        iframeId: 'iframe-road',
+        filePath: 'demos/road-memory.html'
+      }
+    };
+
+    // --- Tab Switching ---
+    function switchTab(tabKey) {
+      if (currentTab === tabKey) return;
+      
+      // Update Tab Triggers Style
+      const triggers = document.querySelectorAll('.tab-trigger');
+      triggers.forEach(trigger => {
+        trigger.classList.remove('active-tab');
+      });
+
+      // Find trigger matching tab content
+      const index = Object.keys(tabs).indexOf(tabKey);
+      if (index !== -1) {
+        triggers[index].classList.add('active-tab');
+      }
+
+      // Hide all active iframes, show the target one
+      const iframes = document.querySelectorAll('.module-iframe');
+      iframes.forEach(iframe => {
+        iframe.classList.remove('active-iframe');
+      });
+
+      const activeIframe = document.getElementById(tabs[tabKey].iframeId);
+      if (activeIframe) {
+        activeIframe.classList.add('active-iframe');
+      }
+
+      currentTab = tabKey;
+    }
+
+
+
+    // --- System Clock ---
+    function updateClock() {
+      const display = document.getElementById('clock-display');
+      const now = new Date();
+      let hours = now.getHours().toString().padStart(2, '0');
+      let minutes = now.getMinutes().toString().padStart(2, '0');
+      let seconds = now.getSeconds().toString().padStart(2, '0');
+      display.innerText = `${hours}:${minutes}:${seconds}`;
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // --- Simulation Sequence ---
+    const simBtn = document.getElementById('sim-trigger');
+    const simOverlay = document.getElementById('sim-overlay');
+    const hudMessage = document.getElementById('hud-message');
+    const hudBar = document.getElementById('hud-bar');
+    const badge = document.getElementById('system-status-badge');
+    const badgeText = document.getElementById('system-status-text');
+
+    const stepNodes = [
+      document.getElementById('step-node-1'),
+      document.getElementById('step-node-2'),
+      document.getElementById('step-node-3')
+    ];
+    const stepConns = [
+      document.getElementById('step-conn-1'),
+      document.getElementById('step-conn-2')
+    ];
+
+    function runSimulation() {
+      // 1. Lock simulation button & update status badge
+      simBtn.classList.add('simulating');
+      simBtn.innerHTML = '<i class="fa-solid fa-spinner"></i> Simulating event...';
+      badge.classList.add('danger-badge');
+      badgeText.innerText = "CRITICAL EVENT ACTIVE";
+
+      // 2. Open diagnostic overlay
+      simOverlay.classList.add('show-overlay');
+
+      // Initialize step nodes layout
+      stepNodes[0].className = "step-node step-active";
+      stepNodes[1].className = "step-node";
+      stepNodes[2].className = "step-node";
+      stepConns[0].className = "step-connector";
+      stepConns[1].className = "step-connector";
+
+      // Reset loading progress bar
+      hudBar.style.transition = 'none';
+      hudBar.style.width = '0%';
+      setTimeout(() => {
+        hudBar.style.transition = 'width 3.5s linear';
+        hudBar.style.width = '100%';
+      }, 50);
+
+      // Start Sequence Step 1: Crash Reconstruction
+      switchTab('reconstruction');
+      hudMessage.innerText = "Impact detected. Reconstructing crash truth...";
+      postToIframe('iframe-reconstruction', 'START_CRASH_RECONSTRUCTION');
+
+      // Step 2: Vital Signs (after 3.5s)
+      setTimeout(() => {
+        switchTab('vitals');
+        hudMessage.innerText = "Irregular vitals detected. Preparing emergency medical data...";
+        
+        // Update Step node Indicators
+        stepNodes[0].className = "step-node step-completed";
+        stepNodes[1].className = "step-node step-active";
+        stepConns[0].className = "step-connector step-completed";
+
+        // Reset and trigger loader bar
+        hudBar.style.transition = 'none';
+        hudBar.style.width = '0%';
+        setTimeout(() => {
+          hudBar.style.transition = 'width 3.5s linear';
+          hudBar.style.width = '100%';
+        }, 50);
+
+        // Access the vital-signs iframe content to simulate critical vital triggers
+        postToIframe('iframe-vitals', 'START_VITALS_EMERGENCY');
+
+      }, 3500);
+
+      // Step 3: Road Memory (after another 3.5s)
+      setTimeout(() => {
+        switchTab('road');
+        hudMessage.innerText = "Incident added to collective road memory.";
+
+        // Update Step node Indicators
+        stepNodes[1].className = "step-node step-completed";
+        stepNodes[2].className = "step-node step-active";
+        stepConns[1].className = "step-connector step-completed";
+
+        // Reset and trigger loader bar
+        hudBar.style.transition = 'none';
+        hudBar.style.width = '0%';
+        setTimeout(() => {
+          hudBar.style.transition = 'width 3.5s linear';
+          hudBar.style.width = '100%';
+        }, 50);
+
+        // Access the road-memory iframe content to trigger collision zone warning map event
+        postToIframe('iframe-road', 'ADD_ROAD_MEMORY_INCIDENT');
+
+      }, 7000);
+
+      // Final: Finish Sequence (after final 3.5s)
+      setTimeout(() => {
+        // Complete last node
+        stepNodes[2].className = "step-node step-completed";
+        
+        // Close overlay smoothly
+        simOverlay.classList.remove('show-overlay');
+
+        // Restore header status badge and simulation button
+        badge.classList.remove('danger-badge');
+        badgeText.innerText = "Active Monitoring";
+        
+        simBtn.classList.remove('simulating');
+        simBtn.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Simulate Crash Event';
+
+      }, 10500);
+    }
+
+    // Helper function to send message to iframe
+    function postToIframe(iframeId, message) {
+      const iframe = document.getElementById(iframeId);
+      if (iframe && iframe.contentWindow) {
+        try {
+          iframe.contentWindow.postMessage(message, '*');
+        } catch (e) {
+          console.warn(`Error postMessage to ${iframeId}:`, e);
+        }
+      }
+    }
+
+    // Listen for events from sub-modules
+    window.addEventListener('message', (event) => {
+      if (event.data === 'RESET_DEMO') {
+        // Restore parent HUD badges and simulation button
+        badge.classList.remove('danger-badge');
+        badgeText.innerText = "Active Monitoring";
+        
+        simBtn.classList.remove('simulating');
+        simBtn.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Simulate Crash Event';
+        
+        // Propagate reset to other iframes
+        postToIframe('iframe-reconstruction', 'RESET_DEMO');
+        postToIframe('iframe-road', 'RESET_DEMO');
+        postToIframe('iframe-vitals', 'RESET_DEMO');
+      } else if (event.data === 'START_SIMULATION') {
+        runSimulation();
+      }
+    });
+
+    // Attach simulation listener
+    simBtn.addEventListener('click', runSimulation);
+
+    // Expand / Collapse Iframe view within the same tab
+    const screenPanel = document.getElementById('main-screen-panel');
+    const exitExpandBtn = document.getElementById('exit-expand-btn');
+    const fullScreenBtn = document.getElementById('full-screen-btn');
+
+    fullScreenBtn.addEventListener('click', () => {
+      screenPanel.classList.add('expanded-panel');
+      exitExpandBtn.style.display = 'flex';
+    });
+
+    exitExpandBtn.addEventListener('click', () => {
+      screenPanel.classList.remove('expanded-panel');
+      exitExpandBtn.style.display = 'none';
+    });
+
+  </script>
+
+</body>
+</html>
