@@ -365,6 +365,7 @@
       transition: var(--transition-standard);
       position: relative;
       overflow: hidden;
+      flex-shrink: 0;
     }
 
     .glass-card::before {
@@ -1042,8 +1043,24 @@
         gap: 16px;
       }
 
+      .mbux-content > .column:nth-child(3) {
+        order: 1;
+      }
+
+      .mbux-content > .column:nth-child(2) {
+        order: 2;
+      }
+
+      .mbux-content > .column:nth-child(1) {
+        order: 3;
+      }
+
       .column {
         height: auto;
+      }
+
+      .controls-card {
+        order: -1;
       }
 
       .telemetry-row {

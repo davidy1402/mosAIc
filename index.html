@@ -50,9 +50,8 @@
       background-color: var(--bg-color);
       color: #e2e8f0;
       font-family: var(--font-primary);
-      min-height: 100vh;
-      overflow-x: hidden;
-      overflow-y: auto;
+      height: 100vh;
+      overflow: hidden;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -101,17 +100,13 @@
 
     /* MBUX Hyperscreen Chassis frame */
     .hyperscreen-container {
-      width: 98vw;
-      height: 96vh;
-      max-width: 1800px;
-      max-height: 950px;
+      width: 100vw;
+      height: 100vh;
       background: rgba(6, 8, 12, 0.9);
-      border: 1px solid rgba(255, 255, 255, 0.06);
-      border-radius: 24px;
+      border: none;
+      border-radius: 0;
       box-shadow: 
-        0 30px 80px rgba(0, 0, 0, 0.95),
-        inset 0 0 25px rgba(0, 0, 0, 0.8),
-        0 0 100px rgba(0, 235, 214, 0.01);
+        inset 0 0 25px rgba(0, 0, 0, 0.8);
       backdrop-filter: blur(40px);
       display: flex;
       flex-direction: column;
@@ -682,6 +677,8 @@
       body {
         align-items: flex-start;
         padding: 10px;
+        height: auto;
+        overflow-y: auto;
       }
 
       .hyperscreen-container {
@@ -729,22 +726,43 @@
         gap: 10px;
       }
 
-      .tabs-group,
-      .tab-controls {
-        display: grid;
-        grid-template-columns: 1fr;
+      .tabs-group {
+        display: flex;
+        flex-direction: row;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
         gap: 8px;
+        width: 100%;
+      }
+      .tabs-group::-webkit-scrollbar {
+        display: none;
       }
 
-      .tab-trigger,
+      .tab-trigger {
+        flex-shrink: 0;
+        padding: 8px 14px;
+        font-size: 12px;
+        justify-content: center;
+      }
+
+      .tab-controls {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+        width: 100%;
+      }
+
       .fullscreen-btn {
+        padding: 8px 12px;
+        font-size: 11px;
         justify-content: center;
         width: 100%;
       }
 
       .screen-panel {
-        height: 78vh;
-        min-height: 640px;
+        height: auto;
+        min-height: 500px;
       }
 
       .step-indicator {
@@ -950,6 +968,9 @@
       } else if (tabKey === 'vitals') {
         setTimeout(() => postToIframe('iframe-vitals', 'VITALS_VISIBLE'), 80);
       }
+
+      // Trigger immediate resize check
+      setTimeout(resizeIframeToFitContent, 50);
     }
 
 
@@ -1254,6 +1275,59 @@
 
       doc.save(`clearbox-evidence-packet-${Date.now()}.pdf`);
     });
+
+    // --- Dynamic Iframe Height Auto-Resizing for Mobile ---
+    function resizeIframeToFitContent() {
+      // Only do this on mobile/tablets (max-width: 1100px)
+      if (window.innerWidth > 1100) {
+        const screenPanel = document.getElementById('main-screen-panel');
+        if (screenPanel) screenPanel.style.height = '';
+        const activeIframe = document.querySelector('.module-iframe.active-iframe');
+        if (activeIframe) activeIframe.style.height = '';
+        return;
+      }
+
+      const activeIframe = document.querySelector('.module-iframe.active-iframe');
+      if (activeIframe && activeIframe.contentWindow && activeIframe.contentDocument) {
+        try {
+          const body = activeIframe.contentDocument.body;
+          const html = activeIframe.contentDocument.documentElement;
+          if (body && html) {
+            // Find the correct content height
+            const height = Math.max(
+              body.scrollHeight,
+              body.offsetHeight,
+              html.clientHeight,
+              html.scrollHeight,
+              html.offsetHeight
+            );
+            
+            if (height > 0) {
+              const screenPanel = document.getElementById('main-screen-panel');
+              if (screenPanel) screenPanel.style.height = `${height}px`;
+              activeIframe.style.height = `${height}px`;
+            }
+          }
+        } catch (e) {
+          console.warn("Unable to resize iframe:", e);
+        }
+      }
+    }
+
+    // Call resize on window actions and iframe load events
+    window.addEventListener('resize', resizeIframeToFitContent);
+
+    window.addEventListener('DOMContentLoaded', () => {
+      const iframes = document.querySelectorAll('.module-iframe');
+      iframes.forEach(iframe => {
+        iframe.addEventListener('load', resizeIframeToFitContent);
+      });
+      // Initial trigger
+      setTimeout(resizeIframeToFitContent, 300);
+    });
+
+    // Run periodic check to handle dynamic page expansions (like dialogue typewriter updates)
+    setInterval(resizeIframeToFitContent, 300);
 
   </script>
 
