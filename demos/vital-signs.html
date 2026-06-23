@@ -1,0 +1,1930 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>mosAIc // ClearBox Vital Signs Intelligence</title>
+  
+  <!-- Premium Fonts & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <style>
+    /* ==========================================
+       1. CORE DESIGN SYSTEM & THEME VARIABLES
+       ========================================== */
+    :root {
+      --bg-color: #05070c;
+      --panel-bg: rgba(10, 14, 24, 0.4);
+      --panel-border: rgba(255, 255, 255, 0.06);
+      --glass-glow: 0 10px 40px 0 rgba(0, 0, 0, 0.6);
+      
+      /* Nominals - Neon Blue / Teal */
+      --accent-color: #00ebd6;
+      --accent-glow: rgba(0, 235, 214, 0.35);
+      --success-color: #00e575;
+      --success-glow: rgba(0, 229, 117, 0.25);
+      
+      /* Critical Alert - Crimson / Red */
+      --critical-color: #ff3b30;
+      --critical-glow: rgba(255, 59, 48, 0.45);
+      --warning-color: #ff9f0a;
+      
+      /* Typography */
+      --font-primary: 'Inter', -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      
+      --transition-standard: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: #e2e8f0;
+      font-family: var(--font-primary);
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    /* Ambient Cockpit Lighting */
+    body::before {
+      content: '';
+      position: absolute;
+      width: 800px;
+      height: 800px;
+      background: radial-gradient(circle, rgba(0, 235, 214, 0.05) 0%, rgba(0,0,0,0) 70%);
+      bottom: -20%;
+      left: -10%;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    body::after {
+      content: '';
+      position: absolute;
+      width: 800px;
+      height: 800px;
+      background: radial-gradient(circle, rgba(0, 132, 255, 0.04) 0%, rgba(0,0,0,0) 70%);
+      top: -20%;
+      right: -10%;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* System Background Grid pattern */
+    .bg-grid {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image: 
+        linear-gradient(to right, rgba(255, 255, 255, 0.007) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.007) 1px, transparent 1px);
+      background-size: 50px 50px;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* ==========================================
+       2. MBUX CHASSIS FRAME (WIDESCREEN SHELL)
+       ========================================== */
+    .mbux-chassis {
+      width: 96vw;
+      height: 90vh;
+      max-width: 1700px;
+      max-height: 850px;
+      background: rgba(8, 10, 16, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 28px;
+      box-shadow: 
+        0 30px 80px -10px rgba(0, 0, 0, 0.95),
+        inset 0 0 30px rgba(0, 0, 0, 0.8),
+        0 0 120px rgba(0, 235, 214, 0.02);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      backdrop-filter: blur(40px);
+      z-index: 10;
+      transition: border-color var(--transition-standard), box-shadow var(--transition-standard);
+    }
+
+    .mbux-chassis.alert-active {
+      border-color: rgba(255, 59, 48, 0.3);
+      box-shadow: 
+        0 30px 80px -10px rgba(0, 0, 0, 0.95),
+        inset 0 0 30px rgba(0, 0, 0, 0.8),
+        0 0 120px rgba(255, 59, 48, 0.06);
+    }
+
+    /* Bezel Screen Glare Effect */
+    .mbux-glare {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 40%;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.015) 0%, rgba(255, 255, 255, 0) 100%);
+      pointer-events: none;
+      z-index: 100;
+    }
+
+    /* ==========================================
+       3. SYSTEM EMERGENCY eCALL BANNER
+       ========================================== */
+    .emergency-banner {
+      display: none;
+      background: rgba(15, 20, 30, 0.92);
+      border: 1.5px solid var(--critical-color);
+      border-radius: 12px;
+      flex-direction: column;
+      padding: 16px;
+      color: #fff;
+      box-shadow: 
+        0 15px 45px rgba(0, 0, 0, 0.8),
+        0 0 25px rgba(255, 59, 48, 0.15),
+        inset 0 0 15px rgba(255, 59, 48, 0.05);
+      backdrop-filter: blur(25px);
+    }
+
+    .emergency-banner.slide-down {
+      display: flex;
+      animation: slide-in-card 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    @keyframes slide-in-card {
+      0% { opacity: 0; transform: translateY(-10px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+
+    .emergency-banner-content {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .siren-icon {
+      width: 18px;
+      height: 18px;
+      animation: pulse-siren 0.8s infinite alternate;
+    }
+
+    @keyframes pulse-siren {
+      0% { transform: scale(0.95); filter: drop-shadow(0 0 2px rgba(255, 59, 48, 0.4)); }
+      100% { transform: scale(1.15); filter: drop-shadow(0 0 8px rgba(255, 59, 48, 0.8)); }
+    }
+
+    /* ==========================================
+       4. HEADER & SYSTEM BAR
+       ========================================== */
+    .mbux-header {
+      height: 80px;
+      border-bottom: 1px solid var(--panel-border);
+      padding: 0 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: relative;
+      z-index: 10;
+      background: rgba(8, 10, 16, 0.4);
+    }
+
+    .brand-section {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .brand-logo-text {
+      font-size: 1.4rem;
+      font-weight: 800;
+      letter-spacing: 1px;
+      color: #ffffff;
+      text-shadow: 0 0 8px var(--accent-glow);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .brand-logo-text span.brand-dot {
+      color: var(--accent-color);
+      animation: logo-glow 2s infinite alternate;
+    }
+
+    @keyframes logo-glow {
+      0% { text-shadow: 0 0 4px var(--accent-glow); }
+      100% { text-shadow: 0 0 15px var(--accent-color); }
+    }
+
+    .brand-subtitle {
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 3.5px;
+      color: #64748b;
+      margin-top: 2px;
+      font-weight: 500;
+    }
+
+    /* Mercedes-Benz Star SVG */
+    .mb-star-container {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    .mb-star {
+      width: 40px;
+      height: 40px;
+      fill: none;
+      stroke: rgba(255, 255, 255, 0.7);
+      stroke-width: 1.2;
+      filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.2));
+      transition: stroke 0.5s ease, filter 0.5s ease;
+    }
+
+    .mbux-chassis.alert-active .mb-star {
+      stroke: var(--critical-color);
+      filter: drop-shadow(0 0 8px rgba(255, 59, 48, 0.3));
+    }
+
+    .system-status-indicator {
+      display: flex;
+      align-items: center;
+      gap: 25px;
+    }
+
+    .sys-time {
+      font-size: 1rem;
+      font-weight: 300;
+      color: #ffffff;
+      letter-spacing: 1px;
+    }
+
+    .sys-status-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      background: rgba(0, 235, 214, 0.05);
+      border: 1px solid rgba(0, 235, 214, 0.15);
+      border-radius: 30px;
+      font-size: 0.72rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--accent-color);
+      box-shadow: inset 0 0 10px rgba(0, 235, 214, 0.03);
+      transition: var(--transition-standard);
+    }
+
+    .sys-status-badge.critical {
+      background: rgba(255, 59, 48, 0.08);
+      border-color: rgba(255, 59, 48, 0.35);
+      color: #ff453a;
+      box-shadow: inset 0 0 12px rgba(255, 59, 48, 0.1);
+      animation: alert-pulse 1.5s infinite alternate;
+    }
+
+    @keyframes alert-pulse {
+      0% { box-shadow: 0 0 4px rgba(255, 59, 48, 0.1), inset 0 0 8px rgba(255, 59, 48, 0.05); }
+      100% { box-shadow: 0 0 12px rgba(255, 59, 48, 0.4), inset 0 0 15px rgba(255, 59, 48, 0.2); }
+    }
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      background-color: var(--accent-color);
+      border-radius: 50%;
+      box-shadow: 0 0 6px var(--accent-color);
+    }
+
+    .sys-status-badge.critical .status-dot {
+      background-color: #ff453a;
+      box-shadow: 0 0 6px #ff453a;
+      animation: blink 0.5s infinite alternate;
+    }
+
+    @keyframes blink {
+      0% { opacity: 0.2; }
+      100% { opacity: 1; }
+    }
+
+    /* ==========================================
+       5. CONTENT GRID SYSTEM
+       ========================================== */
+    .mbux-content {
+      flex: 1;
+      padding: 20px 40px;
+      display: grid;
+      grid-template-columns: 360px 1fr 360px;
+      gap: 20px;
+      z-index: 10;
+      position: relative;
+    }
+
+    .column {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      height: 100%;
+    }
+
+    /* Glassmorphic Panel Cards */
+    .glass-card {
+      background: var(--panel-bg);
+      border: 1px solid var(--panel-border);
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: var(--glass-glow);
+      backdrop-filter: blur(25px);
+      -webkit-backdrop-filter: blur(25px);
+      transition: var(--transition-standard);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .glass-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(180deg, rgba(255,255,255,0.015) 0%, rgba(255,255,255,0) 100%);
+      pointer-events: none;
+    }
+
+    .glass-card:hover {
+      border-color: rgba(255, 255, 255, 0.1);
+      transform: translateY(-1px);
+    }
+
+    .card-title {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: #64748b;
+      margin-bottom: 15px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    /* ==========================================
+       6. COMPONENT: SENSOR FEEDS PANEL
+       ========================================== */
+    .sensor-feeds-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .sensor-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      background: rgba(255, 255, 255, 0.015);
+      border: 1px solid rgba(255, 255, 255, 0.02);
+      border-radius: 10px;
+      transition: var(--transition-standard);
+    }
+
+    .sensor-item:hover {
+      background: rgba(255, 255, 255, 0.03);
+      border-color: rgba(255, 255, 255, 0.05);
+    }
+
+    .sensor-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .sensor-icon-wrap {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      background: rgba(0, 235, 214, 0.04);
+      border: 1px solid rgba(0, 235, 214, 0.12);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: var(--transition-standard);
+    }
+
+    .mbux-chassis.alert-active .sensor-icon-wrap {
+      background: rgba(255, 59, 48, 0.04);
+      border-color: rgba(255, 59, 48, 0.15);
+    }
+
+    .sensor-icon-wrap svg {
+      width: 14px;
+      height: 14px;
+      stroke: var(--accent-color);
+      transition: stroke 0.5s ease;
+    }
+
+    .mbux-chassis.alert-active .sensor-icon-wrap svg {
+      stroke: var(--critical-color);
+    }
+
+    .sensor-name {
+      font-size: 0.78rem;
+      font-weight: 400;
+      color: #94a3b8;
+    }
+
+    .sensor-status {
+      font-size: 0.7rem;
+      font-weight: 500;
+      color: var(--success-color);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      letter-spacing: 0.2px;
+    }
+
+    .sensor-status.scanning {
+      color: var(--accent-color);
+    }
+
+    /* Core Micro-animations for sensor statuses */
+    .pulse-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background-color: var(--success-color);
+      box-shadow: 0 0 5px var(--success-color);
+      animation: pulse-green 1.5s infinite;
+    }
+
+    @keyframes pulse-green {
+      0% { transform: scale(0.9); opacity: 0.6; box-shadow: 0 0 0 0 rgba(0, 229, 117, 0.3); }
+      70% { transform: scale(1.1); opacity: 1; box-shadow: 0 0 0 4px rgba(0, 229, 117, 0); }
+      100% { transform: scale(0.9); opacity: 0.6; box-shadow: 0 0 0 0 rgba(0, 229, 117, 0); }
+    }
+
+    .scan-circle {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background-color: var(--accent-color);
+      box-shadow: 0 0 5px var(--accent-color);
+      animation: pulse-blue 1.2s infinite;
+    }
+
+    @keyframes pulse-blue {
+      0% { transform: scale(0.8); opacity: 0.5; box-shadow: 0 0 0 0 rgba(0, 235, 214, 0.3); }
+      70% { transform: scale(1.2); opacity: 1; box-shadow: 0 0 0 4px rgba(0, 235, 214, 0); }
+      100% { transform: scale(0.8); opacity: 0.5; box-shadow: 0 0 0 0 rgba(0, 235, 214, 0); }
+    }
+
+    /* Small dynamic audio wave for Mic array */
+    .audio-waves {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      height: 8px;
+    }
+
+    .audio-bar {
+      width: 1.5px;
+      height: 100%;
+      background-color: var(--accent-color);
+      border-radius: 1px;
+      animation: bounce-audio 0.8s infinite ease-in-out alternate;
+    }
+
+    .audio-bar:nth-child(2) { animation-delay: 0.2s; height: 70%; }
+    .audio-bar:nth-child(3) { animation-delay: 0.4s; height: 50%; }
+    .audio-bar:nth-child(4) { animation-delay: 0.1s; height: 85%; }
+
+    @keyframes bounce-audio {
+      0% { transform: scaleY(0.3); }
+      100% { transform: scaleY(1.1); }
+    }
+
+    /* ==========================================
+       7. COMPONENT: OCCUPANT PROFILE CARD
+       ========================================== */
+    .occupant-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      padding-top: 20px;
+      padding-bottom: 20px;
+    }
+
+    .avatar-container {
+      position: relative;
+      margin-bottom: 14px;
+    }
+
+    .avatar-glow-ring {
+      position: absolute;
+      top: -5px;
+      left: -5px;
+      width: 90px;
+      height: 90px;
+      border-radius: 50%;
+      border: 1.5px solid transparent;
+      border-top-color: var(--success-color);
+      border-bottom-color: var(--success-color);
+      animation: rotate-ring 4s linear infinite;
+      box-shadow: 0 0 12px rgba(0, 229, 117, 0.12);
+      transition: var(--transition-standard);
+    }
+
+    .mbux-chassis.alert-active .avatar-glow-ring {
+      border-top-color: var(--critical-color);
+      border-bottom-color: var(--critical-color);
+      box-shadow: 0 0 20px rgba(255, 59, 48, 0.35);
+      animation: rotate-ring-alert 1.5s linear infinite;
+    }
+
+    @keyframes rotate-ring {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    @keyframes rotate-ring-alert {
+      0% { transform: rotate(0deg) scale(1); }
+      50% { transform: rotate(180deg) scale(1.03); }
+      100% { transform: rotate(360deg) scale(1); }
+    }
+
+    .avatar-img {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid rgba(255, 255, 255, 0.08);
+      background: #0d1117;
+    }
+
+    /* Fallback avatar SVG when png isn't loaded */
+    .avatar-placeholder {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #131924 0%, #080b11 100%);
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      color: #64748b;
+    }
+
+    .occupant-name {
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: #ffffff;
+      letter-spacing: 0.2px;
+      margin-bottom: 5px;
+    }
+
+    .medical-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(255, 159, 10, 0.06);
+      border: 1px solid rgba(255, 159, 10, 0.2);
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 0.68rem;
+      font-weight: 500;
+      color: #ff9f0a;
+      letter-spacing: 0.3px;
+      margin-bottom: 15px;
+      text-transform: uppercase;
+      box-shadow: 0 4px 12px rgba(255, 159, 10, 0.03);
+    }
+
+    .medical-badge svg {
+      width: 10px;
+      height: 10px;
+      fill: none;
+      stroke: #ff9f0a;
+      stroke-width: 2;
+    }
+
+    .tracking-status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(0, 229, 117, 0.04);
+      border: 1px solid rgba(0, 229, 117, 0.15);
+      padding: 6px 14px;
+      border-radius: 30px;
+      font-size: 0.7rem;
+      font-weight: 500;
+      letter-spacing: 0.3px;
+      color: var(--success-color);
+      transition: var(--transition-standard);
+    }
+
+    .mbux-chassis.alert-active .tracking-status {
+      background: rgba(255, 59, 48, 0.06);
+      border-color: rgba(255, 59, 48, 0.25);
+      color: #ff453a;
+    }
+
+    /* ==========================================
+       8. MAIN AREA: LIVE TELEMETRY DASHBOARD
+       ========================================== */
+    .telemetry-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      height: 100%;
+    }
+
+    .telemetry-row {
+      display: grid;
+      grid-template-columns: 180px 1fr;
+      gap: 20px;
+      height: 48%;
+      min-height: 150px;
+    }
+
+    .telemetry-numeric-card {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+    }
+
+    .telemetry-wave-card {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 12px 18px;
+    }
+
+    .telemetry-source {
+      font-size: 0.62rem;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: #475569;
+      margin-bottom: 2px;
+    }
+
+    .telemetry-value-container {
+      display: flex;
+      align-items: baseline;
+      gap: 5px;
+      margin-top: 5px;
+    }
+
+    .telemetry-value {
+      font-size: 3.8rem;
+      font-weight: 200;
+      color: #ffffff;
+      line-height: 1;
+      letter-spacing: -2px;
+      transition: color 0.5s ease;
+      text-shadow: 0 0 20px rgba(255, 255, 255, 0.05);
+    }
+
+    .vital-hr .telemetry-value {
+      color: var(--accent-color);
+      text-shadow: 0 0 25px rgba(0, 235, 214, 0.15);
+    }
+
+    .vital-rr .telemetry-value {
+      color: var(--accent-color);
+      text-shadow: 0 0 25px rgba(0, 235, 214, 0.15);
+    }
+
+    .mbux-chassis.alert-active .vital-hr .telemetry-value,
+    .mbux-chassis.alert-active .vital-rr .telemetry-value {
+      color: var(--critical-color);
+      text-shadow: 0 0 25px rgba(255, 59, 48, 0.25);
+    }
+
+    .telemetry-unit {
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: #475569;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* Wave visualizers */
+    .wave-container {
+      flex: 1;
+      width: 100%;
+      height: 95px;
+      position: relative;
+      margin-top: 5px;
+      border-radius: 10px;
+      overflow: hidden;
+      background: rgba(0, 0, 0, 0.25);
+      border: 1px solid rgba(255, 255, 255, 0.01);
+    }
+
+    canvas.telemetry-canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    /* ==========================================
+       9. COMPONENT: COGNITIVE & STRESS STATE
+       ========================================== */
+    .stress-card {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .stress-gauge-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      margin: 10px 0;
+      position: relative;
+    }
+
+    .stress-radial-svg {
+      width: 120px;
+      height: 120px;
+      transform: rotate(-90deg);
+    }
+
+    .stress-radial-bg {
+      fill: none;
+      stroke: rgba(255, 255, 255, 0.02);
+      stroke-width: 6;
+    }
+
+    .stress-radial-bar {
+      fill: none;
+      stroke: var(--accent-color);
+      stroke-dasharray: 314;
+      stroke-dashoffset: 257; /* 18% stress default */
+      stroke-width: 6;
+      stroke-linecap: round;
+      transition: stroke-dashoffset 0.8s ease, stroke 0.5s ease;
+      filter: drop-shadow(0 0 4px var(--accent-glow));
+    }
+
+    .mbux-chassis.alert-active .stress-radial-bar {
+      stroke: var(--critical-color);
+      filter: drop-shadow(0 0 6px rgba(255, 59, 48, 0.3));
+    }
+
+    .stress-gauge-text {
+      position: absolute;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .stress-gauge-pct {
+      font-size: 1.6rem;
+      font-weight: 300;
+      color: #ffffff;
+      letter-spacing: -0.5px;
+    }
+
+    .stress-gauge-label {
+      font-size: 0.6rem;
+      text-transform: uppercase;
+      color: #64748b;
+      letter-spacing: 0.8px;
+      margin-top: 1px;
+    }
+
+    .stress-status-desc {
+      font-size: 0.88rem;
+      font-weight: 500;
+      color: #ffffff;
+      text-align: center;
+      margin-top: 8px;
+      transition: color 0.4s ease;
+    }
+
+    .mbux-chassis.alert-active .stress-status-desc {
+      color: #ff453a;
+    }
+
+    .stress-analytics-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 12px;
+      border-top: 1px solid rgba(255, 255, 255, 0.04);
+      padding-top: 12px;
+    }
+
+    .stress-analytic-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.72rem;
+    }
+
+    .analytic-label {
+      color: #64748b;
+    }
+
+    .analytic-value {
+      font-weight: 500;
+      color: #e2e8f0;
+    }
+
+    .analytic-bar-bg {
+      width: 70px;
+      height: 3px;
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 2px;
+      overflow: hidden;
+      margin-left: 8px;
+      display: inline-block;
+      vertical-align: middle;
+    }
+
+    .analytic-bar-fill {
+      height: 100%;
+      background: var(--accent-color);
+      border-radius: 2px;
+      transition: width 0.8s ease, background-color 0.5s ease;
+    }
+
+    .mbux-chassis.alert-active .analytic-bar-fill {
+      background: var(--critical-color);
+    }
+
+    /* ==========================================
+       10. CONTROL PANEL & CRASH WORKFLOW
+       ========================================== */
+    .controls-card {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      height: 48%;
+      min-height: 150px;
+    }
+
+    .btn-crash-trigger {
+      width: 100%;
+      padding: 16px 20px;
+      background: linear-gradient(135deg, rgba(255, 59, 48, 0.12) 0%, rgba(190, 20, 15, 0.12) 100%);
+      border: 1px solid rgba(255, 59, 48, 0.35);
+      border-radius: 12px;
+      color: #ff453a;
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 1.5px;
+      cursor: pointer;
+      text-transform: uppercase;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(255, 59, 48, 0.03);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .btn-crash-trigger:hover {
+      background: linear-gradient(135deg, rgba(255, 59, 48, 0.22) 0%, rgba(190, 20, 15, 0.22) 100%);
+      border-color: rgba(255, 59, 48, 0.75);
+      color: #ffffff;
+      box-shadow: 0 0 20px rgba(255, 59, 48, 0.25);
+      transform: scale(1.01);
+    }
+
+    .btn-crash-trigger:active {
+      transform: scale(0.99);
+    }
+
+    .btn-crash-trigger svg {
+      width: 16px;
+      height: 16px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+    }
+
+    /* Dynamic Paramedic Diagnostic Summary Box */
+    .paramedic-summary-box {
+      grid-column: 1 / -1;
+      background: rgba(255, 59, 48, 0.03);
+      border: 1px solid rgba(255, 59, 48, 0.2);
+      border-radius: 16px;
+      padding: 16px 24px;
+      margin-top: 10px;
+      display: none;
+      animation: fade-in-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.6), inset 0 0 20px rgba(255, 59, 48, 0.03);
+    }
+
+    .paramedic-summary-box.show {
+      display: block;
+    }
+
+    @keyframes fade-in-up {
+      0% { opacity: 0; transform: translateY(15px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+
+    .summary-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(255, 59, 48, 0.15);
+      padding-bottom: 8px;
+      margin-bottom: 12px;
+    }
+
+    .summary-title {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: #ff453a;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .summary-tag {
+      font-family: var(--font-mono);
+      font-size: 0.62rem;
+      color: rgba(255, 255, 255, 0.4);
+    }
+
+    .summary-body {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      line-height: 1.6;
+      color: #cbd5e1;
+      min-height: 50px;
+      letter-spacing: 0.1px;
+    }
+
+    /* Cursor animation for typing effect */
+    .typing-cursor {
+      display: inline-block;
+      width: 6px;
+      height: 13px;
+      background-color: #ff453a;
+      margin-left: 3px;
+      animation: blink-cursor 0.8s infinite;
+      vertical-align: middle;
+    }
+
+    @keyframes blink-cursor {
+      0%, 100% { opacity: 0; }
+      50% { opacity: 1; }
+    }
+
+    /* Reset Demo Button inside Controls Card */
+    .btn-reset-demo-new {
+      width: 100%;
+      padding: 16px 20px;
+      background: rgba(0, 235, 214, 0.05);
+      border: 1px solid rgba(0, 235, 214, 0.25);
+      border-radius: 12px;
+      color: #00ebd6;
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 1.5px;
+      cursor: pointer;
+      text-transform: uppercase;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(0, 235, 214, 0.03);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .btn-reset-demo-new:hover {
+      background: var(--accent-color);
+      color: var(--bg-color);
+      border-color: var(--accent-color);
+      box-shadow: 0 0 20px var(--accent-glow);
+      transform: scale(1.01);
+    }
+
+    .btn-reset-demo-new:active {
+      transform: scale(0.99);
+    }
+
+    /* Navigation Button */
+    .back-btn {
+      padding: 6px 12px;
+      background: rgba(10, 14, 24, 0.5);
+      border: 1px solid rgba(0, 235, 214, 0.35);
+      border-radius: 6px;
+      color: #00ebd6;
+      text-decoration: none;
+      font-family: 'Outfit', sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 0 10px rgba(0, 235, 214, 0.15);
+      transition: all 0.2s ease;
+    }
+    .back-btn:hover {
+      background: rgba(0, 235, 214, 0.1);
+      color: #fff;
+      border-color: #00ebd6;
+      box-shadow: 0 0 15px rgba(0, 235, 214, 0.3);
+      transform: translateY(-1px);
+    }
+    .back-btn:active {
+      transform: translateY(1px);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Background grid overlay -->
+  <div class="bg-grid"></div>
+
+  <!-- MBUX HUD Chassis Widescreen Dashboard -->
+  <div class="mbux-chassis" id="mbuxChassis">
+    <div class="mbux-glare"></div>
+
+    <!-- Header System Bar -->
+    <div class="mbux-header">
+      <div class="brand-section">
+        <div class="brand-logo-text">mosAIc<span class="brand-dot">•</span></div>
+        <div class="brand-subtitle">ClearBox // Vital Signs Intelligence</div>
+      </div>
+
+      <!-- Mercedes-Benz Widescreen Center Star -->
+      <div class="mb-star-container">
+        <svg class="mb-star" viewBox="0 0 100 100">
+          <circle cx="50" cy="50" r="45" />
+          <path d="M50 5 L50 95" />
+          <path d="M50 50 L11 72.5" />
+          <path d="M50 50 L89 72.5" />
+          <polygon points="50,5 50,50 11,72.5 50,42" fill="rgba(255,255,255,0.03)" />
+          <polygon points="50,5 50,50 89,72.5 50,42" fill="rgba(255,255,255,0.07)" />
+        </svg>
+      </div>
+
+      <div class="system-status-indicator">
+        <div class="sys-time" id="sysTime">17:10:00</div>
+        <div class="sys-status-badge" id="sysStatusBadge">
+          <div class="status-dot"></div>
+          <span id="sysStatusText">System Active // Baseline Tracking</span>
+        </div>
+        <!-- Back to Shell Button -->
+        <a href="../index.html" class="back-btn" id="back-btn" target="_top"><i class="fa-solid fa-arrow-left"></i> ClearBox Home</a>
+      </div>
+    </div>
+
+    <!-- Main Content Panels -->
+    <div class="mbux-content">
+      
+      <!-- Left Column: Sensor Feeds & Profile -->
+      <div class="column">
+        
+        <!-- Hardware Sensor Panel -->
+        <div class="glass-card">
+          <div class="card-title">
+            <span>Hardware Status feeds</span>
+            <span style="font-size: 0.65rem; color: var(--accent-color);">Contactless Fusion</span>
+          </div>
+          <div class="sensor-feeds-list">
+            
+            <!-- Feed 1 -->
+            <div class="sensor-item">
+              <div class="sensor-info">
+                <div class="sensor-icon-wrap">
+                  <svg viewBox="0 0 24 24" fill="none" stroke-linejoin="round" stroke-linecap="round">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                    <path d="M2 12h20"/>
+                  </svg>
+                </div>
+                <div class="sensor-name">Steering Wheel Electrodes</div>
+              </div>
+              <div class="sensor-status" id="sensorStatus1">
+                <div class="pulse-dot"></div> Connected
+              </div>
+            </div>
+
+            <!-- Feed 2 -->
+            <div class="sensor-item">
+              <div class="sensor-info">
+                <div class="sensor-icon-wrap">
+                  <svg viewBox="0 0 24 24" fill="none" stroke-linejoin="round" stroke-linecap="round">
+                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                    <circle cx="12" cy="13" r="4"/>
+                  </svg>
+                </div>
+                <div class="sensor-name">rPPG Cabin Camera Matrix</div>
+              </div>
+              <div class="sensor-status scanning" id="sensorStatus2">
+                <div class="scan-circle"></div> Scanning
+              </div>
+            </div>
+
+            <!-- Feed 3 -->
+            <div class="sensor-item">
+              <div class="sensor-info">
+                <div class="sensor-icon-wrap">
+                  <svg viewBox="0 0 24 24" fill="none" stroke-linejoin="round" stroke-linecap="round">
+                    <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
+                  </svg>
+                </div>
+                <div class="sensor-name">Seat Pressure Sensors</div>
+              </div>
+              <div class="sensor-status" id="sensorStatus3">
+                <div class="pulse-dot"></div> Active
+              </div>
+            </div>
+
+            <!-- Feed 4 -->
+            <div class="sensor-item">
+              <div class="sensor-info">
+                <div class="sensor-icon-wrap">
+                  <svg viewBox="0 0 24 24" fill="none" stroke-linejoin="round" stroke-linecap="round">
+                    <path d="M12 1v22M17 5v14M22 9v6M7 5v14M2 9v6"/>
+                  </svg>
+                </div>
+                <div class="sensor-name">Acoustic Microphone Array</div>
+              </div>
+              <div class="sensor-status" id="sensorStatus4">
+                <div class="audio-waves">
+                  <div class="audio-bar"></div>
+                  <div class="audio-bar"></div>
+                  <div class="audio-bar"></div>
+                  <div class="audio-bar"></div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Occupant Card -->
+        <div class="glass-card occupant-card">
+          <div class="avatar-container">
+            <div class="avatar-glow-ring"></div>
+            <img class="avatar-img" src="avatar.png" alt="Anes Abbas" onerror="if(this.src.indexOf('avatar.png') !== -1) this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj4KICA8ZGVmcz4KICAgIDxyYWRpYWxHcmFkaWVudCBpZD0iYmciIGN4PSI1MCUiIGN5PSI1MCUiIHI9IjUwJSI+CiAgICAgIDxzdG9wIG9mZnNldD0iMCUiIHN0b3AtY29sb3I9IiMxMTE2MjUiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSIxMDAlIiBzdG9wLWNvbG9yPSIjMDcwYTEyIi8+CiAgICA8L3JhZGlhbEdyYWRpZW50PgogICAgPGxpbmVhckdyYWRpZW50IGlkPSJib2R5IiB4MT0iMCUiIHkxPSIwJSIgeDI9IjEwMCUiIHkyPSIxMDAlIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iIzAwZWJkNiIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiMwODkxYjIiLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImZhY2UiIHgxPSIwJSIgeTE9IjAlIiB4Mj0iMTAwJSIgeTI9IjEwMCUiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjMzhiZGY4Ii8+CiAgICAgIDxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzAzNjlhMSIvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICA8L2RlZnM+CiAgPGNpcmNsZSBjeD0iNTAiIGN5PSI1MCIgcj0iNDgiIGZpbGw9InVybCgjYmcpIiBzdHJva2U9IiMwMGViZDYiIHN0cm9rZS13aWR0aD0iMS41IiBzdHJva2Utb3BhY2l0eT0iMC4zIi8+CiAgCiAgPCEtLSBPdXRlciBUZWNoIEFjY2VudHMgLS0+CiAgPGNpcmNsZSBjeD0iNTAiIGN5PSI1MCIgcj0iNDUiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzAwZWJkNiIgc3Ryb2tlLXdpZHRoPSIwLjgiIHN0cm9rZS1kYXNoYXJyYXk9IjYsIDMwIiBzdHJva2Utb3BhY2l0eT0iMC41Ii8+CiAgPGNpcmNsZSBjeD0iNTAiIGN5PSI1MCIgcj0iNDIiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzAwZWJkNiIgc3Ryb2tlLXdpZHRoPSIwLjUiIHN0cm9rZS1vcGFjaXR5PSIwLjE1Ii8+CiAgCiAgPCEtLSBBdmF0YXIgQm9keSAtLT4KICA8cGF0aCBkPSJNMjYgNzggQzI2IDYyLCAzNCA1NCwgNTAgNTQgQzY2IDU0LCA3NCA2MiwgNzQgNzggQzc0IDgxLCA3MSA4MywgNTAgODMgQzI5IDgzLCAyNiA4MSwgMjYgNzggWiIgZmlsbD0idXJsKCNib2R5KSIvPgogIAogIDwhLS0gQXZhdGFyIEhlYWQgLS0+CiAgPGNpcmNsZSBjeD0iNTAiIGN5PSIzOCIgcj0iMTUiIGZpbGw9InVybCgjZmFjZSkiLz4KICAKICA8IS0tIFRhcmdldCBSZXRpY2xlIC8gVGVjaCBvdmVybGF5IC0tPgogIDxjaXJjbGUgY3g9IjUwIiBjeT0iMzgiIHI9IjIyIiBmaWxsPSJub25lIiBzdHJva2U9IiMwMGViZDYiIHN0cm9rZS13aWR0aD0iMC44IiBzdHJva2UtZGFzaGFycmF5PSIyLCA2IiBzdHJva2Utb3BhY2l0eT0iMC42Ii8+CiAgPGxpbmUgeDE9IjI0IiB5MT0iMzgiIHgyPSI3NiIgeTI9IjM4IiBzdHJva2U9IiMwMGViZDYiIHN0cm9rZS13aWR0aD0iMC41IiBzdHJva2Utb3BhY2l0eT0iMC4zIi8+CiAgPGxpbmUgeDE9IjUwIiB5MT0iMTIiIHgyPSI1MCIgeTI9IjY0IiBzdHJva2U9IiMwMGViZDYiIHN0cm9rZS13aWR0aD0iMC41IiBzdHJva2Utb3BhY2l0eT0iMC4zIi8+Cjwvc3ZnPg==';">
+          </div>
+          <div class="occupant-name">Anes Abbas</div>
+          <div class="medical-badge">
+            <svg viewBox="0 0 24 24">
+              <path d="M19 10.5V20a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h6.5L19 7.5V10.5z" stroke-linecap="round"/>
+              <path d="M14 2v6h6M9 13h6M12 10v6"/>
+            </svg>
+            History of Acute Asthma
+          </div>
+          <div class="tracking-status" id="trackingStatusBadge">
+            <div class="pulse-dot" id="trackingStatusDot"></div>
+            <span id="trackingStatusText">Pre-Crash Baseline Tracking</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Center Column: Live Telemetry Cards & Waves -->
+      <div class="column">
+        <div class="telemetry-grid">
+          
+          <!-- Heart Rate Row -->
+          <div class="telemetry-row">
+            <div class="glass-card telemetry-numeric-card vital-hr">
+              <div class="card-title">Heart Rate</div>
+              <div class="telemetry-value-container">
+                <span class="telemetry-value" id="valHR">72</span>
+                <span class="telemetry-unit">BPM</span>
+              </div>
+              <div class="telemetry-source">Steering Wheel / rPPG Camera</div>
+            </div>
+            
+            <div class="glass-card telemetry-wave-card">
+              <div class="card-title">
+                <span>ECG Waveform Stream</span>
+                <span style="font-size: 0.65rem; color: #64748b;" id="ecgState">Baseline Scan</span>
+              </div>
+              <div class="wave-container">
+                <canvas class="telemetry-canvas" id="canvasECG"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- Respiration Row -->
+          <div class="telemetry-row">
+            <div class="glass-card telemetry-numeric-card vital-rr">
+              <div class="card-title">Breathing Rhythm</div>
+              <div class="telemetry-value-container">
+                <span class="telemetry-value" id="valRR">14</span>
+                <span class="telemetry-unit">RPM</span>
+              </div>
+              <div class="telemetry-source">Seat Biomimetic Sensors</div>
+            </div>
+
+            <div class="glass-card telemetry-wave-card">
+              <div class="card-title">
+                <span>Respiration Rhythm</span>
+                <span style="font-size: 0.65rem; color: #64748b;" id="respState">Pneumographic Baseline</span>
+              </div>
+              <div class="wave-container">
+                <canvas class="telemetry-canvas" id="canvasResp"></canvas>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Right Column: Cognitive State & Crash controls -->
+      <div class="column">
+        
+        <!-- Cognitive State Card -->
+        <div class="glass-card stress-card" style="flex: 1;">
+          <div class="card-title">Cognitive / Stress State</div>
+          
+          <div class="stress-gauge-wrapper">
+            <svg class="stress-radial-svg" viewBox="0 0 120 120">
+              <circle class="stress-radial-bg" cx="60" cy="60" r="50"></circle>
+              <circle class="stress-radial-bar" id="stressBar" cx="60" cy="60" r="50"></circle>
+            </svg>
+            <div class="stress-gauge-text">
+              <span class="stress-gauge-pct" id="valStressPct">18%</span>
+              <span class="stress-gauge-label">Index</span>
+            </div>
+          </div>
+
+          <div class="stress-status-desc" id="valStressDesc">Optimal / Low Stress</div>
+
+          <div class="stress-analytics-list">
+            <div class="stress-analytic-row">
+              <span class="analytic-label">Vocal Stress Metric</span>
+              <div>
+                <span class="analytic-value" id="valVocalStress">Minimal</span>
+                <div class="analytic-bar-bg"><div class="analytic-bar-fill" id="barVocal" style="width: 12%;"></div></div>
+              </div>
+            </div>
+            <div class="stress-analytic-row">
+              <span class="analytic-label">Behavioral Distraction</span>
+              <div>
+                <span class="analytic-value" id="valBehavioralStress">None</span>
+                <div class="analytic-bar-bg"><div class="analytic-bar-fill" id="barBehavioral" style="width: 8%;"></div></div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="telemetry-source" style="margin-top: 15px; text-align: center;">Vocal & Behavioral Analytics</div>
+        </div>
+
+        <!-- Emergency Alert Card (Compact Alert Panel, inline in right column) -->
+        <div class="emergency-banner" id="emergencyBanner">
+          <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+            <div class="emergency-banner-content">
+              <svg class="siren-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--critical-color);">
+                <path d="M12 2L2 22h20L12 2zM12 9v4M12 17h.01" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <span style="font-weight: 700; font-size: 11px; color: var(--critical-color); letter-spacing: 1px; text-transform: uppercase;">eCall Dispatch Activated</span>
+            </div>
+            <button id="btnDismissAlert" style="background: transparent; border: none; color: #64748b; font-size: 20px; line-height: 1; cursor: pointer; padding: 0 4px; transition: color 0.2s ease;">&times;</button>
+          </div>
+          <div style="font-size: 12px; line-height: 1.4; color: #e2e8f0; font-weight: 500; margin-top: 8px;">
+            Automated 999 Diagnostic Dispatch Initiated via Mercedes eCall.
+          </div>
+          <!-- Short Paramedic Summary -->
+          <div style="font-size: 11px; line-height: 1.4; color: #ff9f0a; font-family: var(--font-mono); margin-top: 10px; border-top: 1px solid rgba(255, 59, 48, 0.15); padding-top: 8px;">
+            <span style="font-weight: 700; color: #ff9f0a;">PARAMEDIC BRIEF:</span> Patient Anes Abbas (Asthma history) shows post-impact distress. Biometrics: Tachycardia (~138 BPM) & Tachypnea (~30 RPM). Targeted respiratory equipment dispatched.
+          </div>
+        </div>
+
+        <!-- Crash Simulation Trigger Card (Stacked Controls) -->
+        <div class="glass-card controls-card" style="display: flex; flex-direction: column; gap: 12px;">
+          <div class="card-title" style="margin-bottom: 0;">ClearBox Demo Controls</div>
+          <button class="btn-crash-trigger" id="btnCrash">
+            <svg viewBox="0 0 24 24">
+              <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" stroke-linecap="round" stroke-linejoin="round"/>
+              <line x1="12" y1="9" x2="12" y2="13" stroke-linecap="round" stroke-linejoin="round"/>
+              <line x1="12" y1="17" x2="12.01" y2="17" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Simulate Crash Impact
+          </button>
+          <button class="btn-reset-demo-new" id="btnReset">
+            <i class="fa-solid fa-rotate-left"></i> Reset Demo
+          </button>
+        </div>
+
+      </div>
+
+      <!-- Paramedic Dispatch Box (Spans bottom) -->
+      <div class="paramedic-summary-box" id="paramedicBox">
+        <div class="summary-header">
+          <span class="summary-title">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="animation: blink 0.5s infinite alternate;">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+            Automated eCall Dispatch Transmission Summary
+          </span>
+          <span class="summary-tag">ENCRYPTED // MERCEDES eCALL TRUNK // SECURE LEDGER PROOF</span>
+        </div>
+        <div class="summary-body" id="summaryText">
+          <!-- Text typed dynamically -->
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Audio Alert Beep effect using Web Audio API -->
+  <script>
+    let audioCtx = null;
+    function playBeep(freq, type, duration) {
+      try {
+        if (!audioCtx) {
+          audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (audioCtx.state === 'suspended') {
+          audioCtx.resume();
+        }
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type || 'sine';
+        osc.frequency.setValueAtTime(freq || 440, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.06, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      } catch (e) {
+        console.warn("Audio Context blocked: ", e);
+      }
+    }
+  </script>
+
+  <!-- Main System Control Logic -->
+  <script>
+    // ==========================================
+    // 1. DYNAMIC SYSTEM CLOCK
+    // ==========================================
+    function updateClock() {
+      const clockEl = document.getElementById('sysTime');
+      const now = new Date();
+      let hours = now.getHours().toString().padStart(2, '0');
+      let minutes = now.getMinutes().toString().padStart(2, '0');
+      let seconds = now.getSeconds().toString().padStart(2, '0');
+      clockEl.textContent = `${hours}:${minutes}:${seconds}`;
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // ==========================================
+    // 2. DASHBOARD GLOBAL STATES & VARIABLES
+    // ==========================================
+    let isCrashMode = false;
+    
+    // Core telemetry values
+    let telemetryData = {
+      hr: 72,
+      rr: 14,
+      stress: 18,
+      vocal: 12,
+      behavioral: 8
+    };
+
+    let telemetryTargets = {
+      hr: 72,
+      rr: 14,
+      stress: 18,
+      vocal: 12,
+      behavioral: 8
+    };
+
+    // Dom elements
+    const chassis = document.getElementById('mbuxChassis');
+    const emergencyBanner = document.getElementById('emergencyBanner');
+    const sysStatusBadge = document.getElementById('sysStatusBadge');
+    const sysStatusText = document.getElementById('sysStatusText');
+    const trackingStatusBadge = document.getElementById('trackingStatusBadge');
+    const trackingStatusText = document.getElementById('trackingStatusText');
+    const trackingStatusDot = document.getElementById('trackingStatusDot');
+    
+    const valHREl = document.getElementById('valHR');
+    const valRREl = document.getElementById('valRR');
+    const valStressPctEl = document.getElementById('valStressPct');
+    const valStressDescEl = document.getElementById('valStressDesc');
+    const valVocalStressEl = document.getElementById('valVocalStress');
+    const valBehavioralStressEl = document.getElementById('valBehavioralStress');
+    const barVocal = document.getElementById('barVocal');
+    const barBehavioral = document.getElementById('barBehavioral');
+    const stressBar = document.getElementById('stressBar');
+    
+    const sensorStatus1 = document.getElementById('sensorStatus1');
+    const sensorStatus2 = document.getElementById('sensorStatus2');
+    const sensorStatus3 = document.getElementById('sensorStatus3');
+    const sensorStatus4 = document.getElementById('sensorStatus4');
+    
+    const paramedicBox = document.getElementById('paramedicBox');
+    const summaryText = document.getElementById('summaryText');
+    
+    const btnCrash = document.getElementById('btnCrash');
+    const btnReset = document.getElementById('btnReset');
+
+    const ecgStateLabel = document.getElementById('ecgState');
+    const respStateLabel = document.getElementById('respState');
+
+    // ==========================================
+    // 3. REAL-TIME WAVEFORM DRAWING (CANVAS)
+    // ==========================================
+    const canvasECG = document.getElementById('canvasECG');
+    const ctxECG = canvasECG.getContext('2d');
+    const canvasResp = document.getElementById('canvasResp');
+    const ctxResp = canvasResp.getContext('2d');
+
+    function resizeCanvases() {
+      const containerWidth = canvasECG.parentElement.clientWidth;
+      const containerHeight = canvasECG.parentElement.clientHeight;
+      
+      canvasECG.width = containerWidth * window.devicePixelRatio;
+      canvasECG.height = containerHeight * window.devicePixelRatio;
+      ctxECG.scale(window.devicePixelRatio, window.devicePixelRatio);
+      
+      canvasResp.width = containerWidth * window.devicePixelRatio;
+      canvasResp.height = containerHeight * window.devicePixelRatio;
+      ctxResp.scale(window.devicePixelRatio, window.devicePixelRatio);
+    }
+    window.addEventListener('resize', resizeCanvases);
+    resizeCanvases();
+
+    // Wave sweep states
+    let ecgX = 0;
+    let respX = 0;
+    let prevEcgX = 0;
+    let prevRespX = 0;
+    const wavePointsECG = [];
+    const wavePointsResp = [];
+    const gapWidth = 35; // Eraser gap size
+    
+    // ECG Cardiac cycle math
+    function getECGValue(phase) {
+      if (phase < 0.1) {
+        return 0;
+      } else if (phase >= 0.1 && phase < 0.2) {
+        // P Wave
+        const pPhase = (phase - 0.1) / 0.1;
+        return Math.sin(pPhase * Math.PI) * 0.08;
+      } else if (phase >= 0.2 && phase < 0.24) {
+        return 0;
+      } else if (phase >= 0.24 && phase < 0.27) {
+        // Q spike
+        const qPhase = (phase - 0.24) / 0.03;
+        return -qPhase * 0.15;
+      } else if (phase >= 0.27 && phase < 0.31) {
+        // R spike (very tall, sharp)
+        const rPhase = (phase - 0.27) / 0.04;
+        if (rPhase < 0.5) {
+          return -0.15 + (rPhase / 0.5) * 1.35; // rises to 1.2
+        } else {
+          return 1.2 - ((rPhase - 0.5) / 0.5) * 1.5; // falls to -0.3
+        }
+      } else if (phase >= 0.31 && phase < 0.34) {
+        // S Wave
+        const sPhase = (phase - 0.31) / 0.03;
+        return -0.3 + (sPhase * 0.3);
+      } else if (phase >= 0.34 && phase < 0.44) {
+        return 0;
+      } else if (phase >= 0.44 && phase < 0.58) {
+        // T Wave
+        const tPhase = (phase - 0.44) / 0.14;
+        const tAmp = isCrashMode ? 0.35 : 0.16;
+        return Math.sin(tPhase * Math.PI) * tAmp;
+      } else {
+        return 0;
+      }
+    }
+
+    let lastTime = 0;
+    let ecgPhase = 0;
+    let respPhase = 0;
+
+    function renderWaves(time) {
+      if (!lastTime) lastTime = time;
+      const delta = (time - lastTime) / 1000;
+      lastTime = time;
+
+      const w = canvasECG.width / window.devicePixelRatio;
+      const h = canvasECG.height / window.devicePixelRatio;
+      
+      if (w === 0 || h === 0) {
+        requestAnimationFrame(renderWaves);
+        return;
+      }
+
+      // ECG Speed & Phase calculations
+      const ecgFreq = telemetryData.hr / 60; 
+      ecgPhase += delta * ecgFreq;
+      if (ecgPhase >= 1.0) {
+        ecgPhase -= 1.0;
+        playBeep(isCrashMode ? 680 : 480, isCrashMode ? 'triangle' : 'sine', isCrashMode ? 0.03 : 0.05);
+      }
+
+      const respFreq = telemetryData.rr / 60;
+      respPhase += delta * respFreq;
+      if (respPhase >= 1.0) respPhase -= 1.0;
+
+      // 1. ECG Sweep-eraser math - Ensures ALL horizontal index elements are populated
+      const ecgSpeed = w / 4; 
+      prevEcgX = ecgX;
+      ecgX += ecgSpeed * delta;
+      
+      let ecgValue = getECGValue(ecgPhase);
+      if (isCrashMode) {
+        ecgValue += (Math.random() - 0.5) * 0.05; // panic tremor noise
+      }
+      const ecgY = (h / 2) - (ecgValue * (h * 0.32));
+
+      let startECG = Math.floor(prevEcgX);
+      let endECG = Math.floor(ecgX);
+
+      if (endECG >= w) {
+        // Fill up to edge
+        for (let x = startECG; x < w; x++) {
+          wavePointsECG[x] = ecgY;
+        }
+        ecgX -= w;
+        startECG = 0;
+        endECG = Math.floor(ecgX);
+      }
+      // Fill current range
+      for (let x = startECG; x <= endECG; x++) {
+        if (x >= 0 && x < w) {
+          wavePointsECG[x] = ecgY;
+        }
+      }
+
+      // 2. Respiration Sweep-eraser math
+      const respSpeed = w / 6; 
+      prevRespX = respX;
+      respX += respSpeed * delta;
+
+      const respAmp = isCrashMode ? 0.15 : 0.35;
+      const respValue = Math.sin(respPhase * 2 * Math.PI) * respAmp;
+      const respY = (h / 2) - (respValue * (h * 0.7));
+
+      let startResp = Math.floor(prevRespX);
+      let endResp = Math.floor(respX);
+
+      if (endResp >= w) {
+        for (let x = startResp; x < w; x++) {
+          wavePointsResp[x] = respY;
+        }
+        respX -= w;
+        startResp = 0;
+        endResp = Math.floor(respX);
+      }
+      for (let x = startResp; x <= endResp; x++) {
+        if (x >= 0 && x < w) {
+          wavePointsResp[x] = respY;
+        }
+      }
+
+      // 3. DRAW ECG TRACE
+      ctxECG.clearRect(0, 0, w, h);
+      
+      // ECG Grid Lines
+      ctxECG.strokeStyle = 'rgba(255, 255, 255, 0.02)';
+      ctxECG.lineWidth = 1;
+      for (let x = 0; x < w; x += 20) {
+        ctxECG.beginPath(); ctxECG.moveTo(x, 0); ctxECG.lineTo(x, h); ctxECG.stroke();
+      }
+      for (let y = 0; y < h; y += 20) {
+        ctxECG.beginPath(); ctxECG.moveTo(0, y); ctxECG.lineTo(w, y); ctxECG.stroke();
+      }
+
+      ctxECG.lineWidth = 2;
+      ctxECG.shadowBlur = 8;
+      if (isCrashMode) {
+        ctxECG.strokeStyle = '#ff3b30';
+        ctxECG.shadowColor = 'rgba(255, 59, 48, 0.4)';
+      } else {
+        ctxECG.strokeStyle = '#00ebd6';
+        ctxECG.shadowColor = 'rgba(0, 235, 214, 0.4)';
+      }
+
+      ctxECG.beginPath();
+      let first = true;
+      for (let i = 0; i < w; i++) {
+        // Skip drawing inside the eraser gap
+        const isGap = (ecgX < i && i < ecgX + gapWidth) || (ecgX + gapWidth > w && i < (ecgX + gapWidth) - w);
+        if (isGap) {
+          first = true;
+          continue;
+        }
+        
+        const yVal = wavePointsECG[i];
+        if (yVal !== undefined) {
+          if (first) {
+            ctxECG.moveTo(i, yVal);
+            first = false;
+          } else {
+            ctxECG.lineTo(i, yVal);
+          }
+        }
+      }
+      ctxECG.stroke();
+      ctxECG.shadowBlur = 0;
+
+      // Glow Tip
+      ctxECG.fillStyle = isCrashMode ? '#ff453a' : '#00ebd6';
+      ctxECG.beginPath();
+      ctxECG.arc(ecgX, wavePointsECG[Math.round(ecgX)] || h/2, 3, 0, Math.PI * 2);
+      ctxECG.fill();
+
+      // 4. DRAW RESPIRATION TRACE
+      ctxResp.clearRect(0, 0, w, h);
+      
+      // Respiration Grid Lines
+      ctxResp.strokeStyle = 'rgba(255, 255, 255, 0.015)';
+      ctxResp.lineWidth = 1;
+      for (let x = 0; x < w; x += 25) {
+        ctxResp.beginPath(); ctxResp.moveTo(x, 0); ctxResp.lineTo(x, h); ctxResp.stroke();
+      }
+      for (let y = 0; y < h; y += 25) {
+        ctxResp.beginPath(); ctxResp.moveTo(0, y); ctxResp.lineTo(w, y); ctxResp.stroke();
+      }
+
+      ctxResp.lineWidth = 2;
+      ctxResp.shadowBlur = 6;
+      if (isCrashMode) {
+        ctxResp.strokeStyle = '#ff9f0a';
+        ctxResp.shadowColor = 'rgba(255, 159, 10, 0.35)';
+      } else {
+        ctxResp.strokeStyle = '#00ebd6';
+        ctxResp.shadowColor = 'rgba(0, 235, 214, 0.35)';
+      }
+
+      ctxResp.beginPath();
+      first = true;
+      for (let i = 0; i < w; i++) {
+        const isGap = (respX < i && i < respX + gapWidth) || (respX + gapWidth > w && i < (respX + gapWidth) - w);
+        if (isGap) {
+          first = true;
+          continue;
+        }
+
+        const yVal = wavePointsResp[i];
+        if (yVal !== undefined) {
+          if (first) {
+            ctxResp.moveTo(i, yVal);
+            first = false;
+          } else {
+            ctxResp.lineTo(i, yVal);
+          }
+        }
+      }
+      ctxResp.stroke();
+      ctxResp.shadowBlur = 0;
+
+      // Glow Tip
+      ctxResp.fillStyle = isCrashMode ? '#ff9f0a' : '#00ebd6';
+      ctxResp.beginPath();
+      ctxResp.arc(respX, wavePointsResp[Math.round(respX)] || h/2, 3, 0, Math.PI * 2);
+      ctxResp.fill();
+
+      requestAnimationFrame(renderWaves);
+    }
+    requestAnimationFrame(renderWaves);
+
+    // ==========================================
+    // 4. LIVE TELEMETRY SIMULATOR (NOMINAL INTERPOLATION)
+    // ==========================================
+    function updateTelemetryTargets() {
+      if (isCrashMode) {
+        telemetryTargets.hr = Math.floor(Math.random() * (144 - 138 + 1)) + 138;
+        telemetryTargets.rr = 30;
+        telemetryTargets.stress = 94;
+        telemetryTargets.vocal = 88;
+        telemetryTargets.behavioral = 75;
+      } else {
+        telemetryTargets.hr = Math.floor(Math.random() * (75 - 68 + 1)) + 68;
+        telemetryTargets.rr = Math.floor(Math.random() * (16 - 13 + 1)) + 13;
+        telemetryTargets.stress = Math.floor(Math.random() * (22 - 15 + 1)) + 15;
+        telemetryTargets.vocal = Math.floor(Math.random() * (15 - 10 + 1)) + 10;
+        telemetryTargets.behavioral = Math.floor(Math.random() * (10 - 5 + 1)) + 5;
+      }
+    }
+
+    function interpolateTelemetry() {
+      const rate = isCrashMode ? 0.35 : 0.08; 
+      
+      telemetryData.hr += (telemetryTargets.hr - telemetryData.hr) * rate;
+      telemetryData.rr += (telemetryTargets.rr - telemetryData.rr) * rate;
+      telemetryData.stress += (telemetryTargets.stress - telemetryData.stress) * rate;
+      telemetryData.vocal += (telemetryTargets.vocal - telemetryData.vocal) * rate;
+      telemetryData.behavioral += (telemetryTargets.behavioral - telemetryData.behavioral) * rate;
+
+      valHREl.textContent = Math.round(telemetryData.hr);
+      valRREl.textContent = Math.round(telemetryData.rr);
+      
+      const roundedStress = Math.round(telemetryData.stress);
+      valStressPctEl.textContent = `${roundedStress}%`;
+      
+      const offset = 314 - (314 * roundedStress / 100);
+      stressBar.style.strokeDashoffset = offset;
+
+      barVocal.style.width = `${telemetryData.vocal}%`;
+      barBehavioral.style.width = `${telemetryData.behavioral}%`;
+
+      if (isCrashMode) {
+        valStressDescEl.textContent = "CRITICAL / ACUTE STRESS FLAG";
+        valVocalStressEl.textContent = "CRITICAL LIMIT";
+        valBehavioralStressEl.textContent = "TENSION LOCK";
+      } else {
+        valStressDescEl.textContent = "Optimal / Low Stress";
+        valVocalStressEl.textContent = "Minimal";
+        valBehavioralStressEl.textContent = "None";
+      }
+    }
+
+    let simulationInterval = setInterval(updateTelemetryTargets, 2000);
+    setInterval(interpolateTelemetry, 33);
+    updateTelemetryTargets();
+
+    // ==========================================
+    // 5. TYPEWRITER EFFECT FOR PARAMEDIC BOX
+    // ==========================================
+    let typingTimer = null;
+    function typeText(targetEl, text, speed) {
+      clearInterval(typingTimer);
+      targetEl.textContent = '';
+      
+      const cursor = document.createElement('span');
+      cursor.className = 'typing-cursor';
+      targetEl.appendChild(cursor);
+
+      let idx = 0;
+      typingTimer = setInterval(() => {
+        if (idx < text.length) {
+          const char = text.charAt(idx);
+          cursor.insertAdjacentText('beforebegin', char);
+          idx++;
+          if (idx % 2 === 0) playBeep(1200, 'triangle', 0.005);
+        } else {
+          clearInterval(typingTimer);
+        }
+      }, speed || 15);
+    }
+
+    // ==========================================
+    // 6. CRASH SIMULATION & RESET WORKFLOWS
+    // ==========================================
+    btnCrash.addEventListener('click', () => {
+      if (isCrashMode) return;
+      
+      isCrashMode = true;
+      chassis.classList.add('alert-active');
+      
+      sysStatusBadge.classList.add('critical');
+      sysStatusText.textContent = "CRITICAL IMPACT DETECTED — DATA ANCHORED TO IMMUTABLE LEDGER";
+      
+      sensorStatus1.innerHTML = '<span style="color:#ff3b30"><span class="pulse-dot" style="background:#ff3b30;box-shadow:0 0 6px #ff3b30"></span> DISRUPTED</span>';
+      sensorStatus2.innerHTML = '<span style="color:#ff3b30"><span class="scan-circle" style="background:#ff3b30;box-shadow:0 0 6px #ff3b30"></span> DISRUPTED</span>';
+      sensorStatus3.innerHTML = '<span style="color:#ff3b30"><span class="pulse-dot" style="background:#ff3b30;box-shadow:0 0 6px #ff3b30"></span> OVERLOADED</span>';
+      sensorStatus4.innerHTML = '<span style="color:#ff3b30">VOICE OVERLOAD</span>';
+
+      trackingStatusBadge.style.background = 'rgba(255, 59, 48, 0.06)';
+      trackingStatusBadge.style.borderColor = 'rgba(255, 59, 48, 0.25)';
+      trackingStatusText.textContent = "CRITICAL AFTERMATH PROTOCOL ACTIVE";
+      trackingStatusDot.style.backgroundColor = '#ff3b30';
+      trackingStatusDot.style.boxShadow = '0 0 8px #ff3b30';
+
+      emergencyBanner.classList.add('slide-down');
+
+      ecgStateLabel.textContent = "TACHYCARDIA WAVEFORM (CHAOTIC)";
+      ecgStateLabel.style.color = '#ff3b30';
+      respStateLabel.textContent = "ACUTE RESPIRATORY DISTRESS TACHYPNEA";
+      respStateLabel.style.color = '#ff9f0a';
+
+      clearInterval(simulationInterval);
+      simulationInterval = setInterval(updateTelemetryTargets, 500);
+      updateTelemetryTargets();
+
+      // Emergency alarm chirp
+      playBeep(880, 'sine', 0.2);
+      setTimeout(() => playBeep(880, 'sine', 0.2), 150);
+      setTimeout(() => playBeep(880, 'sine', 0.2), 300);
+
+      paramedicBox.classList.add('show');
+      
+      const dispatchMessage = "CRITICAL TELEMETRY TRANSMISSION: Occupant Anes Abbas involved in high-impact collision. Sensor fusion data indicates consciousness with immediate onset of severe tachycardia (138 bpm) and tachypnea (30 rpm). Pre-existing history of Asthma flags immediate risk of acute respiratory distress. 999 Emergency Services notified with exact biometric stream so first responders can prepare targeted respiratory management equipment en route.";
+      
+      setTimeout(() => {
+        typeText(summaryText, dispatchMessage, 18);
+      }, 500);
+    });
+
+    function resetVitalsLocal() {
+      isCrashMode = false;
+      chassis.classList.remove('alert-active');
+      
+      sysStatusBadge.classList.remove('critical');
+      sysStatusText.textContent = "System Active // Baseline Tracking";
+
+      sensorStatus1.innerHTML = '<div class="pulse-dot"></div> Connected';
+      sensorStatus2.innerHTML = '<div class="scan-circle"></div> Scanning';
+      sensorStatus3.innerHTML = '<div class="pulse-dot"></div> Active';
+      sensorStatus4.innerHTML = `
+        <div class="audio-waves">
+          <div class="audio-bar"></div>
+          <div class="audio-bar"></div>
+          <div class="audio-bar"></div>
+          <div class="audio-bar"></div>
+        </div>
+      `;
+
+      trackingStatusBadge.style.background = 'rgba(0, 229, 117, 0.04)';
+      trackingStatusBadge.style.borderColor = 'rgba(0, 229, 117, 0.15)';
+      trackingStatusText.textContent = "Pre-Crash Baseline Tracking";
+      trackingStatusDot.style.backgroundColor = 'var(--success-color)';
+      trackingStatusDot.style.boxShadow = '0 0 6px var(--success-color)';
+
+      emergencyBanner.classList.remove('slide-down');
+
+      ecgStateLabel.textContent = "Baseline Scan";
+      ecgStateLabel.style.color = '#64748b';
+      respStateLabel.textContent = "Pneumographic Baseline";
+      respStateLabel.style.color = '#64748b';
+
+      paramedicBox.classList.remove('show');
+      summaryText.textContent = '';
+      clearInterval(typingTimer);
+
+      clearInterval(simulationInterval);
+      simulationInterval = setInterval(updateTelemetryTargets, 2000);
+      updateTelemetryTargets();
+
+      // Reset double tone
+      playBeep(600, 'sine', 0.1);
+      setTimeout(() => playBeep(900, 'sine', 0.1), 80);
+    }
+
+    btnReset.addEventListener('click', () => {
+      resetVitalsLocal();
+      // Notify parent shell that a reset occurred
+      window.parent.postMessage('RESET_DEMO', '*');
+    });
+
+    // Dismiss button handler for compact emergency alert card
+    document.getElementById('btnDismissAlert').addEventListener('click', (e) => {
+      e.stopPropagation();
+      emergencyBanner.classList.remove('slide-down');
+    });
+
+    // Hide back button if loaded in iframe and enforce window.top navigation
+    const backBtn = document.getElementById('back-btn');
+    if (backBtn) {
+      if (window.self !== window.top) {
+        backBtn.style.display = 'none';
+      }
+      backBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        window.top.location.href = "../index.html";
+      });
+    }
+
+    // Listen for messages from parent shell
+    window.addEventListener('message', (event) => {
+      if (event.data === 'START_VITALS_EMERGENCY') {
+        const btnCrash = document.getElementById('btnCrash');
+        if (btnCrash) btnCrash.click();
+      } else if (event.data === 'RESET_DEMO') {
+        resetVitalsLocal();
+      }
+    });
+  </script>
+</body>
+</html>

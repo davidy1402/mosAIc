@@ -1,0 +1,1390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ClearBox // Crash Reconstruction Diagnostics - Mercedes-Benz Vibathon</title>
+  
+  <!-- Fonts & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <style>
+    :root {
+      --bg-dark: #05070c;
+      --panel-bg: rgba(10, 14, 24, 0.45);
+      --border-color: rgba(255, 255, 255, 0.06);
+      --accent-cyan: #00ebd6;
+      --accent-blue: #0088ff;
+      --accent-red: #ff3b30;
+      --accent-orange: #ff9f0a;
+      --success-green: #00e575;
+      --text-main: #f3f4f6;
+      --text-muted: #64748b;
+      --transition-fast: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      --transition-standard: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    /* Ambient lighting */
+    body::before {
+      content: '';
+      position: absolute;
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(0, 235, 214, 0.04) 0%, rgba(0,0,0,0) 70%);
+      top: -10%;
+      left: -10%;
+      pointer-events: none;
+      z-index: 0;
+    }
+    body::after {
+      content: '';
+      position: absolute;
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(255, 59, 48, 0.03) 0%, rgba(0,0,0,0) 70%);
+      bottom: -10%;
+      right: -10%;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Grid pattern */
+    .bg-grid {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image: 
+        linear-gradient(to right, rgba(255, 255, 255, 0.005) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.005) 1px, transparent 1px);
+      background-size: 40px 40px;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* Dashboard Layout */
+    .dashboard {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 340px 1fr 340px;
+      gap: 16px;
+      padding: 16px;
+      position: relative;
+      z-index: 10;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .column {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    /* Glassmorphism Panel Cards */
+    .glass-card {
+      background: var(--panel-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(25px);
+      transition: var(--transition-standard);
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .glass-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.01) 0%, rgba(255, 255, 255, 0) 100%);
+      pointer-events: none;
+    }
+
+    .glass-card:hover {
+      border-color: rgba(255, 255, 255, 0.09);
+      box-shadow: 0 15px 45px rgba(0, 0, 0, 0.6);
+    }
+
+    .card-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card-title i {
+      color: var(--accent-cyan);
+    }
+
+    /* Left Console: Telemetry Grid */
+    .telemetry-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+
+    .telemetry-card {
+      background: rgba(255, 255, 255, 0.015);
+      border: 1px solid rgba(255, 255, 255, 0.03);
+      border-radius: 12px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      transition: var(--transition-fast);
+    }
+
+    .telemetry-card:hover {
+      background: rgba(255, 255, 255, 0.03);
+      border-color: rgba(255, 255, 255, 0.06);
+    }
+
+    .telemetry-label {
+      font-size: 10px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .telemetry-value {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text-main);
+      display: flex;
+      align-items: baseline;
+    }
+
+    .telemetry-value span {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-weight: 400;
+      margin-left: 2px;
+    }
+
+    .telemetry-card.danger .telemetry-value {
+      color: var(--accent-red);
+      text-shadow: 0 0 10px rgba(255, 59, 48, 0.3);
+    }
+
+    .telemetry-card.cyan-value .telemetry-value {
+      color: var(--accent-cyan);
+      text-shadow: 0 0 10px rgba(0, 235, 214, 0.2);
+    }
+
+    /* Left Console: Safety Checklist */
+    .checklist-container {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .check-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      background: rgba(255, 255, 255, 0.01);
+      border: 1px solid rgba(255, 255, 255, 0.02);
+      border-radius: 8px;
+      font-size: 12px;
+      transition: var(--transition-fast);
+    }
+
+    .check-item:hover {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .check-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .check-icon {
+      font-size: 12px;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: rgba(0, 229, 117, 0.05);
+      border: 1px solid rgba(0, 229, 117, 0.15);
+      color: var(--success-green);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: var(--transition-fast);
+    }
+
+    .check-item.danger-state .check-icon {
+      background: rgba(255, 59, 48, 0.08);
+      border-color: rgba(255, 59, 48, 0.25);
+      color: var(--accent-red);
+      animation: alert-pulse-icon 1s infinite alternate;
+    }
+
+    @keyframes alert-pulse-icon {
+      0% { box-shadow: 0 0 2px var(--accent-red); }
+      100% { box-shadow: 0 0 8px var(--accent-red); }
+    }
+
+    .check-name {
+      font-weight: 500;
+      color: var(--text-main);
+    }
+
+    .check-status {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--success-green);
+      text-transform: uppercase;
+    }
+
+    .check-item.danger-state .check-status {
+      color: var(--accent-red);
+    }
+
+    /* Central Panel: Visualizer */
+    .visualizer-card {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      overflow: hidden;
+    }
+
+    .canvas-container {
+      flex: 1;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0.35);
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.02);
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+
+    .canvas-container svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Control HUD Bar */
+    .playback-controls {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      background: rgba(0, 0, 0, 0.2);
+      padding: 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.03);
+    }
+
+    .slider-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .time-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      font-weight: 700;
+      width: 60px;
+      text-align: center;
+      color: var(--accent-cyan);
+    }
+
+    /* Custom Input Range Slider */
+    .timeline-slider {
+      flex: 1;
+      -webkit-appearance: none;
+      appearance: none;
+      background: rgba(255, 255, 255, 0.08);
+      height: 6px;
+      border-radius: 3px;
+      outline: none;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .timeline-slider::-webkit-slider-runnable-track {
+      width: 100%;
+      height: 6px;
+      cursor: pointer;
+    }
+
+    .timeline-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--accent-cyan);
+      box-shadow: 0 0 10px var(--accent-cyan);
+      cursor: pointer;
+      margin-top: -5px;
+      transition: transform 0.1s ease;
+    }
+
+    .timeline-slider::-webkit-slider-thumb:hover {
+      transform: scale(1.2);
+    }
+
+    .buttons-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .play-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: 1px solid rgba(0, 235, 214, 0.3);
+      background: rgba(0, 235, 214, 0.06);
+      color: var(--accent-cyan);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      transition: var(--transition-fast);
+      box-shadow: 0 0 10px rgba(0, 235, 214, 0.05);
+    }
+
+    .play-btn:hover {
+      background: var(--accent-cyan);
+      color: var(--bg-dark);
+      box-shadow: 0 0 15px var(--accent-cyan);
+      border-color: var(--accent-cyan);
+    }
+
+    .play-btn:active {
+      transform: scale(0.95);
+    }
+
+    .stage-indicator {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .stage-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent-blue);
+      box-shadow: 0 0 8px var(--accent-blue);
+    }
+
+    .stage-indicator.impact .stage-dot {
+      background: var(--accent-red);
+      box-shadow: 0 0 8px var(--accent-red);
+      animation: flash 0.5s infinite alternate;
+    }
+
+    .stage-indicator.post-impact .stage-dot {
+      background: var(--accent-orange);
+      box-shadow: 0 0 8px var(--accent-orange);
+    }
+
+    /* Right Console: Crash Log Feed */
+    .log-feed-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .log-feed {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding-right: 4px;
+    }
+
+    /* Custom Scrollbar */
+    .log-feed::-webkit-scrollbar {
+      width: 4px;
+    }
+    .log-feed::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .log-feed::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 2px;
+    }
+
+    .log-item {
+      padding: 10px;
+      background: rgba(255, 255, 255, 0.015);
+      border: 1px solid rgba(255, 255, 255, 0.02);
+      border-radius: 8px;
+      font-size: 12px;
+      transition: var(--transition-standard);
+      opacity: 0.3;
+    }
+
+    .log-item.active {
+      opacity: 1;
+      background: rgba(255, 255, 255, 0.03);
+      border-color: rgba(0, 235, 214, 0.15);
+      box-shadow: inset 0 0 8px rgba(0, 235, 214, 0.02);
+    }
+
+    .log-item.active.danger-log {
+      border-color: rgba(255, 59, 48, 0.3);
+      background: rgba(255, 59, 48, 0.05);
+      box-shadow: inset 0 0 8px rgba(255, 59, 48, 0.05);
+    }
+
+    .log-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 4px;
+    }
+
+    .log-time {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
+      color: var(--accent-cyan);
+    }
+
+    .log-item.active.danger-log .log-time {
+      color: var(--accent-red);
+    }
+
+    .log-event {
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .log-desc {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    @keyframes flash {
+      0% { opacity: 0.3; }
+      100% { opacity: 1; }
+    }
+
+    /* Header Bar & Navigation Button */
+    .header-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 24px;
+      border-bottom: 1px solid var(--border-color);
+      background: rgba(10, 14, 24, 0.35);
+      backdrop-filter: blur(20px);
+      z-index: 1000;
+      position: relative;
+    }
+
+    .back-btn {
+      padding: 6px 12px;
+      background: rgba(10, 14, 24, 0.5);
+      border: 1px solid rgba(0, 235, 214, 0.35);
+      border-radius: 6px;
+      color: #00ebd6;
+      text-decoration: none;
+      font-family: 'Outfit', sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 0 10px rgba(0, 235, 214, 0.15);
+      transition: all 0.2s ease;
+    }
+    .back-btn:hover {
+      background: rgba(0, 235, 214, 0.1);
+      color: #fff;
+      border-color: #00ebd6;
+      box-shadow: 0 0 15px rgba(0, 235, 214, 0.3);
+      transform: translateY(-1px);
+    }
+    .back-btn:active {
+      transform: translateY(1px);
+    }
+    .accident-btn {
+      padding: 6px 14px;
+      border-radius: 20px;
+      border: 1px solid var(--accent-red);
+      background: rgba(255, 59, 48, 0.08);
+      color: #fff;
+      font-family: var(--font-primary);
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: var(--transition-fast);
+      box-shadow: 0 0 10px rgba(255, 59, 48, 0.15);
+    }
+    .accident-btn:hover {
+      background: var(--accent-red);
+      box-shadow: 0 0 15px var(--accent-red);
+      transform: translateY(-1px);
+    }
+    .accident-btn:active {
+      transform: translateY(1px);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Standalone Header Bar (Hidden in Iframe) -->
+  <div class="header-bar" id="header-bar">
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <i class="fa-solid fa-circle-nodes" style="color: var(--accent-cyan); font-size: 16px;"></i>
+      <span style="font-size: 13px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #fff;">ClearBox // Crash Reconstruction Diagnostics</span>
+    </div>
+    <a href="../index.html" class="back-btn" id="back-btn" target="_top">
+      <i class="fa-solid fa-arrow-left"></i> ClearBox Home
+    </a>
+  </div>
+
+  <div class="bg-grid"></div>
+
+  <div class="dashboard">
+    <!-- Left Console: Diagnostics & Safety Checklist -->
+    <div class="column">
+      <!-- Live Telemetry -->
+      <div class="glass-card">
+        <div class="card-title">
+          <i class="fa-solid fa-gauge"></i> Live Telemetry Profile
+        </div>
+        <div class="telemetry-grid">
+          <div class="telemetry-card cyan-value">
+            <span class="telemetry-label">Impact Speed</span>
+            <div class="telemetry-val" id="val-speed">78<span>km/h</span></div>
+          </div>
+          <div class="telemetry-card">
+            <span class="telemetry-label">Steering Angle</span>
+            <div class="telemetry-val" id="val-steering">12<span>° R</span></div>
+          </div>
+          <div class="telemetry-card danger" id="card-g-long">
+            <span class="telemetry-label">Long. G-Force</span>
+            <div class="telemetry-val" id="val-g-long">0.8<span>G</span></div>
+          </div>
+          <div class="telemetry-card" id="card-g-lat">
+            <span class="telemetry-label">Lat. G-Force</span>
+            <div class="telemetry-val" id="val-g-lat">0.2<span>G</span></div>
+          </div>
+          <div class="telemetry-card cyan-value" style="grid-column: span 2;">
+            <span class="telemetry-label">Brake Pedal Pressure</span>
+            <div class="telemetry-val" id="val-brake">0<span>%</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pre-Safe Checklist -->
+      <div class="glass-card" style="flex: 1;">
+        <div class="card-title">
+          <i class="fa-solid fa-shield-cat"></i> Pre-Safe System Checklist
+        </div>
+        <div class="checklist-container">
+          <div class="check-item" id="check-belts">
+            <div class="check-info">
+              <div class="check-icon"><i class="fa-solid fa-check"></i></div>
+              <span class="check-name">Belt Tensioners</span>
+            </div>
+            <span class="check-status" id="status-belts">Nominal</span>
+          </div>
+
+          <div class="check-item" id="check-airbags">
+            <div class="check-info">
+              <div class="check-icon"><i class="fa-solid fa-check"></i></div>
+              <span class="check-name">Airbag Deployment</span>
+            </div>
+            <span class="check-status" id="status-airbags">Ready</span>
+          </div>
+
+          <div class="check-item" id="check-windows">
+            <div class="check-info">
+              <div class="check-icon"><i class="fa-solid fa-check"></i></div>
+              <span class="check-name">Side Windows</span>
+            </div>
+            <span class="check-status" id="status-windows">Open</span>
+          </div>
+
+          <div class="check-item" id="check-fuel">
+            <div class="check-info">
+              <div class="check-icon"><i class="fa-solid fa-check"></i></div>
+              <span class="check-name">Fuel Pump Cut-Off</span>
+            </div>
+            <span class="check-status" id="status-fuel">Active</span>
+          </div>
+
+          <div class="check-item" id="check-ecall">
+            <div class="check-info">
+              <div class="check-icon"><i class="fa-solid fa-check"></i></div>
+              <span class="check-name">eCall Emergency</span>
+            </div>
+            <span class="check-status" id="status-ecall">Standby</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Center Console: Animated Vector Grid -->
+    <div class="glass-card visualizer-card">
+      <div class="card-title">
+        <i class="fa-solid fa-play"></i> Incident Reconstruction Simulation
+      </div>
+
+      <!-- Vector canvas area -->
+      <div class="canvas-container">
+        <svg id="collision-svg" viewBox="0 0 800 400" xmlns="http://www.w3.org/2000/svg">
+          <!-- Defs for gradients & patterns -->
+          <defs>
+            <pattern id="dotGrid" width="20" height="20" patternUnits="userSpaceOnUse">
+              <circle cx="2" cy="2" r="1" fill="rgba(255,255,255,0.06)" />
+            </pattern>
+            <linearGradient id="roadGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="rgba(10,14,24,0.8)" />
+              <stop offset="50%" stop-color="rgba(20,26,40,0.8)" />
+              <stop offset="100%" stop-color="rgba(10,14,24,0.8)" />
+            </linearGradient>
+            <radialGradient id="glowImpact" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="rgba(255, 59, 48, 0.7)" />
+              <stop offset="50%" stop-color="rgba(255, 59, 48, 0.3)" />
+              <stop offset="100%" stop-color="rgba(255, 59, 48, 0)" />
+            </radialGradient>
+          </defs>
+
+          <!-- SVG Grid Overlay -->
+          <rect width="100%" height="100%" fill="url(#dotGrid)" />
+
+          <!-- Two-lane Road Graphic -->
+          <rect x="0" y="120" width="800" height="160" fill="url(#roadGrad)" stroke="rgba(255,255,255,0.02)" stroke-width="2" />
+          <line x1="0" y1="200" x2="800" y2="200" stroke="rgba(255,255,255,0.15)" stroke-dasharray="15, 10" stroke-width="2" />
+          <line x1="0" y1="120" x2="800" y2="120" stroke="rgba(255,255,255,0.1)" stroke-width="1" />
+          <line x1="0" y1="280" x2="800" y2="280" stroke="rgba(255,255,255,0.1)" stroke-width="1" />
+
+          <!-- Skid Marks (appear before impact) -->
+          <path id="skid-marks-ego" d="M 120 160 L 400 160" stroke="#000" stroke-width="3" stroke-linecap="round" opacity="0" stroke-dasharray="4,4" />
+          <path id="skid-marks-other" d="M 500 240 L 400 240" stroke="#000" stroke-width="3" stroke-linecap="round" opacity="0" stroke-dasharray="4,4" />
+
+          <!-- Obstacle vehicle (stationary/stopped car) -->
+          <g id="other-car" transform="translate(420, 240)">
+            <rect x="-35" y="-18" width="70" height="36" rx="6" fill="#131924" stroke="rgba(255,255,255,0.2)" stroke-width="1.5" />
+            <!-- Windshield -->
+            <rect x="10" y="-14" width="12" height="28" rx="2" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.2)" />
+            <!-- Headlights -->
+            <rect x="33" y="-15" width="3" height="6" rx="1" fill="#fff" opacity="0.8" />
+            <rect x="33" y="9" width="3" height="6" rx="1" fill="#fff" opacity="0.8" />
+            <!-- Taillights -->
+            <rect x="-36" y="-14" width="2" height="6" rx="1" fill="var(--accent-red)" />
+            <rect x="-36" y="8" width="2" height="6" rx="1" fill="var(--accent-red)" />
+          </g>
+
+          <!-- Mercedes-Benz Ego Vehicle -->
+          <g id="ego-car" transform="translate(100, 160)">
+            <!-- Speed Vector Line -->
+            <line id="speed-vector" x1="0" y1="0" x2="80" y2="0" stroke="var(--accent-cyan)" stroke-dasharray="5, 3" stroke-width="2" marker-end="url(#arrow)" />
+            
+            <rect x="-40" y="-20" width="80" height="40" rx="8" fill="#003554" stroke="var(--accent-cyan)" stroke-width="2" />
+            <!-- Panoramic Roof -->
+            <rect x="-15" y="-16" width="35" height="32" rx="4" fill="rgba(0, 235, 214, 0.08)" stroke="rgba(0, 235, 214, 0.2)" />
+            <!-- Mercedes Star Graphic on hood -->
+            <circle cx="28" cy="0" r="4" fill="none" stroke="#fff" stroke-width="1" />
+            <line x1="28" y1="-4" x2="28" y2="4" stroke="#fff" stroke-width="0.8" />
+            <line x1="24.5" y1="2" x2="31.5" y2="-2" stroke="#fff" stroke-width="0.8" />
+            
+            <!-- Headlights -->
+            <rect x="38" y="-17" width="3" height="8" rx="1" fill="#fff" />
+            <rect x="38" y="9" width="3" height="8" rx="1" fill="#fff" />
+            
+            <!-- Taillights -->
+            <rect x="-41" y="-16" width="2" height="8" rx="1" fill="var(--accent-red)" />
+            <rect x="-41" y="8" width="2" height="8" rx="1" fill="var(--accent-red)" />
+            
+            <!-- Turn Signal Indicators (Hazard lights) -->
+            <circle id="ego-signal-fl" cx="37" cy="-18" r="3" fill="var(--accent-orange)" opacity="0" />
+            <circle id="ego-signal-fr" cx="37" cy="18" r="3" fill="var(--accent-orange)" opacity="0" />
+            <circle id="ego-signal-bl" cx="-40" cy="-17" r="3" fill="var(--accent-orange)" opacity="0" />
+            <circle id="ego-signal-br" cx="-40" cy="17" r="3" fill="var(--accent-orange)" opacity="0" />
+          </g>
+
+          <!-- Impact Blast Shockwaves (only visible at T = 0) -->
+          <g id="impact-group" opacity="0">
+            <circle cx="400" cy="160" r="40" fill="url(#glowImpact)" />
+            <circle cx="400" cy="160" r="10" fill="none" stroke="var(--accent-red)" stroke-width="2" class="shockwave" />
+            <circle cx="400" cy="160" r="25" fill="none" stroke="var(--accent-red)" stroke-width="1.5" stroke-dasharray="5, 3" class="shockwave" />
+          </g>
+        </svg>
+      </div>
+
+      <!-- Playback Timeline controls -->
+      <div class="playback-controls">
+        <div class="slider-row">
+          <button class="play-btn" id="play-pause-btn"><i class="fa-solid fa-play"></i></button>
+          <input type="range" min="-3.0" max="1.5" step="0.05" value="-3.0" class="timeline-slider" id="timeline">
+          <div class="time-label" id="time-display">-3.00s</div>
+        </div>
+        <div class="buttons-row">
+          <div class="stage-indicator" id="stage-ind">
+            <div class="stage-dot"></div>
+            <span id="stage-text">Pre-crash monitoring</span>
+          </div>
+          <button class="accident-btn" id="btnSimulateAccident">
+            <i class="fa-solid fa-triangle-exclamation"></i> Simulate Accident
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Console: Synced Event Logs -->
+    <div class="glass-card">
+      <div class="card-title">
+        <i class="fa-solid fa-list-check"></i> Chronological Incident Logs
+      </div>
+      <div class="log-feed-container">
+        <div class="log-feed" id="log-feed">
+          <!-- Logs populated by JS -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // --- Data Definitions ---
+    const logsAccident = [
+      {
+        time: -3.00,
+        event: "System Status Nominal",
+        desc: "Ego-vehicle cruising at 78 km/h. Distant forward sensor sweep clear.",
+        type: "nominal"
+      },
+      {
+        time: -2.20,
+        event: "Obstacle Detection",
+        desc: "Front radar detects slow/stationary object on course. Range: 48m.",
+        type: "nominal"
+      },
+      {
+        time: -1.50,
+        event: "Pre-Safe Warning Triggered",
+        desc: "Forward collision warning alert displayed to driver. Brake assistance armed.",
+        type: "warning"
+      },
+      {
+        time: -1.00,
+        event: "Pre-Safe Brakes Engaged",
+        desc: "Driver failed to decelerate. Autonomous maximum brake pressure (100%) applied. Skid initiated.",
+        type: "warning"
+      },
+      {
+        time: -0.40,
+        event: "Occupant Pre-Safe Primed",
+        desc: "Reversible belt tensioners active. Automatic window-closing sequence initiated.",
+        type: "warning"
+      },
+      {
+        time: 0.00,
+        event: "Front-Left Impact Registered",
+        desc: "Peak deceleration threshold breached. Longitudinal force: 24.5 Gs.",
+        type: "danger"
+      },
+      {
+        time: 0.10,
+        event: "Airbag Deployment Active",
+        desc: "Front-left steering wheel and knee airbags deployed successfully.",
+        type: "danger"
+      },
+      {
+        time: 0.20,
+        event: "Fuel Cut-Off Complete",
+        desc: "Critical safety event triggered. Fuel pump shut-down to prevent ignition hazard.",
+        type: "danger"
+      },
+      {
+        time: 0.50,
+        event: "eCall Transmitting SOS",
+        desc: "Automatic emergency beacon transmission initiated. GPS Coordinates and safety profile package sent.",
+        type: "danger"
+      },
+      {
+        time: 1.20,
+        event: "Post-Incident Stabilization",
+        desc: "Vehicle stationary. Airbag deployment fully complete. Hazard warning lamps flashing.",
+        type: "stabilized"
+      }
+    ];
+
+    const logsCruising = [
+      {
+        time: -3.00,
+        event: "System Status Nominal",
+        desc: "Ego-vehicle cruising at 78 km/h. Distant forward sensor sweep clear.",
+        type: "nominal"
+      },
+      {
+        time: -2.00,
+        event: "ACC Lane Change Prep",
+        desc: "Stationary obstacle detected ahead in same lane. Checking adjacent lane availability.",
+        type: "nominal"
+      },
+      {
+        time: -1.50,
+        event: "Lane Change Initiated",
+        desc: "Autopilot executing smooth lane change to bottom lane. Blind-spot monitors clear.",
+        type: "nominal"
+      },
+      {
+        time: -0.50,
+        event: "Overtaking Obstacle",
+        desc: "Passing stationary vehicle safely on the left side with 1.8m lateral clearance.",
+        type: "nominal"
+      },
+      {
+        time: 0.50,
+        event: "Return to Lane Prep",
+        desc: "Overtake complete. Checking lane occupancy to return to primary travel lane.",
+        type: "nominal"
+      },
+      {
+        time: 1.00,
+        event: "Returning to Lane",
+        desc: "Autopilot executing smooth return to top primary travel lane.",
+        type: "nominal"
+      },
+      {
+        time: 1.50,
+        event: "Cruise Resumed",
+        desc: "Primary lane re-engaged. System status nominal. Resuming 78 km/h cruise.",
+        type: "nominal"
+      }
+    ];
+
+    // --- State Variables ---
+    let isPlaying = false;
+    let playInterval = null;
+    let isCrashTriggered = false;
+    const timeline = document.getElementById('timeline');
+    const timeDisplay = document.getElementById('time-display');
+    const playPauseBtn = document.getElementById('play-pause-btn');
+
+    // SVG elements
+    const egoCar = document.getElementById('ego-car');
+    const otherCar = document.getElementById('other-car');
+    const speedVector = document.getElementById('speed-vector');
+    const skidEgo = document.getElementById('skid-marks-ego');
+    const skidOther = document.getElementById('skid-marks-other');
+    const impactGroup = document.getElementById('impact-group');
+
+    // Hazard lights elements
+    const fl = document.getElementById('ego-signal-fl');
+    const fr = document.getElementById('ego-signal-fr');
+    const bl = document.getElementById('ego-signal-bl');
+    const br = document.getElementById('ego-signal-br');
+
+    // Telemetry display elements
+    const valSpeed = document.getElementById('val-speed');
+    const valSteering = document.getElementById('val-steering');
+    const valGLong = document.getElementById('val-g-long');
+    const valGLat = document.getElementById('val-g-lat');
+    const valBrake = document.getElementById('val-brake');
+    const cardGLong = document.getElementById('card-g-long');
+    const cardGLat = document.getElementById('card-g-lat');
+
+    // Checklist elements
+    const checkBelts = document.getElementById('check-belts');
+    const statusBelts = document.getElementById('status-belts');
+    const checkAirbags = document.getElementById('check-airbags');
+    const statusAirbags = document.getElementById('status-airbags');
+    const checkWindows = document.getElementById('check-windows');
+    const statusWindows = document.getElementById('status-windows');
+    const checkFuel = document.getElementById('check-fuel');
+    const statusFuel = document.getElementById('status-fuel');
+    const checkEcall = document.getElementById('check-ecall');
+    const statusEcall = document.getElementById('status-ecall');
+
+    // Stage indicator elements
+    const stageInd = document.getElementById('stage-ind');
+    const stageText = document.getElementById('stage-text');
+
+    // --- Core Operations ---
+    
+    // Build Log Feed list
+    function buildLogFeed() {
+      const feed = document.getElementById('log-feed');
+      feed.innerHTML = '';
+      const currentLogs = isCrashTriggered ? logsAccident : logsCruising;
+      currentLogs.forEach((log, index) => {
+        const item = document.createElement('div');
+        item.className = 'log-item';
+        item.id = `log-item-${index}`;
+        if (log.type === 'danger' || log.type === 'warning') {
+          item.classList.add('danger-log');
+        }
+        item.innerHTML = `
+          <div class="log-header">
+            <span class="log-time">${log.time >= 0 ? '+' : ''}${log.time.toFixed(2)}s</span>
+            <span class="log-event">${log.event}</span>
+          </div>
+          <div class="log-desc">${log.desc}</div>
+        `;
+        feed.appendChild(item);
+      });
+    }
+
+    // Update active highlights in Log Feed
+    function updateLogFeedHighlight(time) {
+      const currentLogs = isCrashTriggered ? logsAccident : logsCruising;
+      currentLogs.forEach((log, index) => {
+        const item = document.getElementById(`log-item-${index}`);
+        if (!item) return;
+
+        // Activate logs that have happened at or before the current time
+        if (time >= log.time) {
+          item.classList.add('active');
+        } else {
+          item.classList.remove('active');
+        }
+      });
+    }
+
+    // Interpolate values
+    function getInterpolatedVal(x1, x2, t1, t2, t) {
+      if (t <= t1) return x1;
+      if (t >= t2) return x2;
+      return x1 + ((x2 - x1) * (t - t1)) / (t2 - t1);
+    }
+
+    // Set Timeline State & Update Graphics / UI
+    function updateTimelineState(time) {
+      timeline.value = time;
+      timeDisplay.innerText = `${time >= 0 ? '+' : ''}${time.toFixed(2)}s`;
+
+      // 1. Car Position Interpolations
+      let egoX = 100;
+      let egoY = 160;
+      let egoRot = 0;
+      let otherX = 450; // Stopped car position
+
+      if (!isCrashTriggered) {
+        // Cruising Path
+        // Ego car drives forward and executes a smooth overtaking lane change:
+        // x goes from 100 to 700.
+        egoX = getInterpolatedVal(100, 700, -3.0, 1.5, time);
+        
+        // y changes:
+        // -3.0 to -2.0: y = 160 (top lane)
+        // -2.0 to -1.0: y changes 160 -> 240 (lane change down)
+        // -1.0 to 0.5: y = 240 (bottom lane)
+        // 0.5 to 1.5: y changes 240 -> 160 (lane change up)
+        if (time < -2.0) {
+          egoY = 160;
+          egoRot = 0;
+        } else if (time < -1.0) {
+          egoY = getInterpolatedVal(160, 240, -2.0, -1.0, time);
+          // slight rotation during lane change
+          egoRot = getInterpolatedVal(0, 4, -2.0, -1.5, time);
+          if (time >= -1.5) egoRot = getInterpolatedVal(4, 0, -1.5, -1.0, time);
+        } else if (time < 0.5) {
+          egoY = 240;
+          egoRot = 0;
+        } else {
+          egoY = getInterpolatedVal(240, 160, 0.5, 1.5, time);
+          // slight rotation during lane change
+          egoRot = getInterpolatedVal(0, -4, 0.5, 1.0, time);
+          if (time >= 1.0) egoRot = getInterpolatedVal(-4, 0, 1.0, 1.5, time);
+        }
+        
+        // Other car stays stationary
+        otherX = 450;
+      } else {
+        // Accident Path
+        // ego car goes straight and collides at T = 0.0
+        if (time < 0) {
+          egoX = getInterpolatedVal(100, 375, -3.0, 0.0, time);
+          // swerves slightly late (y = 175) from T = -0.5 to 0.0
+          if (time < -0.5) {
+            egoY = 160;
+            egoRot = 0;
+          } else {
+            egoY = getInterpolatedVal(160, 175, -0.5, 0.0, time);
+            egoRot = getInterpolatedVal(0, 3, -0.5, 0.0, time);
+          }
+        } else {
+          egoX = getInterpolatedVal(375, 385, 0.0, 1.5, time);
+          egoY = 175;
+          egoRot = getInterpolatedVal(3, -6, 0.0, 0.5, time); // Slight tilt after impact
+        }
+
+        // Other car displacement after collision
+        if (time >= 0) {
+          otherX = getInterpolatedVal(450, 470, 0.0, 1.5, time);
+        } else {
+          otherX = 450;
+        }
+      }
+
+      egoCar.setAttribute('transform', `translate(${egoX}, ${egoY}) rotate(${egoRot})`);
+      otherCar.setAttribute('transform', `translate(${otherX}, 160)`);
+
+      // 2. Vector line & skid marks opacity
+      let vectorLen = 80;
+      if (!isCrashTriggered) {
+        vectorLen = 80;
+      } else {
+        if (time < -1.0) {
+          vectorLen = 80;
+        } else if (time < 0.0) {
+          vectorLen = getInterpolatedVal(80, 15, -1.0, 0.0, time);
+        } else {
+          vectorLen = 0;
+        }
+      }
+      speedVector.setAttribute('x2', vectorLen);
+      speedVector.setAttribute('opacity', vectorLen > 0 ? 1 : 0);
+
+      // Skid marks appear after brake engagement (T = -1.0s) only in accident path
+      if (isCrashTriggered && time >= -1.0) {
+        skidEgo.setAttribute('opacity', getInterpolatedVal(0, 0.7, -1.0, -0.4, time));
+      } else {
+        skidEgo.setAttribute('opacity', 0);
+      }
+
+      // 3. Impact Flash (flashes at T = 0.0s to 0.4s)
+      if (isCrashTriggered && time >= 0 && time <= 0.4) {
+        impactGroup.setAttribute('opacity', getInterpolatedVal(1, 0, 0.0, 0.4, time));
+      } else {
+        impactGroup.setAttribute('opacity', 0);
+      }
+
+      // 4. Telemetry numerical data updates
+      let speed = 78;
+      if (!isCrashTriggered) {
+        speed = 78 + Math.sin(time * 2.0) * 1.5;
+      } else {
+        if (time < -1.0) {
+          speed = 78;
+        } else if (time < 0) {
+          speed = getInterpolatedVal(78, 48, -1.0, 0.0, time);
+        } else {
+          speed = getInterpolatedVal(48, 0, 0.0, 0.5, time);
+        }
+      }
+      valSpeed.innerHTML = `${Math.round(speed)}<span>km/h</span>`;
+
+      // Braking pressure (nominal 0%, brakes fully at T = -1.0s)
+      let brake = 0;
+      if (isCrashTriggered) {
+        if (time >= -1.0 && time < 0) {
+          brake = getInterpolatedVal(0, 100, -1.0, -0.8, time);
+        } else if (time >= 0) {
+          brake = 100;
+        }
+      }
+      valBrake.innerHTML = `${Math.round(brake)}<span>%</span>`;
+
+      // Steering angle
+      let steeringStr = "0<span>°</span>";
+      if (!isCrashTriggered) {
+        if (time >= -2.0 && time < -1.5) {
+          steeringStr = `${Math.round(getInterpolatedVal(0, 12, -2.0, -1.5, time))}<span>° R</span>`;
+        } else if (time >= -1.5 && time < -1.0) {
+          steeringStr = `${Math.round(getInterpolatedVal(12, 0, -1.5, -1.0, time))}<span>° R</span>`;
+        } else if (time >= 0.5 && time < 1.0) {
+          steeringStr = `${Math.round(getInterpolatedVal(0, 12, 0.5, 1.0, time))}<span>° L</span>`;
+        } else if (time >= 1.0 && time < 1.5) {
+          steeringStr = `${Math.round(getInterpolatedVal(12, 0, 1.0, 1.5, time))}<span>° L</span>`;
+        }
+      } else {
+        if (time < -0.5) {
+          steeringStr = "0<span>°</span>";
+        } else if (time < 0) {
+          steeringStr = `${Math.round(getInterpolatedVal(0, 15, -0.5, 0.0, time))}<span>° R</span>`;
+        } else {
+          steeringStr = "15<span>° R</span>";
+        }
+      }
+      valSteering.innerHTML = steeringStr;
+
+      // G-force Profile
+      let gLong = 0.06;
+      let gLat = 0.05;
+      if (!isCrashTriggered) {
+        gLong = 0.06 + Math.cos(time * 3) * 0.02;
+        if (time >= -2.0 && time < -1.0) {
+          gLat = getInterpolatedVal(0.05, 0.22, -2.0, -1.5, time);
+          if (time >= -1.5) gLat = getInterpolatedVal(0.22, 0.05, -1.5, -1.0, time);
+        } else if (time >= 0.5 && time < 1.5) {
+          gLat = getInterpolatedVal(0.05, 0.22, 0.5, 1.0, time);
+          if (time >= 1.0) gLat = getInterpolatedVal(0.22, 0.05, 1.0, 1.5, time);
+        } else {
+          gLat = 0.05 + Math.sin(time * 3) * 0.01;
+        }
+      } else {
+        if (time < -1.0) {
+          gLong = 0.8;
+          gLat = 0.2;
+        } else if (time < 0) {
+          gLong = getInterpolatedVal(0.8, 1.4, -1.0, 0.0, time);
+          gLat = 0.2;
+        } else if (time < 0.15) {
+          gLong = getInterpolatedVal(24.5, 5.2, 0.0, 0.15, time);
+          gLat = getInterpolatedVal(8.2, 1.5, 0.0, 0.15, time);
+        } else {
+          gLong = getInterpolatedVal(5.2, 0.05, 0.15, 1.0, time);
+          gLat = getInterpolatedVal(1.5, 0.05, 0.15, 1.0, time);
+        }
+      }
+      valGLong.innerHTML = `${gLong.toFixed(2)}<span>G</span>`;
+      valGLat.innerHTML = `${gLat.toFixed(2)}<span>G</span>`;
+
+      // G-force Warning Highlights
+      if (isCrashTriggered && time >= 0.0 && time < 0.2) {
+        cardGLong.classList.add('danger');
+        cardGLat.classList.add('danger');
+      } else {
+        cardGLong.classList.remove('danger');
+        cardGLat.classList.remove('danger');
+      }
+
+      // 5. Pre-Safe Checklist Statuses
+      if (!isCrashTriggered) {
+        statusBelts.innerText = "Nominal";
+        checkBelts.classList.remove('danger-state');
+        statusAirbags.innerText = "Ready";
+        checkAirbags.classList.remove('danger-state');
+        statusWindows.innerText = "Open";
+        checkWindows.classList.remove('danger-state');
+        statusFuel.innerText = "Active";
+        checkFuel.classList.remove('danger-state');
+        statusEcall.innerText = "Standby";
+        checkEcall.classList.remove('danger-state');
+      } else {
+        if (time < -1.5) {
+          statusBelts.innerText = "Nominal";
+          checkBelts.classList.remove('danger-state');
+        } else if (time < -0.4) {
+          statusBelts.innerText = "Armed";
+          checkBelts.classList.remove('danger-state');
+        } else {
+          statusBelts.innerText = "Active";
+          checkBelts.classList.add('danger-state');
+        }
+
+        if (time < 0.1) {
+          statusAirbags.innerText = "Ready";
+          checkAirbags.classList.remove('danger-state');
+        } else {
+          statusAirbags.innerText = "Deployed";
+          checkAirbags.classList.add('danger-state');
+        }
+
+        if (time < -0.4) {
+          statusWindows.innerText = "Open";
+          checkWindows.classList.remove('danger-state');
+        } else if (time < 0.5) {
+          statusWindows.innerText = "Closing";
+          checkWindows.classList.remove('danger-state');
+        } else {
+          statusWindows.innerText = "Closed";
+          checkWindows.classList.add('danger-state');
+        }
+
+        if (time < 0.2) {
+          statusFuel.innerText = "Active";
+          checkFuel.classList.remove('danger-state');
+        } else {
+          statusFuel.innerText = "Cut-Off";
+          checkFuel.classList.add('danger-state');
+        }
+
+        if (time < 0.5) {
+          statusEcall.innerText = "Standby";
+          checkEcall.classList.remove('danger-state');
+        } else {
+          statusEcall.innerText = "Beacon Transmitting";
+          checkEcall.classList.add('danger-state');
+        }
+      }
+
+      // Hazard Flashing lights active after T = 0.5s in accident path
+      const blinkCycle = Math.floor(Date.now() / 250) % 2 === 0;
+      if (isCrashTriggered && time >= 0.5 && blinkCycle) {
+        fl.setAttribute('opacity', 1);
+        fr.setAttribute('opacity', 1);
+        bl.setAttribute('opacity', 1);
+        br.setAttribute('opacity', 1);
+      } else {
+        fl.setAttribute('opacity', 0);
+        fr.setAttribute('opacity', 0);
+        bl.setAttribute('opacity', 0);
+        br.setAttribute('opacity', 0);
+      }
+
+      // 6. Stage text & class changes
+      if (!isCrashTriggered) {
+        stageInd.className = "stage-indicator";
+        stageText.innerText = "Nominal cruising - active scan";
+      } else {
+        if (time < -1.5) {
+          stageInd.className = "stage-indicator";
+          stageText.innerText = "Pre-crash monitoring";
+        } else if (time < 0) {
+          stageInd.className = "stage-indicator impact";
+          stageText.innerText = "Collision imminent - braking";
+        } else if (time < 1.0) {
+          stageInd.className = "stage-indicator impact";
+          stageText.innerText = "Impact occurred - occupant protection";
+        } else {
+          stageInd.className = "stage-indicator post-impact";
+          stageText.innerText = "Post-collision response & stabilization";
+        }
+      }
+
+      // 7. Update log highlights
+      updateLogFeedHighlight(time);
+    }
+
+    // Timeline Scrubbing Handler
+    timeline.addEventListener('input', (e) => {
+      pauseTimeline();
+      updateTimelineState(parseFloat(e.target.value));
+    });
+
+    function startPlay() {
+      isPlaying = true;
+      playPauseBtn.innerHTML = '<i class="fa-solid fa-pause"></i>';
+      
+      playInterval = setInterval(() => {
+        let val = parseFloat(timeline.value) + 0.05;
+        if (isCrashTriggered) {
+          if (val > 1.5) {
+            val = 1.5;
+            pauseTimeline();
+          }
+        } else {
+          if (val > 1.5) {
+            val = -3.0; // Loop cruising
+          }
+        }
+        updateTimelineState(val);
+      }, 50);
+    }
+
+    function pauseTimeline() {
+      isPlaying = false;
+      playPauseBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
+      clearInterval(playInterval);
+    }
+
+    playPauseBtn.addEventListener('click', () => {
+      if (isPlaying) {
+        pauseTimeline();
+      } else {
+        startPlay();
+      }
+    });
+
+    // --- Init App ---
+    window.addEventListener('DOMContentLoaded', () => {
+      buildLogFeed();
+      updateTimelineState(-3.0);
+      
+      // Auto play on startup
+      startPlay();
+
+      // Enforce back-btn top window navigation and hide if inside iframe
+      const backBtn = document.getElementById('back-btn');
+      if (backBtn) {
+        if (window.self !== window.top) {
+          const headerBar = document.getElementById('header-bar');
+          if (headerBar) headerBar.style.display = 'none';
+        }
+        backBtn.addEventListener('click', function(e) {
+          e.preventDefault();
+          window.top.location.href = "../index.html";
+        });
+      }
+
+      // Bind simulate accident button inside iframe
+      const btnSimulateAccident = document.getElementById('btnSimulateAccident');
+      if (btnSimulateAccident) {
+        btnSimulateAccident.addEventListener('click', () => {
+          // Tell parent shell to run simulation
+          window.parent.postMessage('START_SIMULATION', '*');
+        });
+      }
+    });
+
+    // Listen for messages from parent shell
+    window.addEventListener('message', (event) => {
+      if (event.data === 'START_CRASH_RECONSTRUCTION') {
+        isCrashTriggered = true;
+        buildLogFeed();
+        updateTimelineState(-3.0);
+        startPlay();
+      } else if (event.data === 'RESET_DEMO') {
+        isCrashTriggered = false;
+        buildLogFeed();
+        updateTimelineState(-3.0);
+        startPlay();
+      }
+    });
+  </script>
+
+</body>
+</html>
