@@ -11,6 +11,10 @@
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
+  <!-- Three.js & OrbitControls -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
   <style>
     :root {
       --bg-dark: #05070c;
@@ -170,7 +174,20 @@
       flex-direction: column;
       gap: 16px;
       height: 100%;
-      overflow: hidden;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    /* Custom Scrollbar for columns */
+    .column::-webkit-scrollbar {
+      width: 4px;
+    }
+    .column::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .column::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 2px;
     }
 
     /* Glassmorphism Panel Cards */
@@ -663,6 +680,199 @@
       color: var(--bg-dark);
       box-shadow: 0 0 15px var(--accent-cyan);
     }
+
+    /* Visualizer Mode Toggles */
+    .visualizer-toggle {
+      display: flex;
+      gap: 6px;
+      background: rgba(0, 0, 0, 0.4);
+      padding: 3px;
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .toggle-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-family: 'Outfit', sans-serif;
+      font-size: 9px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 4px 10px;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: var(--transition-fast);
+    }
+    .toggle-btn:hover {
+      color: #fff;
+    }
+    .toggle-btn.active {
+      background: rgba(0, 235, 214, 0.15);
+      color: var(--accent-cyan);
+      box-shadow: 0 0 10px rgba(0, 235, 214, 0.15);
+    }
+
+    /* Chassis Telemetry Styles */
+    .chassis-layout {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-top: 4px;
+    }
+    .chassis-visual {
+      width: 100px;
+      flex-shrink: 0;
+      position: relative;
+    }
+    .chassis-svg {
+      width: 100%;
+      height: auto;
+      display: block;
+      overflow: visible;
+    }
+    .chassis-stats {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .chassis-stat-item {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+      padding-bottom: 6px;
+    }
+    .chassis-stat-item:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+    .chassis-stat-label {
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+    }
+    .chassis-stat-val {
+      font-size: 13px;
+      font-weight: 700;
+      font-family: 'Outfit', sans-serif;
+      transition: var(--transition-fast);
+    }
+    .chassis-stat-val.text-cyan {
+      color: var(--accent-cyan);
+      text-shadow: 0 0 8px rgba(0, 235, 214, 0.15);
+    }
+    .chassis-stat-val.text-danger {
+      color: var(--accent-red);
+      text-shadow: 0 0 8px rgba(255, 59, 48, 0.25);
+    }
+    .chassis-stat-val.text-warning {
+      color: var(--accent-orange);
+      text-shadow: 0 0 8px rgba(255, 159, 10, 0.25);
+    }
+    .chassis-wheel {
+      transition: var(--transition-fast);
+    }
+
+    /* Ledger Styles */
+    .ledger-container {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 4px;
+    }
+    .ledger-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 8px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    }
+    .ledger-row.border-top {
+      border-top: 1px dashed rgba(255, 255, 255, 0.08);
+      padding-top: 12px;
+      margin-top: 4px;
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+    .ledger-row:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+    .ledger-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+    .ledger-val {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: var(--text-main);
+      font-weight: 700;
+    }
+    .ledger-val-hash {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--text-muted);
+      background: rgba(255, 255, 255, 0.03);
+      padding: 2px 6px;
+      border-radius: 4px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      max-width: 160px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      transition: var(--transition-fast);
+    }
+    .ledger-val-hash.secured {
+      color: var(--accent-cyan);
+      border-color: rgba(0, 235, 214, 0.2);
+      background: rgba(0, 235, 214, 0.04);
+      text-shadow: 0 0 5px rgba(0, 235, 214, 0.1);
+    }
+    .ledger-badge {
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      border-radius: 20px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      border: 1px solid transparent;
+      transition: var(--transition-fast);
+    }
+    .ledger-badge.badge-standby {
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--text-muted);
+      border-color: rgba(255, 255, 255, 0.06);
+    }
+    .ledger-badge.badge-active {
+      background: rgba(0, 136, 255, 0.08);
+      color: var(--accent-blue);
+      border-color: rgba(0, 136, 255, 0.25);
+      text-shadow: 0 0 8px rgba(0, 136, 255, 0.15);
+      box-shadow: 0 0 10px rgba(0, 136, 255, 0.05);
+    }
+    .ledger-badge.badge-warning {
+      background: rgba(255, 159, 10, 0.08);
+      color: var(--accent-orange);
+      border-color: rgba(255, 159, 10, 0.25);
+      text-shadow: 0 0 8px rgba(255, 159, 10, 0.15);
+      box-shadow: 0 0 10px rgba(255, 159, 10, 0.05);
+    }
+    .ledger-badge.badge-success {
+      background: rgba(0, 229, 117, 0.08);
+      color: var(--success-green);
+      border-color: rgba(0, 229, 117, 0.25);
+      text-shadow: 0 0 8px rgba(0, 229, 117, 0.15);
+      box-shadow: 0 0 10px rgba(0, 229, 117, 0.05);
+    }
   </style>
 </head>
 <body>
@@ -757,12 +967,74 @@
           </div>
         </div>
       </div>
+
+      <!-- Chassis Impact Telemetry -->
+      <div class="glass-card">
+        <div class="card-title">
+          <i class="fa-solid fa-car-burst"></i> Chassis Impact Telemetry
+        </div>
+        <div class="chassis-layout">
+          <div class="chassis-visual">
+            <svg class="chassis-svg" viewBox="0 0 140 240" xmlns="http://www.w3.org/2000/svg">
+              <!-- Wheels -->
+              <rect class="chassis-wheel" x="10" y="40" width="12" height="26" rx="3" fill="#1e293b" />
+              <rect class="chassis-wheel" x="118" y="40" width="12" height="26" rx="3" fill="#1e293b" />
+              <rect class="chassis-wheel" x="10" y="174" width="12" height="26" rx="3" fill="#1e293b" />
+              <rect class="chassis-wheel" x="118" y="174" width="12" height="26" rx="3" fill="#1e293b" />
+              
+              <!-- Car Silhouette Grid Background -->
+              <path d="M 30 50 L 110 50 L 120 90 L 120 180 L 110 210 L 30 210 L 20 180 L 20 90 Z" fill="rgba(15, 23, 42, 0.6)" stroke="rgba(255,255,255,0.05)" stroke-width="2" />
+              
+              <!-- Chassis Zones -->
+              <!-- Front Left Quadrant -->
+              <path id="chassis-zone-fl" d="M 30 50 L 70 50 L 70 120 L 20 120 L 20 90 Z" fill="rgba(0, 235, 214, 0.05)" stroke="rgba(0, 235, 214, 0.25)" stroke-width="1.5" style="transition: all 0.2s ease;" />
+              <!-- Front Right Quadrant -->
+              <path id="chassis-zone-fr" d="M 70 50 L 110 50 L 120 90 L 120 120 L 70 120 Z" fill="rgba(0, 235, 214, 0.05)" stroke="rgba(0, 235, 214, 0.25)" stroke-width="1.5" />
+              <!-- Rear Left Quadrant -->
+              <path id="chassis-zone-rl" d="M 20 120 L 70 120 L 70 210 L 30 210 L 20 180 Z" fill="rgba(0, 235, 214, 0.05)" stroke="rgba(0, 235, 214, 0.25)" stroke-width="1.5" />
+              <!-- Rear Right Quadrant -->
+              <path id="chassis-zone-rr" d="M 70 120 L 120 120 L 120 180 L 110 210 L 70 210 Z" fill="rgba(0, 235, 214, 0.05)" stroke="rgba(0, 235, 214, 0.25)" stroke-width="1.5" />
+              
+              <!-- Impact Arrow (flashes red/orange and points at FL corner) -->
+              <g id="chassis-impact-arrow" opacity="0" style="transition: all 0.2s ease;">
+                <line x1="-5" y1="15" x2="22" y2="45" stroke="var(--accent-red)" stroke-width="4" stroke-linecap="round" />
+                <polygon points="22,45 13,42 20,35" fill="var(--accent-red)" />
+                <circle cx="22" cy="45" r="6" fill="none" stroke="var(--accent-red)" stroke-width="2" />
+              </g>
+            </svg>
+          </div>
+          <div class="chassis-stats">
+            <div class="chassis-stat-item">
+              <span class="chassis-stat-label">Impact Zone</span>
+              <span class="chassis-stat-val text-cyan" id="chassis-val-zone">None (Cruising)</span>
+            </div>
+            <div class="chassis-stat-item">
+              <span class="chassis-stat-label">Max G-Force</span>
+              <span class="chassis-stat-val text-cyan" id="chassis-val-gforce">0.08 G</span>
+            </div>
+            <div class="chassis-stat-item">
+              <span class="chassis-stat-label">Crumple Deflect.</span>
+              <span class="chassis-stat-val text-cyan" id="chassis-val-deflect">0 cm</span>
+            </div>
+            <div class="chassis-stat-item">
+              <span class="chassis-stat-label">Cabin Airbags</span>
+              <span class="chassis-stat-val text-cyan" id="chassis-val-airbags">Ready</span>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Center Console: Animated Vector Grid -->
     <div class="glass-card visualizer-card">
-      <div class="card-title">
-        <i class="fa-solid fa-play"></i> Incident Reconstruction Simulation
+      <div class="card-title" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <i class="fa-solid fa-play"></i> Incident Reconstruction Simulation
+        </div>
+        <div class="visualizer-toggle">
+          <button class="toggle-btn active" id="btn-view-2d">2D HUD</button>
+          <button class="toggle-btn" id="btn-view-3d">3D Hologram</button>
+        </div>
       </div>
 
       <!-- Vector canvas area -->
@@ -846,6 +1118,7 @@
             <circle cx="400" cy="160" r="25" fill="none" stroke="var(--accent-red)" stroke-width="1.5" stroke-dasharray="5, 3" class="shockwave" />
           </g>
         </svg>
+        <div id="three-container" style="display: none; width: 100%; height: 100%; position: absolute; top: 0; left: 0; background: rgba(5, 7, 12, 0.85); overflow: hidden;"></div>
       </div>
 
       <!-- Playback Timeline controls -->
@@ -867,14 +1140,41 @@
       </div>
     </div>
 
-    <!-- Right Console: Synced Event Logs -->
-    <div class="glass-card">
-      <div class="card-title">
-        <i class="fa-solid fa-list-check"></i> Chronological Incident Logs
+    <!-- Right Console: Synced Event Logs & Ledger -->
+    <div class="column">
+      <div class="glass-card" style="flex: 1; min-height: 250px;">
+        <div class="card-title">
+          <i class="fa-solid fa-list-check"></i> Chronological Incident Logs
+        </div>
+        <div class="log-feed-container">
+          <div class="log-feed" id="log-feed">
+            <!-- Logs populated by JS -->
+          </div>
+        </div>
       </div>
-      <div class="log-feed-container">
-        <div class="log-feed" id="log-feed">
-          <!-- Logs populated by JS -->
+
+      <!-- Immutable Ledger & Smart Claims -->
+      <div class="glass-card">
+        <div class="card-title">
+          <i class="fa-solid fa-link"></i> Immutable Ledger & Smart Claims
+        </div>
+        <div class="ledger-container">
+          <div class="ledger-row">
+            <span class="ledger-label">Ledger Anchor</span>
+            <span class="ledger-badge badge-standby" id="ledger-val-anchor">MONITORING</span>
+          </div>
+          <div class="ledger-row">
+            <span class="ledger-label">Anchor Hash</span>
+            <span class="ledger-val-hash" id="ledger-val-hash">--</span>
+          </div>
+          <div class="ledger-row">
+            <span class="ledger-label">Block Height</span>
+            <span class="ledger-val" id="ledger-val-height">--</span>
+          </div>
+          <div class="ledger-row border-top">
+            <span class="ledger-label">Claims Router</span>
+            <span class="ledger-badge badge-standby" id="ledger-val-claim">STANDBY</span>
+          </div>
         </div>
       </div>
     </div>
@@ -1032,6 +1332,29 @@
     const statusFuel = document.getElementById('status-fuel');
     const checkEcall = document.getElementById('check-ecall');
     const statusEcall = document.getElementById('status-ecall');
+
+    // Chassis Telemetry Elements
+    const chassisZoneFl = document.getElementById('chassis-zone-fl');
+    const chassisImpactArrow = document.getElementById('chassis-impact-arrow');
+    const chassisValZone = document.getElementById('chassis-val-zone');
+    const chassisValGforce = document.getElementById('chassis-val-gforce');
+    const chassisValDeflect = document.getElementById('chassis-val-deflect');
+    const chassisValAirbags = document.getElementById('chassis-val-airbags');
+
+    // Ledger Elements
+    const ledgerValAnchor = document.getElementById('ledger-val-anchor');
+    const ledgerValHash = document.getElementById('ledger-val-hash');
+    const ledgerValHeight = document.getElementById('ledger-val-height');
+    const ledgerValClaim = document.getElementById('ledger-val-claim');
+
+    const btnSimulateAccident = document.getElementById('btnSimulateAccident');
+
+    // Three.js State Variables
+    let visualizerMode = '2d'; // '2d' or '3d'
+    let threeScene, threeCamera, threeRenderer, threeControls;
+    let threeCarGroup, threeImpactSphere;
+    let threeSparks, threeSparkVelocities;
+    let originalMeshVertices = {};
 
     // Stage indicator elements
     const stageInd = document.getElementById('stage-ind');
@@ -1373,7 +1696,559 @@
 
       // 7. Update log highlights
       updateLogFeedHighlight(time);
+
+      // 8. Chassis & Ledger Updates
+      const flash = Math.floor(Date.now() / 250) % 2 === 0;
+
+      if (!isCrashTriggered) {
+        // Cruising / Reset State
+        chassisZoneFl.style.fill = 'rgba(0, 235, 214, 0.05)';
+        chassisZoneFl.style.stroke = 'rgba(0, 235, 214, 0.25)';
+        chassisImpactArrow.setAttribute('opacity', 0);
+        
+        chassisValZone.innerText = 'None (Cruising)';
+        chassisValZone.className = 'chassis-stat-val text-cyan';
+        chassisValGforce.innerText = '0.08 G';
+        chassisValGforce.className = 'chassis-stat-val text-cyan';
+        chassisValDeflect.innerText = '0 cm';
+        chassisValDeflect.className = 'chassis-stat-val text-cyan';
+        chassisValAirbags.innerText = 'Ready';
+        chassisValAirbags.className = 'chassis-stat-val text-cyan';
+
+        ledgerValAnchor.innerText = 'MONITORING';
+        ledgerValAnchor.className = 'ledger-badge badge-active';
+        ledgerValHash.innerText = '--';
+        ledgerValHash.classList.remove('secured');
+        ledgerValHeight.innerText = '--';
+        ledgerValClaim.innerText = 'STANDBY';
+        ledgerValClaim.className = 'ledger-badge badge-standby';
+      } else {
+        // Accident Scenario
+        if (time < 0.0) {
+          // Pre-impact phase
+          chassisZoneFl.style.fill = 'rgba(0, 235, 214, 0.05)';
+          chassisZoneFl.style.stroke = 'rgba(0, 235, 214, 0.25)';
+          chassisImpactArrow.setAttribute('opacity', 0);
+          
+          chassisValZone.innerText = 'None (Scanning)';
+          chassisValZone.className = 'chassis-stat-val text-cyan';
+          chassisValGforce.innerText = `${gLong.toFixed(2)} G`;
+          chassisValGforce.className = 'chassis-stat-val text-cyan';
+          chassisValDeflect.innerText = '0 cm';
+          chassisValDeflect.className = 'chassis-stat-val text-cyan';
+          chassisValAirbags.innerText = 'Ready';
+          chassisValAirbags.className = 'chassis-stat-val text-cyan';
+
+          ledgerValAnchor.innerText = 'MONITORING';
+          ledgerValAnchor.className = 'ledger-badge badge-active';
+          ledgerValHash.innerText = '--';
+          ledgerValHash.classList.remove('secured');
+          ledgerValHeight.innerText = '--';
+          ledgerValClaim.innerText = 'STANDBY';
+          ledgerValClaim.className = 'ledger-badge badge-standby';
+        } else {
+          // Post-impact phase (time >= 0.0)
+          // Flashing Front-Left zone red/orange
+          chassisZoneFl.style.fill = flash ? 'rgba(255, 59, 48, 0.6)' : 'rgba(255, 59, 48, 0.2)';
+          chassisZoneFl.style.stroke = 'var(--accent-red)';
+          
+          // Animate / Flash impact arrow
+          chassisImpactArrow.setAttribute('opacity', flash ? 1 : 0.4);
+
+          chassisValZone.innerText = 'Front-Left Quadrant';
+          chassisValZone.className = 'chassis-stat-val text-danger';
+          chassisValGforce.innerText = '24.52 G';
+          chassisValGforce.className = 'chassis-stat-val text-danger';
+          chassisValDeflect.innerText = '42 cm';
+          chassisValDeflect.className = 'chassis-stat-val text-danger';
+          
+          if (time < 0.1) {
+            chassisValAirbags.innerText = 'Ready';
+            chassisValAirbags.className = 'chassis-stat-val text-cyan';
+          } else {
+            chassisValAirbags.innerText = 'Deployed';
+            chassisValAirbags.className = 'chassis-stat-val text-danger';
+          }
+
+          // Ledger State Transitions
+          if (time < 0.2) {
+            // Immediately post-impact: anchoring in progress
+            ledgerValAnchor.innerText = 'ANCHORING...';
+            ledgerValAnchor.className = 'ledger-badge badge-warning';
+            ledgerValHash.innerText = '0xe2f18a...';
+            ledgerValHash.classList.remove('secured');
+            ledgerValHeight.innerText = '429,187';
+            ledgerValClaim.innerText = 'ROUTING...';
+            ledgerValClaim.className = 'ledger-badge badge-warning';
+          } else if (time < 0.8) {
+            // Still anchoring / routing
+            ledgerValAnchor.innerText = 'ANCHORING...';
+            ledgerValAnchor.className = 'ledger-badge badge-warning';
+            ledgerValHash.innerText = '0xe2f18a...';
+            ledgerValHash.classList.remove('secured');
+            ledgerValHeight.innerText = '429,187';
+            ledgerValClaim.innerText = 'ROUTING...';
+            ledgerValClaim.className = 'ledger-badge badge-warning';
+          } else {
+            // Fully secured (time >= 0.8s)
+            ledgerValAnchor.innerText = 'VERIFIED & SECURED';
+            ledgerValAnchor.className = 'ledger-badge badge-success';
+            ledgerValHash.innerText = '0xe2f18a7c645fb...';
+            ledgerValHash.classList.add('secured');
+            ledgerValHeight.innerText = '429,188';
+            ledgerValClaim.innerText = 'CLAIM ROUTED / APPROVED';
+            ledgerValClaim.className = 'ledger-badge badge-success';
+          }
+        }
+      }
+
+      // 9. 3D Hologram Updates
+      updateThreeJSHologram(time);
     }
+
+    // --- Three.js Hologram Core Logic ---
+    function createWireframeMesh(geometry, color, opacity, name) {
+      const material = new THREE.MeshBasicMaterial({
+        color: color,
+        wireframe: true,
+        transparent: true,
+        opacity: opacity
+      });
+      const mesh = new THREE.Mesh(geometry, material);
+      if (name) mesh.name = name;
+      return mesh;
+    }
+
+    function cacheOriginalVertices(mesh) {
+      const posAttr = mesh.geometry.attributes.position;
+      const cached = new Float32Array(posAttr.count * 3);
+      for (let i = 0; i < posAttr.count; i++) {
+        cached[i * 3] = posAttr.getX(i);
+        cached[i * 3 + 1] = posAttr.getY(i);
+        cached[i * 3 + 2] = posAttr.getZ(i);
+      }
+      originalMeshVertices[mesh.name] = cached;
+    }
+
+    function initThreeJS() {
+      const container = document.getElementById('three-container');
+      if (!container) return;
+
+      // Create Scene & Camera
+      threeScene = new THREE.Scene();
+      threeCamera = new THREE.PerspectiveCamera(40, container.clientWidth / container.clientHeight, 0.1, 1000);
+      threeCamera.position.set(5.5, 3.5, 7.5);
+
+      // Create Renderer
+      threeRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      threeRenderer.setSize(container.clientWidth, container.clientHeight);
+      threeRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      container.appendChild(threeRenderer.domElement);
+
+      // OrbitControls
+      threeControls = new THREE.OrbitControls(threeCamera, threeRenderer.domElement);
+      threeControls.enableDamping = true;
+      threeControls.dampingFactor = 0.05;
+      threeControls.maxPolarAngle = Math.PI / 2 - 0.05; // don't go below grid floor
+      threeControls.minDistance = 3;
+      threeControls.maxDistance = 15;
+
+      // Lights
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.45);
+      threeScene.add(ambientLight);
+      
+      const dirLight1 = new THREE.DirectionalLight(0x00ebd6, 0.8);
+      dirLight1.position.set(5, 8, 5);
+      threeScene.add(dirLight1);
+      
+      const dirLight2 = new THREE.DirectionalLight(0xff3b30, 0.45);
+      dirLight2.position.set(-5, -3, -5);
+      threeScene.add(dirLight2);
+
+      // Cyber Holographic Grid Helper
+      const gridHelper = new THREE.GridHelper(18, 18, 0x00ebd6, 0x1e293b);
+      gridHelper.position.y = -0.9;
+      threeScene.add(gridHelper);
+
+      // Car Group
+      threeCarGroup = new THREE.Group();
+      threeScene.add(threeCarGroup);
+
+      // Rebuild Procedural Futuristic Car Parts
+      // 1. Lower Chassis Plate
+      const chassisGeo = new THREE.BoxGeometry(2.7, 0.08, 1.25, 6, 2, 4);
+      const chassisMesh = createWireframeMesh(chassisGeo, 0x00ebd6, 0.8, 'deform_chassis');
+      chassisMesh.position.y = -0.2;
+      threeCarGroup.add(chassisMesh);
+      cacheOriginalVertices(chassisMesh);
+
+      // 2. Sloped Hood
+      const hoodGeo = new THREE.BoxGeometry(0.7, 0.28, 1.2, 4, 2, 4);
+      const hoodMesh = createWireframeMesh(hoodGeo, 0x00ebd6, 0.8, 'deform_hood');
+      hoodMesh.position.set(0.85, 0.02, 0);
+      threeCarGroup.add(hoodMesh);
+      cacheOriginalVertices(hoodMesh);
+
+      // 3. Front Nose Bumper
+      const noseGeo = new THREE.BoxGeometry(0.5, 0.22, 1.2, 4, 2, 4);
+      const noseMesh = createWireframeMesh(noseGeo, 0x00ebd6, 0.7, 'deform_nose');
+      noseMesh.position.set(1.15, -0.09, 0);
+      threeCarGroup.add(noseMesh);
+      cacheOriginalVertices(noseMesh);
+
+      // 4. Main Cabin
+      const cabinGeo = new THREE.BoxGeometry(1.25, 0.44, 1.05, 4, 2, 4);
+      const cabinMesh = createWireframeMesh(cabinGeo, 0x00ebd6, 0.65, 'deform_cabin');
+      cabinMesh.position.set(-0.15, 0.35, 0);
+      threeCarGroup.add(cabinMesh);
+      cacheOriginalVertices(cabinMesh);
+
+      // 5. Rear Trunk
+      const trunkGeo = new THREE.BoxGeometry(0.65, 0.34, 1.2, 4, 2, 4);
+      const trunkMesh = createWireframeMesh(trunkGeo, 0x00ebd6, 0.8, 'deform_trunk');
+      trunkMesh.position.set(-1.1, 0.01, 0);
+      threeCarGroup.add(trunkMesh);
+      cacheOriginalVertices(trunkMesh);
+
+      // 6. Spoiler Mesh
+      const spoilerGeo = new THREE.BoxGeometry(0.12, 0.08, 1.22);
+      const spoilerMesh = createWireframeMesh(spoilerGeo, 0x00ebd6, 0.9, 'deform_spoiler');
+      spoilerMesh.position.set(-1.38, 0.25, 0);
+      spoilerMesh.rotation.z = 0.15; // angled wing
+      threeCarGroup.add(spoilerMesh);
+      cacheOriginalVertices(spoilerMesh);
+
+      // 7. Windshield
+      const windshieldGeo = new THREE.BoxGeometry(0.55, 0.04, 1.05);
+      const windshieldMesh = createWireframeMesh(windshieldGeo, 0x00ebd6, 0.5, 'deform_windshield');
+      windshieldMesh.position.set(0.38, 0.24, 0);
+      windshieldMesh.rotation.z = -0.55; // angled windshield
+      threeCarGroup.add(windshieldMesh);
+      cacheOriginalVertices(windshieldMesh);
+
+      // 8. Headlights (Bright White cylinders)
+      const hlGeo = new THREE.CylinderGeometry(0.04, 0.04, 0.12, 8);
+      const hlMat = new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: true });
+      
+      const hlL = new THREE.Mesh(hlGeo, hlMat);
+      hlL.rotation.x = Math.PI / 2;
+      hlL.rotation.z = Math.PI / 2;
+      hlL.position.set(1.4, -0.06, -0.45);
+      threeCarGroup.add(hlL);
+
+      const hlR = new THREE.Mesh(hlGeo, hlMat);
+      hlR.rotation.x = Math.PI / 2;
+      hlR.rotation.z = Math.PI / 2;
+      hlR.position.set(1.4, -0.06, 0.45);
+      threeCarGroup.add(hlR);
+
+      // 9. Taillights (Bright Red boxes)
+      const tlMat = new THREE.MeshBasicMaterial({ color: 0xff3b30, wireframe: true });
+      const tlL = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.08, 0.22), tlMat);
+      tlL.position.set(-1.43, 0.08, -0.45);
+      threeCarGroup.add(tlL);
+
+      const tlR = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.08, 0.22), tlMat);
+      tlR.position.set(-1.43, 0.08, 0.45);
+      threeCarGroup.add(tlR);
+
+      // 10. Front Grille Detail
+      const grilleGeo = new THREE.BoxGeometry(0.02, 0.16, 0.55);
+      const grilleMat = new THREE.MeshBasicMaterial({ color: 0x00ebd6, wireframe: true });
+      const grilleMesh = new THREE.Mesh(grilleGeo, grilleMat);
+      grilleMesh.position.set(1.41, -0.09, 0);
+      threeCarGroup.add(grilleMesh);
+
+      // 11. Detailed Wheels with Spokes (Rims)
+      const wheelGeo = new THREE.CylinderGeometry(0.32, 0.32, 0.22, 12, 1);
+      const wheelMat = new THREE.MeshBasicMaterial({
+        color: 0x64748b,
+        wireframe: true,
+        transparent: true,
+        opacity: 0.65
+      });
+      
+      const rimMat = new THREE.MeshBasicMaterial({ color: 0x00ebd6, wireframe: true });
+      const rimGeo = new THREE.BoxGeometry(0.58, 0.03, 0.03);
+
+      const wheels = [
+        { name: 'fl', x: 0.85, y: -0.32, z: -0.65 },
+        { name: 'fr', x: 0.85, y: -0.32, z: 0.65 },
+        { name: 'rl', x: -0.85, y: -0.32, z: -0.65 },
+        { name: 'rr', x: -0.85, y: -0.32, z: 0.65 }
+      ];
+
+      wheels.forEach(w => {
+        const wheelGroup = new THREE.Group();
+        wheelGroup.name = `wheel_${w.name}`;
+        wheelGroup.position.set(w.x, w.y, w.z);
+
+        const tyreMesh = new THREE.Mesh(wheelGeo, wheelMat);
+        tyreMesh.name = 'tyre';
+        tyreMesh.rotation.x = Math.PI / 2;
+        wheelGroup.add(tyreMesh);
+
+        // Rim spokes group
+        const spokesGroup = new THREE.Group();
+        spokesGroup.name = 'spokes';
+        
+        const spoke1 = new THREE.Mesh(rimGeo, rimMat);
+        spokesGroup.add(spoke1);
+        
+        const spoke2 = new THREE.Mesh(rimGeo, rimMat);
+        spoke2.rotation.z = Math.PI / 3;
+        spokesGroup.add(spoke2);
+        
+        const spoke3 = new THREE.Mesh(rimGeo, rimMat);
+        spoke3.rotation.z = -Math.PI / 3;
+        spokesGroup.add(spoke3);
+
+        wheelGroup.add(spokesGroup);
+        threeCarGroup.add(wheelGroup);
+      });
+
+      // 12. Collision Spark Particle System (Buffer Geometry)
+      const particleCount = 45;
+      const particleGeo = new THREE.BufferGeometry();
+      const positions = new Float32Array(particleCount * 3);
+      const velocities = new Float32Array(particleCount * 3);
+
+      for (let i = 0; i < particleCount; i++) {
+        positions[i * 3] = 0;
+        positions[i * 3 + 1] = 0;
+        positions[i * 3 + 2] = 0;
+
+        // Random spray velocities shooting outwards (up, forward, and left)
+        velocities[i * 3] = (Math.random() - 0.2) * 1.6;     // X: forward/right
+        velocities[i * 3 + 1] = Math.random() * 1.4;         // Y: upwards spray
+        velocities[i * 3 + 2] = (Math.random() - 0.8) * 1.6; // Z: left side
+      }
+
+      particleGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      
+      const particleMat = new THREE.PointsMaterial({
+        color: 0xff5500,
+        size: 0.14,
+        transparent: true,
+        opacity: 0,
+        blending: THREE.AdditiveBlending
+      });
+
+      threeSparks = new THREE.Points(particleGeo, particleMat);
+      threeSparks.position.set(1.3, 0.0, -0.6); // Front-left collision zone
+      threeCarGroup.add(threeSparks);
+      threeSparkVelocities = velocities;
+
+      // 13. Impact Glow Sphere
+      const glowGeo = new THREE.SphereGeometry(0.45, 16, 16);
+      const glowMat = new THREE.MeshBasicMaterial({
+        color: 0xff3b30,
+        wireframe: true,
+        transparent: true,
+        opacity: 0
+      });
+      threeImpactSphere = new THREE.Mesh(glowGeo, glowMat);
+      threeImpactSphere.position.set(1.3, 0.0, -0.6); // Front-Left quadrant
+      threeCarGroup.add(threeImpactSphere);
+
+      // Start rendering loop
+      animateThreeJS();
+    }
+
+    function animateThreeJS() {
+      requestAnimationFrame(animateThreeJS);
+      
+      const container = document.getElementById('three-container');
+      if (container && container.style.display !== 'none') {
+        // Slow auto spin if the user isn't interacting
+        if (threeCarGroup && threeControls && threeControls.state === -1) {
+          threeCarGroup.rotation.y += 0.004;
+        }
+        
+        threeControls.update();
+        threeRenderer.render(threeScene, threeCamera);
+      }
+    }
+
+    function animateSparksTimeline(time) {
+      if (!threeSparks) return;
+
+      const posAttr = threeSparks.geometry.attributes.position;
+      const positions = posAttr.array;
+      const opacity = isCrashTriggered && time >= 0.0 ? getInterpolatedVal(1.0, 0.0, 0.0, 0.6, time) : 0;
+
+      threeSparks.material.opacity = opacity;
+
+      if (opacity > 0) {
+        const dt = time; // seconds since impact
+        for (let i = 0; i < posAttr.count; i++) {
+          const vx = threeSparkVelocities[i * 3];
+          const vy = threeSparkVelocities[i * 3 + 1];
+          const vz = threeSparkVelocities[i * 3 + 2];
+
+          // Newtonian physics coordinate calculation (gravity arc decay)
+          positions[i * 3] = vx * dt;
+          positions[i * 3 + 1] = vy * dt - 1.8 * dt * dt; // gravitational downward arc
+          positions[i * 3 + 2] = vz * dt;
+        }
+      } else {
+        // Reset sparks to zero origin
+        for (let i = 0; i < posAttr.count; i++) {
+          positions[i * 3] = 0;
+          positions[i * 3 + 1] = 0;
+          positions[i * 3 + 2] = 0;
+        }
+      }
+      posAttr.needsUpdate = true;
+    }
+
+    function updateThreeJSHologram(time) {
+      if (!threeCarGroup || !originalMeshVertices) return;
+
+      // Front wheel steering simulation
+      let steeringAngle = 0;
+      if (!isCrashTriggered) {
+        if (time >= -2.0 && time < -1.5) {
+          steeringAngle = getInterpolatedVal(0, -0.22, -2.0, -1.5, time); // swerve right
+        } else if (time >= -1.5 && time < -1.0) {
+          steeringAngle = getInterpolatedVal(-0.22, 0, -1.5, -1.0, time);
+        } else if (time >= 0.5 && time < 1.0) {
+          steeringAngle = getInterpolatedVal(0, 0.22, 0.5, 1.0, time); // swerve left
+        } else if (time >= 1.0 && time < 1.5) {
+          steeringAngle = getInterpolatedVal(0.22, 0, 1.0, 1.5, time);
+        }
+      } else {
+        if (time >= -0.5 && time < 0.0) {
+          steeringAngle = getInterpolatedVal(0, -0.26, -0.5, 0.0, time);
+        } else if (time >= 0.0) {
+          steeringAngle = -0.26;
+        }
+      }
+
+      const wheelFL = threeCarGroup.getObjectByName('wheel_fl');
+      const wheelFR = threeCarGroup.getObjectByName('wheel_fr');
+      if (wheelFL) wheelFL.rotation.y = steeringAngle;
+      if (wheelFR) wheelFR.rotation.y = steeringAngle;
+
+      // Spin wheels (rims and tyres spin in cylinder coordinates)
+      const wheelSpinState = isCrashTriggered ? (time < 0.0 ? 1 : 0) : 1;
+      const wheelAngle = (Date.now() / 150) * wheelSpinState;
+      ['wheel_fl', 'wheel_fr', 'wheel_rl', 'wheel_rr'].forEach(n => {
+        const wGroup = threeCarGroup.getObjectByName(`wheel_${n}`);
+        if (wGroup) {
+          wGroup.children.forEach(child => {
+            if (child.name === 'spokes') {
+              child.rotation.z = wheelAngle;
+            } else if (child.name === 'tyre') {
+              child.rotation.y = wheelAngle;
+            }
+          });
+        }
+      });
+
+      // Deformation coefficient
+      let deformCoeff = 0;
+      if (isCrashTriggered && time >= 0.0) {
+        deformCoeff = getInterpolatedVal(0, 1.0, 0.0, 0.4, time);
+      }
+
+      // Loop over deforming structural meshes and shift front-left vertices
+      threeCarGroup.traverse(child => {
+        if (child.isMesh && child.name && child.name.startsWith('deform_')) {
+          const posAttr = child.geometry.attributes.position;
+          const original = originalMeshVertices[child.name];
+          if (!original) return;
+
+          const mx = child.position.x;
+          const mz = child.position.z;
+          const my = child.position.y;
+
+          for (let i = 0; i < posAttr.count; i++) {
+            let lx = original[i * 3];
+            let ly = original[i * 3 + 1];
+            let lz = original[i * 3 + 2];
+
+            // Reconstruct coordinates relative to the main car group
+            const cx = mx + lx;
+            const cy = my + ly;
+            const cz = mz + lz;
+
+            // Target Front-Left quadrant (x > 0.3, z < -0.1) for crumpling
+            if (deformCoeff > 0 && cx > 0.3 && cz < -0.1) {
+              const factor = (cx - 0.3) * (-cz - 0.1);
+              lx -= factor * 0.4 * deformCoeff;
+              lz += factor * 0.45 * deformCoeff;
+              ly -= factor * 0.15 * deformCoeff;
+            }
+
+            posAttr.setXYZ(i, lx, ly, lz);
+          }
+          posAttr.needsUpdate = true;
+          child.geometry.computeVertexNormals();
+
+          // Color animations based on play state
+          const flash = Math.floor(Date.now() / 250) % 2 === 0;
+          if (isCrashTriggered && time >= 0.0) {
+            // Front panels and chassis plate turn red/orange
+            if (child.name.includes('hood') || child.name.includes('nose') || child.name.includes('chassis')) {
+              child.material.color.setHex(flash ? 0xff3b30 : 0xff9f0a);
+            } else {
+              child.material.color.setHex(0x00ebd6); // Cabin/Windshield/Spoiler remains clean
+            }
+          } else {
+            child.material.color.setHex(0x00ebd6);
+          }
+        }
+      });
+
+      // Update impact glow sphere
+      if (isCrashTriggered && time >= 0.0) {
+        const pulse = getInterpolatedVal(0.1, 1.8, 0.0, 0.3, time) * (0.85 + 0.2 * Math.sin(Date.now() / 60));
+        threeImpactSphere.scale.set(pulse, pulse, pulse);
+        threeImpactSphere.material.opacity = getInterpolatedVal(0.8, 0, 0.0, 0.5, time);
+      } else {
+        threeImpactSphere.scale.set(0.01, 0.01, 0.01);
+        threeImpactSphere.material.opacity = 0;
+      }
+
+      // Animate sparks
+      animateSparksTimeline(time);
+    }
+
+    function switchVisualizerMode(mode) {
+      visualizerMode = mode;
+      const svg = document.getElementById('collision-svg');
+      const threeContainer = document.getElementById('three-container');
+      const btn2d = document.getElementById('btn-view-2d');
+      const btn3d = document.getElementById('btn-view-3d');
+
+      if (mode === '3d') {
+        svg.style.display = 'none';
+        threeContainer.style.display = 'block';
+        btn2d.classList.remove('active');
+        btn3d.classList.add('active');
+
+        if (threeRenderer) {
+          threeRenderer.setSize(threeContainer.clientWidth, threeContainer.clientHeight);
+          threeCamera.aspect = threeContainer.clientWidth / threeContainer.clientHeight;
+          threeCamera.updateProjectionMatrix();
+        }
+      } else {
+        svg.style.display = 'block';
+        threeContainer.style.display = 'none';
+        btn2d.classList.add('active');
+        btn3d.classList.remove('active');
+      }
+    }
+
+    window.addEventListener('resize', () => {
+      const threeContainer = document.getElementById('three-container');
+      if (threeContainer && threeRenderer && threeCamera) {
+        threeRenderer.setSize(threeContainer.clientWidth, threeContainer.clientHeight);
+        threeCamera.aspect = threeContainer.clientWidth / threeContainer.clientHeight;
+        threeCamera.updateProjectionMatrix();
+      }
+    });
 
     // Timeline Scrubbing Handler
     timeline.addEventListener('input', (e) => {
@@ -1452,6 +2327,16 @@
     // --- Init App ---
     window.addEventListener('DOMContentLoaded', () => {
       buildLogFeed();
+      
+      // Initialize Three.js 3D scene
+      initThreeJS();
+
+      // View Toggles Handlers
+      const btn2d = document.getElementById('btn-view-2d');
+      const btn3d = document.getElementById('btn-view-3d');
+      if (btn2d) btn2d.addEventListener('click', () => switchVisualizerMode('2d'));
+      if (btn3d) btn3d.addEventListener('click', () => switchVisualizerMode('3d'));
+
       updateTimelineState(-3.0);
       
       // Auto play on startup

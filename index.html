@@ -864,6 +864,9 @@
           <button class="tab-trigger" onclick="switchTab('road')">
             <i class="fa-solid fa-chart-network"></i> Road Memory
           </button>
+          <button class="tab-trigger" onclick="switchTab('autopilot')">
+            <i class="fa-solid fa-compass"></i> Autopilot HUD
+          </button>
         </div>
 
         <div class="tab-controls">
@@ -885,6 +888,7 @@
         <iframe id="iframe-reconstruction" class="module-iframe active-iframe" src="demos/crash-reconstruction.html"></iframe>
         <iframe id="iframe-vitals" class="module-iframe" src="demos/vital-signs.html"></iframe>
         <iframe id="iframe-road" class="module-iframe" src="demos/road-memory.html"></iframe>
+        <iframe id="iframe-autopilot" class="module-iframe" src="demos/driving-visualization.html"></iframe>
 
         <!-- Diagnostic Simulation HUD overlay overlay -->
         <div class="sim-hud-overlay" id="sim-overlay">
@@ -932,6 +936,10 @@
       road: {
         iframeId: 'iframe-road',
         filePath: 'demos/road-memory.html'
+      },
+      autopilot: {
+        iframeId: 'iframe-autopilot',
+        filePath: 'demos/driving-visualization.html'
       }
     };
 
@@ -967,6 +975,8 @@
         setTimeout(() => postToIframe('iframe-road', 'MAP_VISIBLE'), 80);
       } else if (tabKey === 'vitals') {
         setTimeout(() => postToIframe('iframe-vitals', 'VITALS_VISIBLE'), 80);
+      } else if (tabKey === 'autopilot') {
+        setTimeout(() => postToIframe('iframe-autopilot', 'AUTOPILOT_VISIBLE'), 80);
       }
 
       // Trigger immediate resize check
@@ -1040,6 +1050,7 @@
       switchTab('reconstruction');
       hudMessage.innerText = "Impact detected. Reconstructing crash truth...";
       postToIframe('iframe-reconstruction', 'START_CRASH_RECONSTRUCTION');
+      postToIframe('iframe-autopilot', 'START_CRASH_RECONSTRUCTION');
 
       // Step 2: Vital Signs (after 3.5s)
       setTimeout(() => {
@@ -1137,6 +1148,7 @@
       postToIframe('iframe-reconstruction', 'RESET_DEMO');
       postToIframe('iframe-road', 'RESET_DEMO');
       postToIframe('iframe-vitals', 'RESET_DEMO');
+      postToIframe('iframe-autopilot', 'RESET_DEMO');
     }
 
     // Listen for events from sub-modules
