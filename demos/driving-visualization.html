@@ -1224,6 +1224,17 @@
       }
     }
 
+    function triggerCanvasResize() {
+      const threeContainer = document.getElementById('three-container');
+      if (threeContainer && threeRenderer && threeCamera) {
+        threeRenderer.setSize(threeContainer.clientWidth, threeContainer.clientHeight);
+        threeCamera.aspect = threeContainer.clientWidth / threeContainer.clientHeight;
+        threeCamera.updateProjectionMatrix();
+      }
+    }
+
+    window.addEventListener('resize', triggerCanvasResize);
+
     // --- Init App ---
     window.addEventListener('DOMContentLoaded', () => {
       // Setup Three.js WebGL
@@ -1241,6 +1252,10 @@
           }
         });
       }
+
+      // Initial sizing check
+      setTimeout(triggerCanvasResize, 100);
+      setTimeout(triggerCanvasResize, 400);
     });
 
     // Listen for messages from parent cockpit shell
@@ -1249,6 +1264,10 @@
         triggerAccidentTimeline();
       } else if (event.data === 'RESET_DEMO') {
         resetAccidentTimeline();
+      } else if (event.data === 'AUTOPILOT_VISIBLE') {
+        // Trigger Three.js canvas size update
+        setTimeout(triggerCanvasResize, 50);
+        setTimeout(triggerCanvasResize, 150);
       }
     });
   </script>
