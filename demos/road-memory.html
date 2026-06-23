@@ -52,7 +52,7 @@
 
     /* Left Console Panel */
     .console-panel {
-      width: 420px;
+      width: 350px;
       background: var(--panel-bg);
       border-right: 1px solid var(--border-color);
       backdrop-filter: blur(16px);
@@ -70,55 +70,10 @@
       gap: 12px;
     }
 
-    .m-benz-logo {
+    .m-benz-logo-img {
       width: 32px;
       height: 32px;
-      border: 2px solid var(--text-main);
-      border-radius: 50%;
-      position: relative;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-    .m-benz-logo::before, .m-benz-logo::after {
-      content: '';
-      position: absolute;
-      background: var(--text-main);
-    }
-    .m-benz-logo::before {
-      width: 2px;
-      height: 12px;
-      top: 2px;
-    }
-    .m-benz-logo-spokes {
-      width: 100%;
-      height: 100%;
-      position: absolute;
-      transform: rotate(120deg);
-    }
-    .m-benz-logo-spokes::before {
-      content: '';
-      position: absolute;
-      width: 2px;
-      height: 12px;
-      left: 13px;
-      top: 2px;
-      background: var(--text-main);
-    }
-    .m-benz-logo-spokes2 {
-      width: 100%;
-      height: 100%;
-      position: absolute;
-      transform: rotate(240deg);
-    }
-    .m-benz-logo-spokes2::before {
-      content: '';
-      position: absolute;
-      width: 2px;
-      height: 12px;
-      left: 13px;
-      top: 2px;
-      background: var(--text-main);
+      object-fit: contain;
     }
 
     .brand-text h1 {
@@ -642,6 +597,65 @@
       box-shadow: 0 0 15px #ff3b30;
       z-index: 10;
     }
+
+    /* Custom Scrollbar for iframe page */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.25);
+    }
+
+    body.in-iframe {
+      height: 100vh;
+      overflow: hidden;
+    }
+    body.in-iframe .dashboard {
+      height: 100vh;
+    }
+    body.in-iframe .console-panel {
+      height: 100%;
+      overflow-y: auto;
+      box-shadow: none;
+    }
+    body.in-iframe .map-container {
+      height: 100%;
+    }
+
+    @media (max-width: 1100px) {
+      body, body.in-iframe {
+        height: auto;
+        overflow-y: auto;
+      }
+      .dashboard, body.in-iframe .dashboard {
+        flex-direction: column;
+        height: auto;
+      }
+      .console-panel, body.in-iframe .console-panel {
+        width: 100%;
+        height: auto;
+        border-right: none;
+        border-bottom: 1px solid var(--border-color);
+        box-shadow: none;
+        overflow-y: visible;
+      }
+      .map-container, body.in-iframe .map-container {
+        width: 100% !important;
+        height: 550px !important;
+        flex: none;
+      }
+      #map {
+        height: 100% !important;
+      }
+    }
   </style>
 </head>
 <body>
@@ -652,19 +666,13 @@
       <!-- Mercedes Benz Hackathon Branding -->
       <div class="brand-section" style="justify-content: space-between; width: 100%;">
         <div style="display: flex; align-items: center; gap: 12px;">
-          <div class="m-benz-logo">
-            <div class="m-benz-logo-spokes"></div>
-            <div class="m-benz-logo-spokes2"></div>
-          </div>
+          <img src="../mercedeslogo.png" class="m-benz-logo-img" alt="Mercedes-Benz Logo">
           <div class="brand-text">
             <h1>ClearBox</h1>
             <span>Active Safety Cockpit</span>
           </div>
         </div>
-        <!-- Back to Shell Button -->
-        <a href="../index.html" class="back-btn" id="back-btn" style="position: static; margin-left: auto;" target="_top">
-          <i class="fa-solid fa-arrow-left"></i> ClearBox Home
-        </a>
+
       </div>
 
       <!-- Safety Proximity Warning Banner -->
@@ -719,8 +727,20 @@
         </div>
       </div>
 
+      <div class="proximity-meter-container">
+        <div class="feed-title">Dataset Provenance</div>
+        <div style="font-size: 11px; line-height: 1.45; color: var(--text-muted);">
+          Simulated Klang Valley hotspot layer for demo. Production inputs: police crash reports, DBKL road works, insurer claims, OEM near-miss telemetry, weather, and crowdsourced hazard validation.
+        </div>
+      </div>
+
       <!-- Console Simulation Controls -->
       <div class="control-panel">
+        <div class="control-row" style="margin-bottom: 8px;">
+          <button class="btn" id="btnSimulateAccident" style="border-color: var(--accent-red); background: rgba(255, 59, 48, 0.08); color: #fff; width: 100%;">
+            <i class="fa-solid fa-triangle-exclamation"></i> Simulate Accident
+          </button>
+        </div>
         <div class="control-row">
           <button class="btn active-btn" id="play-pause-btn">
             <i class="fa-solid fa-pause"></i> Pause Drive
@@ -801,6 +821,7 @@
     let heatLayer;
     let routePolyline;
     let carMarker;
+    let isCrashTriggered = false;
     
     // Simulation state
     let isDriving = true;
@@ -843,19 +864,29 @@
         lineJoin: 'round'
       }).addTo(map);
 
-      // Initialize Heatmap using Leaflet.heat CDN
-      // Structure: [lat, lng, intensity]
-      const heatPoints = hotspots.map(h => [h.lat, h.lng, 0.8]);
-      heatLayer = L.heatLayer(heatPoints, {
-        radius: 35,
-        blur: 25,
-        maxZoom: 15,
-        gradient: {
-          0.2: '#0088ff',
-          0.4: '#ff9f0a',
-          0.8: '#ff3b30'
+      function attachHeatLayerWhenReady(attemptsLeft = 20) {
+        const mapEl = document.getElementById('map');
+        if (!mapEl || mapEl.clientWidth === 0 || mapEl.clientHeight === 0) {
+          if (attemptsLeft > 0) setTimeout(() => attachHeatLayerWhenReady(attemptsLeft - 1), 150);
+          return;
         }
-      }).addTo(map);
+
+        map.invalidateSize();
+        if (heatLayer) map.removeLayer(heatLayer);
+        const heatPoints = hotspots.map(h => [h.lat, h.lng, 0.8]);
+        heatLayer = L.heatLayer(heatPoints, {
+          radius: 35,
+          blur: 25,
+          maxZoom: 15,
+          gradient: {
+            0.2: '#0088ff',
+            0.4: '#ff9f0a',
+            0.8: '#ff3b30'
+          }
+        }).addTo(map);
+      }
+
+      attachHeatLayerWhenReady();
 
       // Place visual circular rings for each hotspot (300m danger zones)
       hotspots.forEach((h, index) => {
@@ -1156,7 +1187,14 @@
       // Drive simulation cycle (100ms updates)
       setInterval(simulateDriving, 100);
 
-      // Handle back button navigation to top window and hide if inside iframe
+      // Set iframe mode class unconditionally
+      if (window.self !== window.top) {
+        document.body.classList.add('in-iframe');
+        const brandSec = document.querySelector('.brand-section');
+        if (brandSec) brandSec.style.display = 'none';
+      }
+
+      // Handle back button navigation to top window if present
       const backBtn = document.getElementById('back-btn');
       if (backBtn) {
         if (window.self !== window.top) {
@@ -1167,12 +1205,39 @@
           window.top.location.href = "../index.html";
         });
       }
+
+      // Bind simulate accident button inside Road Memory
+      const btnSimulateAccident = document.getElementById('btnSimulateAccident');
+      if (btnSimulateAccident) {
+        btnSimulateAccident.addEventListener('click', () => {
+          if (isCrashTriggered) {
+            resetRoadDemo();
+          } else {
+            addNewIncident();
+          }
+        });
+      }
+
+      // Handle window resizing to keep Leaflet map layout correct
+      window.addEventListener('resize', () => {
+        if (map) {
+          map.invalidateSize();
+        }
+      });
     });
 
     let newAccidentMarker = null;
     let newAccidentCircle = null;
 
     function addNewIncident() {
+      isCrashTriggered = true;
+      const btnSim = document.getElementById('btnSimulateAccident');
+      if (btnSim) {
+        btnSim.innerHTML = '<i class="fa-solid fa-rotate-left"></i> Reset Demo';
+        btnSim.style.borderColor = 'var(--accent-cyan)';
+        btnSim.style.background = 'rgba(0, 235, 214, 0.08)';
+      }
+
       // 1. Stop driving
       isDriving = false;
       
@@ -1255,6 +1320,14 @@
     }
 
     function resetRoadDemo() {
+      isCrashTriggered = false;
+      const btnSim = document.getElementById('btnSimulateAccident');
+      if (btnSim) {
+        btnSim.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Simulate Accident';
+        btnSim.style.borderColor = 'var(--accent-red)';
+        btnSim.style.background = 'rgba(255, 59, 48, 0.08)';
+      }
+
       // 1. Restore driving state
       isDriving = true;
       isFollowingCar = true;
@@ -1311,6 +1384,13 @@
         addNewIncident();
       } else if (event.data === 'RESET_DEMO') {
         resetRoadDemo();
+      } else if (event.data === 'MAP_VISIBLE') {
+        if (map) {
+          setTimeout(() => {
+            map.invalidateSize();
+            attachHeatLayerWhenReady();
+          }, 300);
+        }
       }
     });
   </script>

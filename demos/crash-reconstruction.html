@@ -35,12 +35,18 @@
       -webkit-font-smoothing: antialiased;
     }
 
+    html {
+      max-width: 100%;
+      overflow-x: hidden;
+    }
+
     body {
       font-family: 'Outfit', sans-serif;
       background-color: var(--bg-dark);
       color: var(--text-main);
-      height: 100vh;
-      overflow: hidden;
+      min-height: 100vh;
+      overflow-x: hidden;
+      overflow-y: auto;
       display: flex;
       flex-direction: column;
       position: relative;
@@ -49,7 +55,7 @@
     /* Ambient lighting */
     body::before {
       content: '';
-      position: absolute;
+      position: fixed;
       width: 600px;
       height: 600px;
       background: radial-gradient(circle, rgba(0, 235, 214, 0.04) 0%, rgba(0,0,0,0) 70%);
@@ -60,7 +66,7 @@
     }
     body::after {
       content: '';
-      position: absolute;
+      position: fixed;
       width: 600px;
       height: 600px;
       background: radial-gradient(circle, rgba(255, 59, 48, 0.03) 0%, rgba(0,0,0,0) 70%);
@@ -96,6 +102,43 @@
       z-index: 10;
       height: 100%;
       overflow: hidden;
+    }
+
+    @media (max-width: 1180px) {
+      body {
+        min-height: 100vh;
+      }
+
+      .dashboard {
+        grid-template-columns: 1fr;
+        height: auto;
+        min-height: 100vh;
+        overflow: visible;
+      }
+
+      .column {
+        height: auto;
+        overflow: visible;
+      }
+
+      .glass-card {
+        overflow: visible;
+      }
+    }
+
+    @media (max-width: 620px) {
+      .dashboard {
+        padding: 10px;
+        gap: 10px;
+      }
+
+      .telemetry-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .card-title {
+        line-height: 1.35;
+      }
     }
 
     .column {
@@ -585,6 +628,16 @@
     .accident-btn:active {
       transform: translateY(1px);
     }
+    .accident-btn.reset-state {
+      border-color: var(--accent-cyan);
+      background: rgba(0, 235, 214, 0.08);
+      box-shadow: 0 0 10px rgba(0, 235, 214, 0.15);
+    }
+    .accident-btn.reset-state:hover {
+      background: var(--accent-cyan);
+      color: var(--bg-dark);
+      box-shadow: 0 0 15px var(--accent-cyan);
+    }
   </style>
 </head>
 <body>
@@ -595,9 +648,7 @@
       <i class="fa-solid fa-circle-nodes" style="color: var(--accent-cyan); font-size: 16px;"></i>
       <span style="font-size: 13px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #fff;">ClearBox // Crash Reconstruction Diagnostics</span>
     </div>
-    <a href="../index.html" class="back-btn" id="back-btn" target="_top">
-      <i class="fa-solid fa-arrow-left"></i> ClearBox Home
-    </a>
+
   </div>
 
   <div class="bg-grid"></div>
@@ -1302,12 +1353,14 @@
     // Timeline Scrubbing Handler
     timeline.addEventListener('input', (e) => {
       pauseTimeline();
+      playPauseBtn.classList.remove('replay-state');
       updateTimelineState(parseFloat(e.target.value));
     });
 
     function startPlay() {
       isPlaying = true;
       playPauseBtn.innerHTML = '<i class="fa-solid fa-pause"></i>';
+      playPauseBtn.classList.remove('replay-state');
       
       playInterval = setInterval(() => {
         let val = parseFloat(timeline.value) + 0.05;
@@ -1315,6 +1368,8 @@
           if (val > 1.5) {
             val = 1.5;
             pauseTimeline();
+            playPauseBtn.innerHTML = '<i class="fa-solid fa-rotate-right"></i>';
+            playPauseBtn.classList.add('replay-state');
           }
         } else {
           if (val > 1.5) {
@@ -1327,17 +1382,47 @@
 
     function pauseTimeline() {
       isPlaying = false;
-      playPauseBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
+      if (!playPauseBtn.classList.contains('replay-state')) {
+        playPauseBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
+      }
       clearInterval(playInterval);
     }
 
     playPauseBtn.addEventListener('click', () => {
-      if (isPlaying) {
+      if (playPauseBtn.classList.contains('replay-state')) {
+        playPauseBtn.classList.remove('replay-state');
+        updateTimelineState(-3.0);
+        startPlay();
+      } else if (isPlaying) {
         pauseTimeline();
       } else {
         startPlay();
       }
     });
+
+    function triggerAccidentTimeline() {
+      isCrashTriggered = true;
+      buildLogFeed();
+      updateTimelineState(-3.0);
+      playPauseBtn.classList.remove('replay-state');
+      startPlay();
+      if (btnSimulateAccident) {
+        btnSimulateAccident.innerHTML = '<i class="fa-solid fa-rotate-left"></i> Reset Demo';
+        btnSimulateAccident.classList.add('reset-state');
+      }
+    }
+
+    function resetAccidentTimeline() {
+      isCrashTriggered = false;
+      buildLogFeed();
+      updateTimelineState(-3.0);
+      playPauseBtn.classList.remove('replay-state');
+      startPlay();
+      if (btnSimulateAccident) {
+        btnSimulateAccident.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Simulate Accident';
+        btnSimulateAccident.classList.remove('reset-state');
+      }
+    }
 
     // --- Init App ---
     window.addEventListener('DOMContentLoaded', () => {
@@ -1347,13 +1432,15 @@
       // Auto play on startup
       startPlay();
 
-      // Enforce back-btn top window navigation and hide if inside iframe
+      // Set iframe mode layout unconditionally
+      if (window.self !== window.top) {
+        const headerBar = document.getElementById('header-bar');
+        if (headerBar) headerBar.style.display = 'none';
+      }
+
+      // Handle back button navigation to top window if present
       const backBtn = document.getElementById('back-btn');
       if (backBtn) {
-        if (window.self !== window.top) {
-          const headerBar = document.getElementById('header-bar');
-          if (headerBar) headerBar.style.display = 'none';
-        }
         backBtn.addEventListener('click', function(e) {
           e.preventDefault();
           window.top.location.href = "../index.html";
@@ -1361,11 +1448,13 @@
       }
 
       // Bind simulate accident button inside iframe
-      const btnSimulateAccident = document.getElementById('btnSimulateAccident');
       if (btnSimulateAccident) {
         btnSimulateAccident.addEventListener('click', () => {
-          // Tell parent shell to run simulation
-          window.parent.postMessage('START_SIMULATION', '*');
+          if (isCrashTriggered) {
+            resetAccidentTimeline();
+          } else {
+            triggerAccidentTimeline();
+          }
         });
       }
     });
@@ -1373,15 +1462,9 @@
     // Listen for messages from parent shell
     window.addEventListener('message', (event) => {
       if (event.data === 'START_CRASH_RECONSTRUCTION') {
-        isCrashTriggered = true;
-        buildLogFeed();
-        updateTimelineState(-3.0);
-        startPlay();
+        triggerAccidentTimeline();
       } else if (event.data === 'RESET_DEMO') {
-        isCrashTriggered = false;
-        buildLogFeed();
-        updateTimelineState(-3.0);
-        startPlay();
+        resetAccidentTimeline();
       }
     });
   </script>

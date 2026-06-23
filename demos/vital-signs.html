@@ -47,12 +47,18 @@
       -moz-osx-font-smoothing: grayscale;
     }
 
+    html {
+      max-width: 100%;
+      overflow-x: hidden;
+    }
+
     body {
       background-color: var(--bg-color);
       color: #e2e8f0;
       font-family: var(--font-primary);
-      height: 100vh;
-      overflow: hidden;
+      min-height: 100vh;
+      overflow-x: hidden;
+      overflow-y: auto;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -62,7 +68,7 @@
     /* Ambient Cockpit Lighting */
     body::before {
       content: '';
-      position: absolute;
+      position: fixed;
       width: 800px;
       height: 800px;
       background: radial-gradient(circle, rgba(0, 235, 214, 0.05) 0%, rgba(0,0,0,0) 70%);
@@ -74,7 +80,7 @@
 
     body::after {
       content: '';
-      position: absolute;
+      position: fixed;
       width: 800px;
       height: 800px;
       background: radial-gradient(circle, rgba(0, 132, 255, 0.04) 0%, rgba(0,0,0,0) 70%);
@@ -238,27 +244,31 @@
       font-weight: 500;
     }
 
-    /* Mercedes-Benz Star SVG */
+    /* Mercedes-Benz Star Logo Image */
     .mb-star-container {
       position: absolute;
       left: 50%;
       top: 50%;
       transform: translate(-50%, -50%);
+      transition: var(--transition-standard);
     }
 
-    .mb-star {
+    .m-benz-logo-img {
       width: 40px;
       height: 40px;
-      fill: none;
-      stroke: rgba(255, 255, 255, 0.7);
-      stroke-width: 1.2;
+      object-fit: contain;
       filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.2));
-      transition: stroke 0.5s ease, filter 0.5s ease;
+      transition: filter 0.5s ease;
     }
 
-    .mbux-chassis.alert-active .mb-star {
-      stroke: var(--critical-color);
-      filter: drop-shadow(0 0 8px rgba(255, 59, 48, 0.3));
+    .mbux-chassis.alert-active .m-benz-logo-img {
+      filter: drop-shadow(0 0 8px rgba(255, 59, 48, 0.6));
+    }
+
+    @media (max-width: 1350px) {
+      .mb-star-container {
+        display: none;
+      }
     }
 
     .system-status-indicator {
@@ -328,10 +338,10 @@
        ========================================== */
     .mbux-content {
       flex: 1;
-      padding: 20px 40px;
+      padding: 12px 24px;
       display: grid;
-      grid-template-columns: 360px 1fr 360px;
-      gap: 20px;
+      grid-template-columns: 320px 1fr 320px;
+      gap: 16px;
       z-index: 10;
       position: relative;
     }
@@ -339,7 +349,7 @@
     .column {
       display: flex;
       flex-direction: column;
-      gap: 20px;
+      gap: 12px;
       height: 100%;
     }
 
@@ -347,8 +357,8 @@
     .glass-card {
       background: var(--panel-bg);
       border: 1px solid var(--panel-border);
-      border-radius: 16px;
-      padding: 20px;
+      border-radius: 14px;
+      padding: 14px 18px;
       box-shadow: var(--glass-glow);
       backdrop-filter: blur(25px);
       -webkit-backdrop-filter: blur(25px);
@@ -391,7 +401,7 @@
     .sensor-feeds-list {
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 8px;
     }
 
     .sensor-item {
@@ -652,16 +662,16 @@
     .telemetry-grid {
       display: flex;
       flex-direction: column;
-      gap: 20px;
+      gap: 14px;
       height: 100%;
     }
 
     .telemetry-row {
       display: grid;
-      grid-template-columns: 180px 1fr;
-      gap: 20px;
+      grid-template-columns: 150px 1fr;
+      gap: 14px;
       height: 48%;
-      min-height: 150px;
+      min-height: 140px;
     }
 
     .telemetry-numeric-card {
@@ -765,8 +775,8 @@
     }
 
     .stress-radial-svg {
-      width: 120px;
-      height: 120px;
+      width: 100px;
+      height: 100px;
       transform: rotate(-90deg);
     }
 
@@ -999,6 +1009,90 @@
       50% { opacity: 1; }
     }
 
+    @media (max-width: 1180px) {
+      body {
+        align-items: flex-start;
+        padding: 10px;
+      }
+
+      .mbux-chassis {
+        width: 100%;
+        height: auto;
+        min-height: 100vh;
+        max-height: none;
+        overflow: visible;
+        border-radius: 18px;
+      }
+
+      .mbux-header {
+        height: auto;
+        min-height: 78px;
+        padding: 16px 20px;
+        gap: 14px;
+        flex-wrap: wrap;
+      }
+
+      .mb-star-container {
+        display: none;
+      }
+
+      .mbux-content {
+        grid-template-columns: 1fr;
+        padding: 16px;
+        gap: 16px;
+      }
+
+      .column {
+        height: auto;
+      }
+
+      .telemetry-row {
+        grid-template-columns: minmax(150px, 190px) 1fr;
+        min-height: 180px;
+      }
+
+      .controls-card {
+        height: auto;
+        min-height: 0;
+      }
+    }
+
+    @media (max-width: 620px) {
+      body {
+        padding: 0;
+      }
+
+      .mbux-chassis {
+        border-radius: 0;
+        border-left: none;
+        border-right: none;
+      }
+
+      .brand-subtitle,
+      .sys-time {
+        display: none;
+      }
+
+      .mbux-content {
+        padding: 12px;
+      }
+
+      .telemetry-row {
+        grid-template-columns: 1fr;
+        height: auto;
+      }
+
+      .telemetry-value {
+        font-size: 3rem;
+      }
+
+      .summary-header {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 6px;
+      }
+    }
+
     /* Reset Demo Button inside Controls Card */
     .btn-reset-demo-new {
       width: 100%;
@@ -1062,6 +1156,87 @@
     .back-btn:active {
       transform: translateY(1px);
     }
+
+    /* Custom Scrollbar for iframe page */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.25);
+    }
+
+    /* Style overrides when loaded inside iframe of index.html */
+    body.in-iframe {
+      align-items: flex-start;
+      justify-content: flex-start;
+      padding: 0;
+      overflow-y: auto;
+      height: auto;
+      min-height: 0;
+    }
+    body.in-iframe .mbux-chassis {
+      width: 100%;
+      height: auto;
+      max-height: none;
+      border: none;
+      box-shadow: none;
+      background: transparent;
+      overflow: visible;
+      border-radius: 0;
+      backdrop-filter: none;
+    }
+    body.in-iframe .mbux-header {
+      display: none;
+    }
+    body.in-iframe .mbux-content {
+      padding: 12px;
+      height: auto;
+      grid-template-columns: 300px 1fr 300px;
+      gap: 12px;
+    }
+    body.in-iframe .column {
+      height: auto;
+      gap: 10px;
+    }
+    body.in-iframe .glass-card {
+      padding: 12px 14px;
+      border-radius: 12px;
+    }
+    body.in-iframe .sensor-item {
+      padding: 8px 10px;
+    }
+    body.in-iframe .stress-card {
+      height: auto !important;
+      flex: none !important;
+    }
+    body.in-iframe .controls-card {
+      height: auto !important;
+      min-height: 0 !important;
+    }
+    body.in-iframe .stress-radial-svg {
+      width: 85px;
+      height: 85px;
+    }
+    body.in-iframe .stress-gauge-pct {
+      font-size: 1.35rem;
+    }
+    body.in-iframe .telemetry-row {
+      gap: 10px;
+      min-height: 130px;
+    }
+    body.in-iframe .paramedic-summary-box {
+      padding: 10px 16px;
+      margin-top: 5px;
+      border-radius: 12px;
+    }
   </style>
 </head>
 <body>
@@ -1079,27 +1254,16 @@
         <div class="brand-logo-text">mosAIc<span class="brand-dot">•</span></div>
         <div class="brand-subtitle">ClearBox // Vital Signs Intelligence</div>
       </div>
-
-      <!-- Mercedes-Benz Widescreen Center Star -->
+      <!-- Mercedes-Benz Star Logo -->
       <div class="mb-star-container">
-        <svg class="mb-star" viewBox="0 0 100 100">
-          <circle cx="50" cy="50" r="45" />
-          <path d="M50 5 L50 95" />
-          <path d="M50 50 L11 72.5" />
-          <path d="M50 50 L89 72.5" />
-          <polygon points="50,5 50,50 11,72.5 50,42" fill="rgba(255,255,255,0.03)" />
-          <polygon points="50,5 50,50 89,72.5 50,42" fill="rgba(255,255,255,0.07)" />
-        </svg>
+        <img src="../mercedeslogo.png" class="m-benz-logo-img" alt="Mercedes-Benz Logo">
       </div>
 
       <div class="system-status-indicator">
-        <div class="sys-time" id="sysTime">17:10:00</div>
         <div class="sys-status-badge" id="sysStatusBadge">
           <div class="status-dot"></div>
           <span id="sysStatusText">System Active // Baseline Tracking</span>
         </div>
-        <!-- Back to Shell Button -->
-        <a href="../index.html" class="back-btn" id="back-btn" target="_top"><i class="fa-solid fa-arrow-left"></i> ClearBox Home</a>
       </div>
     </div>
 
@@ -1388,19 +1552,7 @@
 
   <!-- Main System Control Logic -->
   <script>
-    // ==========================================
-    // 1. DYNAMIC SYSTEM CLOCK
-    // ==========================================
-    function updateClock() {
-      const clockEl = document.getElementById('sysTime');
-      const now = new Date();
-      let hours = now.getHours().toString().padStart(2, '0');
-      let minutes = now.getMinutes().toString().padStart(2, '0');
-      let seconds = now.getSeconds().toString().padStart(2, '0');
-      clockEl.textContent = `${hours}:${minutes}:${seconds}`;
-    }
-    setInterval(updateClock, 1000);
-    updateClock();
+
 
     // ==========================================
     // 2. DASHBOARD GLOBAL STATES & VARIABLES
@@ -1468,14 +1620,23 @@
     function resizeCanvases() {
       const containerWidth = canvasECG.parentElement.clientWidth;
       const containerHeight = canvasECG.parentElement.clientHeight;
+      if (containerWidth === 0 || containerHeight === 0) return;
       
       canvasECG.width = containerWidth * window.devicePixelRatio;
       canvasECG.height = containerHeight * window.devicePixelRatio;
+      ctxECG.setTransform(1, 0, 0, 1, 0, 0);
       ctxECG.scale(window.devicePixelRatio, window.devicePixelRatio);
       
       canvasResp.width = containerWidth * window.devicePixelRatio;
       canvasResp.height = containerHeight * window.devicePixelRatio;
+      ctxResp.setTransform(1, 0, 0, 1, 0, 0);
       ctxResp.scale(window.devicePixelRatio, window.devicePixelRatio);
+
+      // Reset array data to prevent undefined indexing visual gaps
+      wavePointsECG.length = 0;
+      wavePointsResp.length = 0;
+      ecgX = 0;
+      respX = 0;
     }
     window.addEventListener('resize', resizeCanvases);
     resizeCanvases();
@@ -1536,12 +1697,21 @@
       const delta = (time - lastTime) / 1000;
       lastTime = time;
 
-      const w = canvasECG.width / window.devicePixelRatio;
-      const h = canvasECG.height / window.devicePixelRatio;
+      const containerWidth = canvasECG.parentElement.clientWidth;
+      const containerHeight = canvasECG.parentElement.clientHeight;
       
-      if (w === 0 || h === 0) {
+      if (containerWidth === 0 || containerHeight === 0) {
         requestAnimationFrame(renderWaves);
         return;
+      }
+
+      let w = canvasECG.width / window.devicePixelRatio;
+      let h = canvasECG.height / window.devicePixelRatio;
+      
+      if (containerWidth !== w || containerHeight !== h) {
+        resizeCanvases();
+        w = canvasECG.width / window.devicePixelRatio;
+        h = canvasECG.height / window.devicePixelRatio;
       }
 
       // ECG Speed & Phase calculations
@@ -1850,6 +2020,20 @@
     function resetVitalsLocal() {
       isCrashMode = false;
       chassis.classList.remove('alert-active');
+      telemetryData = {
+        hr: 72,
+        rr: 14,
+        stress: 18,
+        vocal: 12,
+        behavioral: 8
+      };
+      telemetryTargets = {
+        hr: 72,
+        rr: 14,
+        stress: 18,
+        vocal: 12,
+        behavioral: 8
+      };
       
       sysStatusBadge.classList.remove('critical');
       sysStatusText.textContent = "System Active // Baseline Tracking";
@@ -1885,7 +2069,7 @@
 
       clearInterval(simulationInterval);
       simulationInterval = setInterval(updateTelemetryTargets, 2000);
-      updateTelemetryTargets();
+      interpolateTelemetry();
 
       // Reset double tone
       playBeep(600, 'sine', 0.1);
@@ -1904,16 +2088,9 @@
       emergencyBanner.classList.remove('slide-down');
     });
 
-    // Hide back button if loaded in iframe and enforce window.top navigation
-    const backBtn = document.getElementById('back-btn');
-    if (backBtn) {
-      if (window.self !== window.top) {
-        backBtn.style.display = 'none';
-      }
-      backBtn.addEventListener('click', function(e) {
-        e.preventDefault();
-        window.top.location.href = "../index.html";
-      });
+    // Set iframe mode class unconditionally
+    if (window.self !== window.top) {
+      document.body.classList.add('in-iframe');
     }
 
     // Listen for messages from parent shell
@@ -1923,6 +2100,8 @@
         if (btnCrash) btnCrash.click();
       } else if (event.data === 'RESET_DEMO') {
         resetVitalsLocal();
+      } else if (event.data === 'VITALS_VISIBLE') {
+        resizeCanvases();
       }
     });
   </script>
