@@ -873,6 +873,26 @@
       text-shadow: 0 0 8px rgba(0, 229, 117, 0.15);
       box-shadow: 0 0 10px rgba(0, 229, 117, 0.05);
     }
+    #btn-verify-ledger:hover {
+      background: var(--accent-cyan) !important;
+      color: var(--bg-dark) !important;
+      box-shadow: 0 0 15px var(--accent-cyan) !important;
+    }
+    #btn-verify-ledger:active {
+      transform: scale(0.98);
+    }
+    .receipt-modal-overlay.show {
+      display: flex !important;
+      opacity: 1 !important;
+    }
+    .ledger-row.scanning {
+      animation: ledger-row-pulse 0.4s infinite alternate;
+      border-radius: 6px;
+    }
+    @keyframes ledger-row-pulse {
+      0% { background: rgba(255, 159, 10, 0.02); }
+      100% { background: rgba(255, 159, 10, 0.08); }
+    }
   </style>
 </head>
 <body>
@@ -1176,6 +1196,11 @@
             <span class="ledger-badge badge-standby" id="ledger-val-claim">STANDBY</span>
           </div>
         </div>
+        
+        <!-- Interactive Verify Button -->
+        <button class="action-btn-primary" id="btn-verify-ledger" style="width: 100%; padding: 10px; margin-top: 14px; border-radius: 20px; border: 1px solid var(--accent-cyan); background: rgba(0, 235, 214, 0.06); color: #fff; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.3s ease; box-shadow: 0 0 10px rgba(0, 235, 214, 0.1);">
+          <i class="fa-solid fa-shield-halved"></i> Verify Ledger Integrity
+        </button>
       </div>
     </div>
   </div>
@@ -2322,6 +2347,16 @@
         btnSimulateAccident.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Simulate Accident';
         btnSimulateAccident.classList.remove('reset-state');
       }
+      if (btnVerifyLedger) {
+        btnVerifyLedger.innerHTML = '<i class="fa-solid fa-shield-halved"></i> Verify Ledger Integrity';
+        btnVerifyLedger.style.borderColor = 'var(--accent-cyan)';
+        btnVerifyLedger.style.background = 'rgba(0, 235, 214, 0.06)';
+        btnVerifyLedger.style.color = '#fff';
+      }
+      if (receiptModal) {
+        receiptModal.classList.remove('show');
+      }
+      ledgerRows.forEach(row => row.classList.remove('scanning'));
     }
 
     // --- Init App ---
@@ -2369,15 +2404,122 @@
       }
     });
 
+    // Interactive Verification Logic
+    const btnVerifyLedger = document.getElementById('btn-verify-ledger');
+    const receiptModal = document.getElementById('receipt-modal');
+    const btnCloseReceipt = document.getElementById('btn-close-receipt');
+    const ledgerRows = document.querySelectorAll('.ledger-row');
+
+    function executeLedgerVerification() {
+      // If the simulation is not triggered yet or hasn't finished, warn the user
+      if (!isCrashTriggered || parseFloat(timeline.value) < 0.8) {
+        alert('System in standby active monitoring. Verification available post-incident.');
+        return;
+      }
+
+      // Start audit scan animation
+      btnVerifyLedger.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Auditing Hashes...';
+      btnVerifyLedger.style.borderColor = 'var(--accent-orange)';
+      btnVerifyLedger.style.background = 'rgba(255, 159, 10, 0.06)';
+      
+      // Make rows pulse
+      ledgerRows.forEach(row => row.classList.add('scanning'));
+
+      setTimeout(() => {
+        // Complete verification
+        btnVerifyLedger.innerHTML = '<i class="fa-solid fa-check-double"></i> Verification Completed';
+        btnVerifyLedger.style.borderColor = 'var(--success-green)';
+        btnVerifyLedger.style.background = 'rgba(0, 229, 117, 0.08)';
+
+        // Remove row pulse and secure hashes
+        ledgerRows.forEach(row => {
+          row.classList.remove('scanning');
+          const badge = row.querySelector('.ledger-badge');
+          if (badge) {
+            if (badge.id === 'ledger-val-anchor') {
+              badge.innerText = 'INTEGRITY VERIFIED';
+              badge.className = 'ledger-badge badge-success';
+            } else if (badge.id === 'ledger-val-claim') {
+              badge.innerText = 'CLAIM SECURED';
+              badge.className = 'ledger-badge badge-success';
+            }
+          }
+        });
+
+        // Show receipt modal
+        if (receiptModal) {
+          receiptModal.classList.add('show');
+        }
+      }, 1500);
+    }
+
+    if (btnVerifyLedger) {
+      btnVerifyLedger.addEventListener('click', executeLedgerVerification);
+    }
+
+    if (btnCloseReceipt) {
+      btnCloseReceipt.addEventListener('click', () => {
+        if (receiptModal) {
+          receiptModal.classList.remove('show');
+        }
+      });
+    }
+
     // Listen for messages from parent shell
     window.addEventListener('message', (event) => {
       if (event.data === 'START_CRASH_RECONSTRUCTION') {
         triggerAccidentTimeline();
       } else if (event.data === 'RESET_DEMO') {
         resetAccidentTimeline();
+      } else if (event.data === 'TRIGGER_BLOCKCHAIN_VERIFY') {
+        executeLedgerVerification();
       }
     });
   </script>
+
+  <!-- Smart Claims Receipt Modal -->
+  <div class="receipt-modal-overlay" id="receipt-modal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(5, 7, 12, 0.85); backdrop-filter: blur(12px); display: none; justify-content: center; align-items: center; z-index: 2000; opacity: 0; transition: opacity 0.3s ease;">
+    <div class="glass-card" style="width: 380px; padding: 24px; border: 1px solid var(--accent-cyan); box-shadow: 0 20px 50px rgba(0, 235, 214, 0.15); border-radius: 20px; display: flex; flex-direction: column; gap: 16px; background: rgba(10, 14, 24, 0.95);">
+      <div style="text-align: center; color: var(--accent-cyan); font-size: 28px;">
+        <i class="fa-solid fa-circle-check"></i>
+      </div>
+      <div style="text-align: center;">
+        <h2 style="font-size: 18px; font-weight: 700; letter-spacing: 0.5px; margin-bottom: 4px;">Smart Claim Approved</h2>
+        <span style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;">Blockchain Verified Settlement</span>
+      </div>
+      
+      <div style="border-top: 1px dashed rgba(255, 255, 255, 0.1); border-bottom: 1px dashed rgba(255, 255, 255, 0.1); padding: 16px 0; display: flex; flex-direction: column; gap: 10px; font-family: 'JetBrains Mono', monospace; font-size: 12px;">
+        <div style="display: flex; justify-content: space-between;">
+          <span style="color: var(--text-muted);">CONTRACT:</span>
+          <span>Mercedes-Allianz-v1</span>
+        </div>
+        <div style="display: flex; justify-content: space-between;">
+          <span style="color: var(--text-muted);">INCIDENT:</span>
+          <span>M-BENZ-39084</span>
+        </div>
+        <div style="display: flex; justify-content: space-between;">
+          <span style="color: var(--text-muted);">ASSESSMENT:</span>
+          <span style="color: var(--accent-cyan);">Instant Auto-Approve</span>
+        </div>
+        <div style="display: flex; justify-content: space-between;">
+          <span style="color: var(--text-muted);">SETTLEMENT:</span>
+          <span style="color: var(--success-green); font-weight: 700;">$3,500.00 USD</span>
+        </div>
+        <div style="display: flex; justify-content: space-between;">
+          <span style="color: var(--text-muted);">PAYMENT:</span>
+          <span>Mercedes pay (Tx #89cf7)</span>
+        </div>
+      </div>
+      
+      <div style="font-size: 10px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; word-break: break-all; text-align: center; background: rgba(255, 255, 255, 0.02); padding: 8px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.04);">
+        Signature: 30450221008f52de22f7b88939c0989f64cd5d774438b4d89a7bb14890c022026ae462208ef7d87bc4
+      </div>
+      
+      <button class="action-btn-primary" id="btn-close-receipt" style="width: 100%; padding: 10px; border-radius: 20px; border: 1px solid var(--accent-cyan); background: var(--accent-cyan); color: var(--bg-dark); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; cursor: pointer; text-align: center; transition: all 0.2s ease;">
+        Dismiss Settlement
+      </button>
+    </div>
+  </div>
 
 </body>
 </html>
