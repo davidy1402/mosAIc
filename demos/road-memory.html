@@ -324,6 +324,79 @@
       margin-top: 2px;
     }
 
+    .memory-signal-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .memory-signal {
+      padding: 10px 12px;
+      background: rgba(255, 255, 255, 0.018);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: all 0.25s ease;
+    }
+
+    .memory-signal i {
+      width: 24px;
+      height: 24px;
+      border-radius: 7px;
+      background: rgba(0, 240, 255, 0.07);
+      border: 1px solid rgba(0, 240, 255, 0.16);
+      color: var(--accent-cyan);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex: none;
+      font-size: 11px;
+    }
+
+    .memory-signal-copy {
+      min-width: 0;
+      flex: 1;
+    }
+
+    .memory-signal-label {
+      font-size: 10px;
+      color: var(--text-muted);
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .memory-signal-value {
+      margin-top: 2px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--text-main);
+      font-weight: 700;
+    }
+
+    .memory-signal.active {
+      border-color: rgba(0, 240, 255, 0.28);
+      background: rgba(0, 240, 255, 0.045);
+      box-shadow: inset 0 0 14px rgba(0, 240, 255, 0.035);
+    }
+
+    .memory-signal.warning {
+      border-color: rgba(255, 159, 10, 0.28);
+      background: rgba(255, 159, 10, 0.045);
+    }
+
+    .memory-signal.warning i {
+      background: rgba(255, 159, 10, 0.1);
+      border-color: rgba(255, 159, 10, 0.22);
+      color: var(--accent-orange);
+    }
+
     /* Simulation Control Section */
     .control-panel {
       order: 3;
@@ -805,6 +878,14 @@
           <span class="telemetry-label"><i class="fa-solid fa-compass"></i> Coordinates</span>
           <div class="telemetry-val" id="telemetry-lat" style="font-size: 13px; margin-top: 4px;">--</div>
         </div>
+        <div class="telemetry-card">
+          <span class="telemetry-label"><i class="fa-solid fa-car-side"></i> Vehicle Plate</span>
+          <div class="telemetry-val" style="font-size: 15px; margin-top: 4px;">WXY 4821</div>
+        </div>
+        <div class="telemetry-card">
+          <span class="telemetry-label"><i class="fa-solid fa-satellite-dish"></i> eCall ID</span>
+          <div class="telemetry-val" style="font-size: 13px; margin-top: 4px;">MY-CB-WXY4821</div>
+        </div>
       </div>
 
       <!-- Distance Proximity Warning Meter -->
@@ -830,6 +911,36 @@
         <div class="feed-title">Dataset Provenance</div>
         <div style="font-size: 11px; line-height: 1.45; color: var(--text-muted);">
           Simulated Klang Valley hotspot layer for demo. Production inputs: police crash reports, DBKL road works, insurer claims, OEM near-miss telemetry, weather, and crowdsourced hazard validation.
+        </div>
+        <div class="memory-signal-grid" aria-label="Collective Road Memory privacy and witness signals">
+          <div class="memory-signal active" id="memory-signal-network">
+            <i class="fa-solid fa-user-shield"></i>
+            <div class="memory-signal-copy">
+              <div class="memory-signal-label">Anonymous Mercedes Network</div>
+              <div class="memory-signal-value" id="memory-signal-network-value">OPTED-IN // HASHED IDS</div>
+            </div>
+          </div>
+          <div class="memory-signal" id="memory-signal-fleet">
+            <i class="fa-solid fa-warehouse"></i>
+            <div class="memory-signal-copy">
+              <div class="memory-signal-label">Fleet Reports</div>
+              <div class="memory-signal-value" id="memory-signal-fleet-value">12 RECENT VALIDATIONS</div>
+            </div>
+          </div>
+          <div class="memory-signal" id="memory-signal-car2x">
+            <i class="fa-solid fa-car-on"></i>
+            <div class="memory-signal-copy">
+              <div class="memory-signal-label">Car2X Witness Vehicles</div>
+              <div class="memory-signal-value" id="memory-signal-car2x-value">STANDBY</div>
+            </div>
+          </div>
+          <div class="memory-signal" id="memory-signal-upload">
+            <i class="fa-solid fa-cloud-arrow-up"></i>
+            <div class="memory-signal-copy">
+              <div class="memory-signal-label">Anonymized Upload</div>
+              <div class="memory-signal-value" id="memory-signal-upload-value">PRIVACY FILTER READY</div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -1331,8 +1442,39 @@
     let newAccidentMarker = null;
     let newAccidentCircle = null;
 
+    function setMemorySignalState(state) {
+      const signalIds = ['network', 'fleet', 'car2x', 'upload'];
+      signalIds.forEach(id => {
+        const signal = document.getElementById(`memory-signal-${id}`);
+        if (signal) signal.className = id === 'network' ? 'memory-signal active' : 'memory-signal';
+      });
+
+      const values = {
+        network: document.getElementById('memory-signal-network-value'),
+        fleet: document.getElementById('memory-signal-fleet-value'),
+        car2x: document.getElementById('memory-signal-car2x-value'),
+        upload: document.getElementById('memory-signal-upload-value')
+      };
+
+      if (state === 'incident') {
+        document.getElementById('memory-signal-fleet')?.classList.add('warning');
+        document.getElementById('memory-signal-car2x')?.classList.add('active');
+        document.getElementById('memory-signal-upload')?.classList.add('active');
+        if (values.network) values.network.innerText = 'BROADCASTING ANON ALERT';
+        if (values.fleet) values.fleet.innerText = '18 REPORTS CORRELATED';
+        if (values.car2x) values.car2x.innerText = '3 WITNESSES SIGNED';
+        if (values.upload) values.upload.innerText = 'UPLOADED // PII REMOVED';
+      } else {
+        if (values.network) values.network.innerText = 'OPTED-IN // HASHED IDS';
+        if (values.fleet) values.fleet.innerText = '12 RECENT VALIDATIONS';
+        if (values.car2x) values.car2x.innerText = 'STANDBY';
+        if (values.upload) values.upload.innerText = 'PRIVACY FILTER READY';
+      }
+    }
+
     function addNewIncident() {
       isCrashTriggered = true;
+      setMemorySignalState('incident');
       const btnSim = document.getElementById('btnSimulateAccident');
       if (btnSim) {
         btnSim.innerHTML = '<i class="fa-solid fa-rotate-left"></i> Reset Demo';
@@ -1423,6 +1565,7 @@
 
     function resetRoadDemo() {
       isCrashTriggered = false;
+      setMemorySignalState('baseline');
       const btnSim = document.getElementById('btnSimulateAccident');
       if (btnSim) {
         btnSim.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Simulate Accident';
