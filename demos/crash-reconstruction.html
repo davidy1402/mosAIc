@@ -149,7 +149,7 @@
       }
 
       .canvas-container {
-        height: 320px;
+        height: 200px;
         flex: none;
       }
     }
@@ -160,7 +160,9 @@
         gap: 10px;
       }
 
-      .telemetry-grid {
+      .telemetry-grid,
+      .alignment-compare,
+      .alignment-metrics {
         grid-template-columns: 1fr;
       }
 
@@ -366,17 +368,223 @@
       color: var(--accent-red);
     }
 
+    /* Proposal Alignment: Truth Reconstruction */
+    .alignment-panel {
+      gap: 12px;
+    }
+
+    .alignment-compare {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .alignment-side {
+      padding: 10px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.014);
+      border: 1px solid rgba(255, 255, 255, 0.03);
+      min-width: 0;
+    }
+
+    .alignment-side.limited {
+      border-color: rgba(255, 159, 10, 0.16);
+      background: rgba(255, 159, 10, 0.035);
+    }
+
+    .alignment-side.verified {
+      border-color: rgba(0, 235, 214, 0.16);
+      background: rgba(0, 235, 214, 0.035);
+    }
+
+    .alignment-label {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      margin-bottom: 6px;
+      color: var(--text-main);
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.7px;
+    }
+
+    .alignment-side.limited .alignment-label i {
+      color: var(--accent-orange);
+    }
+
+    .alignment-side.verified .alignment-label i {
+      color: var(--accent-cyan);
+    }
+
+    .alignment-copy {
+      font-size: 11px;
+      line-height: 1.45;
+      color: var(--text-muted);
+    }
+
+    .fusion-sources {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .fusion-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      background: rgba(255, 255, 255, 0.018);
+      color: var(--text-main);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.2px;
+      white-space: nowrap;
+    }
+
+    .fusion-chip i {
+      color: var(--accent-cyan);
+      font-size: 10px;
+    }
+
+    .alignment-metrics {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .alignment-metric {
+      padding: 9px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.014);
+      border: 1px solid rgba(255, 255, 255, 0.03);
+      min-width: 0;
+    }
+
+    .metric-value {
+      display: block;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--accent-cyan);
+      line-height: 1.1;
+    }
+
+    .metric-label {
+      display: block;
+      margin-top: 5px;
+      color: var(--text-muted);
+      font-size: 9px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      line-height: 1.3;
+    }
+
+    .reasoning-note {
+      padding: 10px 11px;
+      border-radius: 10px;
+      background: rgba(0, 136, 255, 0.04);
+      border: 1px solid rgba(0, 136, 255, 0.12);
+      color: var(--text-main);
+      font-size: 11px;
+      line-height: 1.5;
+    }
+
+    .reasoning-note strong {
+      color: var(--accent-cyan);
+      font-weight: 700;
+    }
+
+    .splat-viewer {
+      position: relative;
+      height: 210px;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid rgba(0, 235, 214, 0.16);
+      background:
+        radial-gradient(circle at 50% 45%, rgba(0, 235, 214, 0.08), transparent 42%),
+        linear-gradient(180deg, rgba(5, 8, 14, 0.9), rgba(0, 0, 0, 0.55));
+      cursor: grab;
+      touch-action: none;
+    }
+
+    .splat-viewer:active {
+      cursor: grabbing;
+    }
+
+    .splat-viewer canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .splat-viewer-hud {
+      position: absolute;
+      inset: 10px 10px auto 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .splat-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 8px;
+      border-radius: 999px;
+      background: rgba(3, 5, 10, 0.68);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: #e2e8f0;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+      text-transform: uppercase;
+      backdrop-filter: blur(10px);
+    }
+
+    .splat-chip i {
+      color: var(--accent-cyan);
+    }
+
+    .splat-hint {
+      position: absolute;
+      left: 10px;
+      right: 10px;
+      bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      color: rgba(226, 232, 240, 0.72);
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+      pointer-events: none;
+      z-index: 2;
+    }
+
     /* Central Panel: Visualizer */
     .visualizer-card {
-      flex: 1;
+      align-self: start;
+      height: auto;
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
+      justify-content: flex-start;
+      gap: 16px;
       overflow: hidden;
     }
 
     .canvas-container {
-      flex: 1;
+      width: 100%;
+      aspect-ratio: 800 / 220;
+      flex: none;
       position: relative;
       display: flex;
       align-items: center;
@@ -919,7 +1127,7 @@
         <div class="telemetry-grid">
           <div class="telemetry-card cyan-value">
             <span class="telemetry-label">Impact Speed</span>
-            <div class="telemetry-val" id="val-speed">78<span>km/h</span></div>
+            <div class="telemetry-val" id="val-speed">130<span>km/h</span></div>
           </div>
           <div class="telemetry-card">
             <span class="telemetry-label">Steering Angle</span>
@@ -936,6 +1144,35 @@
           <div class="telemetry-card cyan-value" style="grid-column: span 2;">
             <span class="telemetry-label">Brake Pedal Pressure</span>
             <div class="telemetry-val" id="val-brake">0<span>%</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="glass-card">
+        <div class="card-title">
+          <i class="fa-solid fa-car-side"></i> Vehicle Identity
+        </div>
+        <div class="checklist-container">
+          <div class="check-item">
+            <div class="check-info">
+              <div class="check-icon"><i class="fa-solid fa-id-card"></i></div>
+              <span class="check-name">Plate Number</span>
+            </div>
+            <span class="check-status">WXY 4821</span>
+          </div>
+          <div class="check-item">
+            <div class="check-info">
+              <div class="check-icon"><i class="fa-solid fa-satellite-dish"></i></div>
+              <span class="check-name">eCall ID</span>
+            </div>
+            <span class="check-status">MY-CB-WXY4821</span>
+          </div>
+          <div class="check-item">
+            <div class="check-info">
+              <div class="check-icon"><i class="fa-solid fa-fingerprint"></i></div>
+              <span class="check-name">Evidence Hash</span>
+            </div>
+            <span class="check-status" id="status-evidence-hash">Armed</span>
           </div>
         </div>
       </div>
@@ -1059,9 +1296,13 @@
 
       <!-- Vector canvas area -->
       <div class="canvas-container">
-        <svg id="collision-svg" viewBox="0 0 800 400" xmlns="http://www.w3.org/2000/svg">
-          <!-- Defs for gradients & patterns -->
+        <svg id="collision-svg" viewBox="0 90 800 220" xmlns="http://www.w3.org/2000/svg">
+          <!-- Defs for gradients & patterns & markers -->
           <defs>
+            <!-- Arrow marker -->
+            <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="var(--accent-cyan)" />
+            </marker>
             <pattern id="dotGrid" width="20" height="20" patternUnits="userSpaceOnUse">
               <circle cx="2" cy="2" r="1" fill="rgba(255,255,255,0.06)" />
             </pattern>
@@ -1144,7 +1385,7 @@
       <!-- Playback Timeline controls -->
       <div class="playback-controls">
         <div class="slider-row">
-          <button class="play-btn" id="play-pause-btn"><i class="fa-solid fa-play"></i></button>
+          <button class="play-btn" id="play-pause-btn" type="button" aria-label="Play timeline"><i class="fa-solid fa-play"></i></button>
           <input type="range" min="-3.0" max="1.5" step="0.05" value="-3.0" class="timeline-slider" id="timeline">
           <div class="time-label" id="time-display">-3.00s</div>
         </div>
@@ -1160,9 +1401,53 @@
       </div>
     </div>
 
-    <!-- Right Console: Synced Event Logs & Ledger -->
+    <!-- Right Console: Proposal Alignment, Synced Event Logs & Ledger -->
     <div class="column">
-      <div class="glass-card" style="flex: 1; min-height: 250px;">
+      <div class="glass-card alignment-panel">
+        <div class="card-title">
+          <i class="fa-solid fa-layer-group"></i> Dashcam vs ClearBox 360 Reconstruction
+        </div>
+
+        <div class="alignment-compare">
+          <div class="alignment-side limited">
+            <div class="alignment-label"><i class="fa-solid fa-video-slash"></i> 2D Dashcam</div>
+            <p class="alignment-copy">Single forward view misses side contact context, occluded lanes, and post-impact occupant cues.</p>
+          </div>
+          <div class="alignment-side verified">
+            <div class="alignment-label"><i class="fa-solid fa-circle-check"></i> ClearBox 360</div>
+            <p class="alignment-copy">Scene verified from synchronized vehicle telemetry, cabin state, and external sensor evidence.</p>
+          </div>
+        </div>
+
+        <div class="fusion-sources" aria-label="Sensor fusion sources">
+          <span class="fusion-chip"><i class="fa-solid fa-wave-square"></i> Radar</span>
+          <span class="fusion-chip"><i class="fa-solid fa-camera"></i> Cameras</span>
+          <span class="fusion-chip"><i class="fa-solid fa-location-crosshairs"></i> GPS/IMU</span>
+          <span class="fusion-chip"><i class="fa-solid fa-car-burst"></i> Airbag ECU</span>
+          <span class="fusion-chip"><i class="fa-solid fa-microchip"></i> Brake CAN</span>
+        </div>
+
+        <div class="alignment-metrics">
+          <div class="alignment-metric">
+            <span class="metric-value">94%</span>
+            <span class="metric-label">Scene Confidence</span>
+          </div>
+          <div class="alignment-metric">
+            <span class="metric-value">360°</span>
+            <span class="metric-label">Blind Spot Coverage</span>
+          </div>
+          <div class="alignment-metric">
+            <span class="metric-value">PoC</span>
+            <span class="metric-label">Gaussian Splatting Simulated</span>
+          </div>
+        </div>
+
+        <p class="reasoning-note">
+          <strong>AI reasoning:</strong> fused timing, force, and visual evidence indicates the collision path is consistent with front-left impact, not a dashcam-only lane judgment.
+        </p>
+      </div>
+
+      <div class="glass-card" style="flex: 1; min-height: 200px;">
         <div class="card-title">
           <i class="fa-solid fa-list-check"></i> Chronological Incident Logs
         </div>
@@ -1211,7 +1496,7 @@
       {
         time: -3.00,
         event: "System Status Nominal",
-        desc: "Ego-vehicle cruising at 78 km/h. Distant forward sensor sweep clear.",
+        desc: "Ego-vehicle travelling at 130 km/h. Forward sensor sweep begins high-risk closing-speed analysis.",
         type: "nominal"
       },
       {
@@ -1240,8 +1525,8 @@
       },
       {
         time: 0.00,
-        event: "Front-Left Impact Registered",
-        desc: "Peak deceleration threshold breached. Longitudinal force: 24.5 Gs.",
+        event: "Severe Front-Left Impact Registered",
+        desc: "Peak deceleration threshold breached. Longitudinal force: 46.0 Gs; lateral spike: 18.0 Gs.",
         type: "danger"
       },
       {
@@ -1357,6 +1642,7 @@
     const statusFuel = document.getElementById('status-fuel');
     const checkEcall = document.getElementById('check-ecall');
     const statusEcall = document.getElementById('status-ecall');
+    const statusEvidenceHash = document.getElementById('status-evidence-hash');
 
     // Chassis Telemetry Elements
     const chassisZoneFl = document.getElementById('chassis-zone-fl');
@@ -1479,24 +1765,24 @@
         // Accident Path
         // ego car goes straight and collides at T = 0.0
         if (time < 0) {
-          egoX = getInterpolatedVal(100, 375, -3.0, 0.0, time);
+          egoX = getInterpolatedVal(80, 405, -3.0, 0.0, time);
           // swerves slightly late (y = 175) from T = -0.5 to 0.0
           if (time < -0.5) {
             egoY = 160;
             egoRot = 0;
           } else {
-            egoY = getInterpolatedVal(160, 175, -0.5, 0.0, time);
-            egoRot = getInterpolatedVal(0, 3, -0.5, 0.0, time);
+            egoY = getInterpolatedVal(160, 190, -0.5, 0.0, time);
+            egoRot = getInterpolatedVal(0, 11, -0.5, 0.0, time);
           }
         } else {
-          egoX = getInterpolatedVal(375, 385, 0.0, 1.5, time);
-          egoY = 175;
-          egoRot = getInterpolatedVal(3, -6, 0.0, 0.5, time); // Slight tilt after impact
+          egoX = getInterpolatedVal(405, 315, 0.0, 1.5, time);
+          egoY = getInterpolatedVal(190, 232, 0.0, 0.6, time);
+          egoRot = getInterpolatedVal(11, -32, 0.0, 0.5, time);
         }
 
         // Other car displacement after collision
         if (time >= 0) {
-          otherX = getInterpolatedVal(450, 470, 0.0, 1.5, time);
+          otherX = getInterpolatedVal(450, 575, 0.0, 1.5, time);
         } else {
           otherX = 450;
         }
@@ -1528,9 +1814,9 @@
         skidEgo.setAttribute('opacity', 0);
       }
 
-      // 3. Impact Flash (flashes at T = 0.0s to 0.4s)
-      if (isCrashTriggered && time >= 0 && time <= 0.4) {
-        impactGroup.setAttribute('opacity', getInterpolatedVal(1, 0, 0.0, 0.4, time));
+      // 3. Impact Flash (flashes at T = 0.0s to 0.65s)
+      if (isCrashTriggered && time >= 0 && time <= 0.65) {
+        impactGroup.setAttribute('opacity', getInterpolatedVal(1, 0, 0.0, 0.65, time));
       } else {
         impactGroup.setAttribute('opacity', 0);
       }
@@ -1541,11 +1827,11 @@
         speed = 78 + Math.sin(time * 2.0) * 1.5;
       } else {
         if (time < -1.0) {
-          speed = 78;
+          speed = 130;
         } else if (time < 0) {
-          speed = getInterpolatedVal(78, 48, -1.0, 0.0, time);
+          speed = getInterpolatedVal(130, 84, -1.0, 0.0, time);
         } else {
-          speed = getInterpolatedVal(48, 0, 0.0, 0.5, time);
+          speed = getInterpolatedVal(84, 0, 0.0, 0.8, time);
         }
       }
       valSpeed.innerHTML = `${Math.round(speed)}<span>km/h</span>`;
@@ -1577,9 +1863,9 @@
         if (time < -0.5) {
           steeringStr = "0<span>°</span>";
         } else if (time < 0) {
-          steeringStr = `${Math.round(getInterpolatedVal(0, 15, -0.5, 0.0, time))}<span>° R</span>`;
+          steeringStr = `${Math.round(getInterpolatedVal(0, 38, -0.5, 0.0, time))}<span>° R</span>`;
         } else {
-          steeringStr = "15<span>° R</span>";
+          steeringStr = "38<span>° R</span>";
         }
       }
       valSteering.innerHTML = steeringStr;
@@ -1600,17 +1886,17 @@
         }
       } else {
         if (time < -1.0) {
-          gLong = 0.8;
-          gLat = 0.2;
+          gLong = 1.8;
+          gLat = 0.7;
         } else if (time < 0) {
-          gLong = getInterpolatedVal(0.8, 1.4, -1.0, 0.0, time);
-          gLat = 0.2;
+          gLong = getInterpolatedVal(1.8, 3.4, -1.0, 0.0, time);
+          gLat = getInterpolatedVal(0.7, 1.4, -1.0, 0.0, time);
         } else if (time < 0.15) {
-          gLong = getInterpolatedVal(24.5, 5.2, 0.0, 0.15, time);
-          gLat = getInterpolatedVal(8.2, 1.5, 0.0, 0.15, time);
+          gLong = getInterpolatedVal(46.0, 8.6, 0.0, 0.15, time);
+          gLat = getInterpolatedVal(18.0, 3.2, 0.0, 0.15, time);
         } else {
-          gLong = getInterpolatedVal(5.2, 0.05, 0.15, 1.0, time);
-          gLat = getInterpolatedVal(1.5, 0.05, 0.15, 1.0, time);
+          gLong = getInterpolatedVal(8.6, 0.05, 0.15, 1.0, time);
+          gLat = getInterpolatedVal(3.2, 0.05, 0.15, 1.0, time);
         }
       }
       valGLong.innerHTML = `${gLong.toFixed(2)}<span>G</span>`;
@@ -2283,18 +2569,21 @@
     });
 
     function startPlay() {
+      clearInterval(playInterval);
       isPlaying = true;
+      playPauseBtn.setAttribute('aria-label', 'Pause timeline');
       playPauseBtn.innerHTML = '<i class="fa-solid fa-pause"></i>';
       playPauseBtn.classList.remove('replay-state');
       
       playInterval = setInterval(() => {
-        let val = parseFloat(timeline.value) + 0.05;
+        let val = parseFloat(timeline.value) + (isCrashTriggered ? 0.08 : 0.05);
         if (isCrashTriggered) {
           if (val > 1.5) {
             val = 1.5;
             pauseTimeline();
             playPauseBtn.innerHTML = '<i class="fa-solid fa-rotate-right"></i>';
             playPauseBtn.classList.add('replay-state');
+            playPauseBtn.setAttribute('aria-label', 'Replay timeline');
           }
         } else {
           if (val > 1.5) {
@@ -2309,15 +2598,22 @@
       isPlaying = false;
       if (!playPauseBtn.classList.contains('replay-state')) {
         playPauseBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
+        playPauseBtn.setAttribute('aria-label', 'Play timeline');
       }
       clearInterval(playInterval);
     }
 
+    function replayTimeline() {
+      clearInterval(playInterval);
+      isPlaying = false;
+      playPauseBtn.classList.remove('replay-state');
+      updateTimelineState(parseFloat(timeline.min));
+      startPlay();
+    }
+
     playPauseBtn.addEventListener('click', () => {
       if (playPauseBtn.classList.contains('replay-state')) {
-        playPauseBtn.classList.remove('replay-state');
-        updateTimelineState(-3.0);
-        startPlay();
+        replayTimeline();
       } else if (isPlaying) {
         pauseTimeline();
       } else {
@@ -2335,6 +2631,7 @@
         btnSimulateAccident.innerHTML = '<i class="fa-solid fa-rotate-left"></i> Reset Demo';
         btnSimulateAccident.classList.add('reset-state');
       }
+      if (statusEvidenceHash) statusEvidenceHash.innerText = 'Signed';
     }
 
     function resetAccidentTimeline() {
@@ -2347,6 +2644,7 @@
         btnSimulateAccident.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Simulate Accident';
         btnSimulateAccident.classList.remove('reset-state');
       }
+      if (statusEvidenceHash) statusEvidenceHash.innerText = 'Armed';
       if (btnVerifyLedger) {
         btnVerifyLedger.innerHTML = '<i class="fa-solid fa-shield-halved"></i> Verify Ledger Integrity';
         btnVerifyLedger.style.borderColor = 'var(--accent-cyan)';
@@ -2357,6 +2655,141 @@
         receiptModal.classList.remove('show');
       }
       ledgerRows.forEach(row => row.classList.remove('scanning'));
+    }
+
+    function initSplatViewer() {
+      const canvas = document.getElementById('splatCanvas');
+      const viewer = document.getElementById('splatViewer');
+      const angleLabel = document.getElementById('splatAngle');
+      if (!canvas || !viewer) return;
+
+      const ctx = canvas.getContext('2d');
+      let yaw = 0;
+      let pitch = -0.18;
+      let dragging = false;
+      let lastX = 0;
+      let lastY = 0;
+
+      const splats = [];
+      const addSplat = (x, y, z, r, color, alpha = 0.75) => {
+        splats.push({ x, y, z, r, color, alpha });
+      };
+
+      // Road surface and lane splats
+      for (let i = 0; i < 220; i++) {
+        const x = -5.8 + Math.random() * 11.6;
+        const z = -3.2 + Math.random() * 6.4;
+        const lane = Math.abs(z) < 0.08 || Math.abs(z - 1.35) < 0.06 || Math.abs(z + 1.35) < 0.06;
+        addSplat(x, -0.85 + Math.random() * 0.05, z, lane ? 2.1 : 1.4, lane ? '#94a3b8' : '#1e293b', lane ? 0.55 : 0.38);
+      }
+
+      const addVehicle = (cx, cz, color, damaged = false) => {
+        for (let i = 0; i < 190; i++) {
+          const x = cx + (Math.random() - 0.5) * 1.65;
+          const y = -0.42 + Math.random() * 0.72;
+          const z = cz + (Math.random() - 0.5) * 0.88;
+          addSplat(x, y, z, damaged && i % 5 === 0 ? 3.2 : 2.2, damaged && i % 7 === 0 ? '#ff3b30' : color, damaged ? 0.8 : 0.7);
+        }
+      };
+
+      addVehicle(-0.48, 0.58, '#00ebd6', true);
+      addVehicle(1.15, 0.0, '#e2e8f0', true);
+
+      // Impact plume, debris, and Car2X witness points
+      for (let i = 0; i < 130; i++) {
+        const spread = Math.random();
+        addSplat(
+          0.42 + (Math.random() - 0.5) * (1.8 * spread),
+          -0.35 + Math.random() * 1.25,
+          0.28 + (Math.random() - 0.5) * (1.5 * spread),
+          1.5 + Math.random() * 4.2,
+          i % 3 === 0 ? '#ff3b30' : (i % 3 === 1 ? '#ff9f0a' : '#ffffff'),
+          0.45 + Math.random() * 0.45
+        );
+      }
+
+      const witnessPoints = [
+        [-3.7, 0.65, -2.2], [3.4, 0.65, -2.4], [-2.9, 0.65, 2.3], [3.8, 0.65, 2.1]
+      ];
+      witnessPoints.forEach(([x, y, z]) => addSplat(x, y, z, 4.4, '#0088ff', 0.75));
+
+      function resizeSplatCanvas() {
+        const rect = viewer.getBoundingClientRect();
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width = Math.max(1, Math.floor(rect.width * dpr));
+        canvas.height = Math.max(1, Math.floor(rect.height * dpr));
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      }
+
+      function project(point, w, h) {
+        const cosY = Math.cos(yaw);
+        const sinY = Math.sin(yaw);
+        const cosP = Math.cos(pitch);
+        const sinP = Math.sin(pitch);
+        const x1 = point.x * cosY - point.z * sinY;
+        const z1 = point.x * sinY + point.z * cosY;
+        const y1 = point.y * cosP - z1 * sinP;
+        const z2 = point.y * sinP + z1 * cosP + 7.2;
+        const scale = 120 / z2;
+        return {
+          x: w / 2 + x1 * scale,
+          y: h / 2 + y1 * scale,
+          z: z2,
+          size: Math.max(0.7, point.r * scale * 0.12)
+        };
+      }
+
+      function drawSplat() {
+        const w = canvas.width / (window.devicePixelRatio || 1);
+        const h = canvas.height / (window.devicePixelRatio || 1);
+        if (!dragging) yaw += 0.0045;
+        if (angleLabel) angleLabel.textContent = `Yaw ${Math.round(((yaw % (Math.PI * 2)) * 180 / Math.PI + 360) % 360)}°`;
+
+        ctx.clearRect(0, 0, w, h);
+        ctx.fillStyle = 'rgba(3, 5, 10, 0.84)';
+        ctx.fillRect(0, 0, w, h);
+
+        const projected = splats.map(s => ({ s, p: project(s, w, h) })).sort((a, b) => b.p.z - a.p.z);
+        projected.forEach(({ s, p }) => {
+          const gradient = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size * 4.2);
+          gradient.addColorStop(0, s.color);
+          gradient.addColorStop(1, 'rgba(0,0,0,0)');
+          ctx.globalAlpha = s.alpha;
+          ctx.fillStyle = gradient;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.size * 4.2, 0, Math.PI * 2);
+          ctx.fill();
+        });
+
+        ctx.globalAlpha = 1;
+        ctx.strokeStyle = 'rgba(0,235,214,0.18)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(10, 10, w - 20, h - 20);
+        requestAnimationFrame(drawSplat);
+      }
+
+      const pointerMove = (clientX, clientY) => {
+        if (!dragging) return;
+        const dx = clientX - lastX;
+        const dy = clientY - lastY;
+        yaw += dx * 0.01;
+        pitch = Math.max(-0.65, Math.min(0.35, pitch + dy * 0.004));
+        lastX = clientX;
+        lastY = clientY;
+      };
+
+      viewer.addEventListener('pointerdown', (event) => {
+        dragging = true;
+        lastX = event.clientX;
+        lastY = event.clientY;
+        viewer.setPointerCapture(event.pointerId);
+      });
+      viewer.addEventListener('pointermove', (event) => pointerMove(event.clientX, event.clientY));
+      viewer.addEventListener('pointerup', () => { dragging = false; });
+      viewer.addEventListener('pointercancel', () => { dragging = false; });
+      window.addEventListener('resize', resizeSplatCanvas);
+      resizeSplatCanvas();
+      drawSplat();
     }
 
     // --- Init App ---
@@ -2373,6 +2806,7 @@
       if (btn3d) btn3d.addEventListener('click', () => switchVisualizerMode('3d'));
 
       updateTimelineState(-3.0);
+      initSplatViewer();
       
       // Auto play on startup
       startPlay();

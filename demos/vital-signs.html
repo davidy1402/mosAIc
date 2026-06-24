@@ -657,6 +657,147 @@
       color: #ff453a;
     }
 
+    .occupant-detection-card {
+      gap: 12px;
+    }
+
+    .occupant-detection-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    .occupant-count-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      background: rgba(0, 235, 214, 0.06);
+      border: 1px solid rgba(0, 235, 214, 0.18);
+      color: var(--accent-color);
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .occupant-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .occupant-mini-card {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px 10px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      background: rgba(255, 255, 255, 0.018);
+      transition: var(--transition-standard);
+    }
+
+    .occupant-mini-card.priority {
+      border-color: rgba(255, 59, 48, 0.32);
+      background: rgba(255, 59, 48, 0.06);
+      box-shadow: inset 0 0 14px rgba(255, 59, 48, 0.04);
+    }
+
+    .occupant-mini-title {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      color: #f8fafc;
+      font-size: 0.78rem;
+      font-weight: 650;
+    }
+
+    .occupant-seat {
+      color: #64748b;
+      font-size: 0.66rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.7px;
+    }
+
+    .occupant-priority {
+      align-self: start;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: rgba(0, 229, 117, 0.06);
+      border: 1px solid rgba(0, 229, 117, 0.16);
+      color: var(--success-color);
+      font-family: var(--font-mono);
+      font-size: 0.62rem;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+      text-transform: uppercase;
+    }
+
+    .occupant-mini-card.priority .occupant-priority {
+      background: rgba(255, 59, 48, 0.12);
+      border-color: rgba(255, 59, 48, 0.28);
+      color: #ff453a;
+    }
+
+    .occupant-vitals-grid {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 6px;
+    }
+
+    .occupant-vital {
+      padding: 6px 7px;
+      border-radius: 7px;
+      background: rgba(0, 0, 0, 0.18);
+      border: 1px solid rgba(255, 255, 255, 0.03);
+      min-width: 0;
+    }
+
+    .occupant-vital-label {
+      display: block;
+      margin-bottom: 2px;
+      color: #64748b;
+      font-size: 0.57rem;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    .occupant-vital-value {
+      color: #e2e8f0;
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 700;
+      display: block;
+      line-height: 1.2;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+
+    .occupant-vital.state-vital {
+      grid-column: span 2;
+    }
+
+    .occupant-vital.state-vital .occupant-vital-value {
+      font-size: 0.66rem;
+    }
+
+    .occupant-action {
+      grid-column: 1 / -1;
+      color: #94a3b8;
+      font-size: 0.7rem;
+      line-height: 1.35;
+    }
+
+    .occupant-mini-card.priority .occupant-action {
+      color: #ffb4ad;
+    }
+
     /* ==========================================
        8. MAIN AREA: LIVE TELEMETRY DASHBOARD
        ========================================== */
@@ -1389,6 +1530,17 @@
           </div>
         </div>
 
+        <div class="glass-card occupant-detection-card">
+          <div class="occupant-detection-header">
+            <div class="card-title" style="margin-bottom: 0;">Cabin Occupant Triage</div>
+            <div class="occupant-count-badge">
+              <i class="fa-solid fa-user-group"></i>
+              <span id="occupantCount">3 DETECTED</span>
+            </div>
+          </div>
+          <div class="occupant-list" id="occupantList"></div>
+        </div>
+
       </div>
 
       <!-- Center Column: Live Telemetry Cards & Waves -->
@@ -1494,7 +1646,7 @@
             <button id="btnDismissAlert" style="background: transparent; border: none; color: #64748b; font-size: 20px; line-height: 1; cursor: pointer; padding: 0 4px; transition: color 0.2s ease;">&times;</button>
           </div>
           <div style="font-size: 12px; line-height: 1.4; color: #e2e8f0; font-weight: 500; margin-top: 8px;">
-            Automated 999 Diagnostic Dispatch Initiated via Mercedes eCall.
+            Automated 999 Diagnostic Dispatch Initiated via Mercedes eCall for vehicle WXY 4821.
           </div>
           <!-- Short Paramedic Summary -->
           <div style="font-size: 11px; line-height: 1.4; color: #ff9f0a; font-family: var(--font-mono); margin-top: 10px; border-top: 1px solid rgba(255, 59, 48, 0.15); padding-top: 8px;">
@@ -1505,6 +1657,16 @@
         <!-- Crash Simulation Trigger Card (Stacked Controls) -->
         <div class="glass-card controls-card" style="display: flex; flex-direction: column; gap: 12px;">
           <div class="card-title" style="margin-bottom: 0;">ClearBox Demo Controls</div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-family: var(--font-mono); font-size: 0.68rem; color: #94a3b8;">
+            <div style="padding: 8px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); background: rgba(255,255,255,0.018);">
+              <span style="display:block; color:#64748b; text-transform:uppercase; font-size:0.56rem; letter-spacing:0.6px;">Plate</span>
+              WXY 4821
+            </div>
+            <div style="padding: 8px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); background: rgba(255,255,255,0.018);">
+              <span style="display:block; color:#64748b; text-transform:uppercase; font-size:0.56rem; letter-spacing:0.6px;">eCall ID</span>
+              MY-CB-WXY4821
+            </div>
+          </div>
           <button class="btn-crash-trigger" id="btnCrash">
             <svg viewBox="0 0 24 24">
               <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" stroke-linecap="round" stroke-linejoin="round"/>
@@ -1619,12 +1781,93 @@
     
     const paramedicBox = document.getElementById('paramedicBox');
     const summaryText = document.getElementById('summaryText');
+    const occupantList = document.getElementById('occupantList');
+    const occupantCount = document.getElementById('occupantCount');
     
     const btnCrash = document.getElementById('btnCrash');
     const btnReset = document.getElementById('btnReset');
 
     const ecgStateLabel = document.getElementById('ecgState');
     const respStateLabel = document.getElementById('respState');
+
+    const occupantProfiles = [
+      {
+        id: 'driver',
+        name: 'Anes Abbas',
+        seat: 'Driver',
+        condition: 'Asthma',
+        baseline: { hr: 72, rr: 14, spo2: 98, conscious: 'Alert', priority: 'P3', action: 'Continue monitoring. No immediate intervention required.' },
+        crash: { hr: 138, rr: 30, spo2: 91, conscious: 'Conscious', priority: 'P2', action: 'Prepare bronchodilator and oxygen support due to asthma risk.' }
+      },
+      {
+        id: 'front',
+        name: 'Maya Tan',
+        seat: 'Front Passenger',
+        condition: 'None',
+        baseline: { hr: 76, rr: 15, spo2: 99, conscious: 'Alert', priority: 'P3', action: 'Seatbelt force normal. Continue remote monitoring.' },
+        crash: { hr: 104, rr: 20, spo2: 96, conscious: 'Alert', priority: 'P3', action: 'Possible mild whiplash. Secondary assessment after critical occupants.' }
+      },
+      {
+        id: 'rear-left',
+        name: 'Daniel Lim',
+        seat: 'Rear Left',
+        condition: 'Heart condition',
+        baseline: { hr: 70, rr: 13, spo2: 98, conscious: 'Alert', priority: 'P3', action: 'Known cardiac history logged for responders.' },
+        crash: { hr: 42, rr: 8, spo2: 86, conscious: 'Unresponsive', priority: 'P1', action: 'Check airway first. Prepare oxygen and cardiac response immediately.' }
+      }
+    ];
+
+    function priorityRank(priority) {
+      return { P1: 1, P2: 2, P3: 3 }[priority] || 4;
+    }
+
+    function renderOccupantTriage() {
+      if (!occupantList) return;
+      const mode = isCrashMode ? 'crash' : 'baseline';
+      const sortedProfiles = [...occupantProfiles].sort((a, b) => {
+        return priorityRank(a[mode].priority) - priorityRank(b[mode].priority);
+      });
+
+      if (occupantCount) {
+        occupantCount.textContent = `${occupantProfiles.length} DETECTED`;
+      }
+
+      occupantList.innerHTML = sortedProfiles.map(profile => {
+        const vitals = profile[mode];
+        const isPriority = vitals.priority === 'P1' || vitals.priority === 'P2';
+        return `
+          <div class="occupant-mini-card ${isPriority ? 'priority' : ''}">
+            <div>
+              <div class="occupant-mini-title">
+                <i class="fa-solid ${vitals.priority === 'P1' ? 'fa-triangle-exclamation' : 'fa-user'}"></i>
+                ${profile.name}
+              </div>
+              <div class="occupant-seat">${profile.seat} // ${profile.condition}</div>
+            </div>
+            <div class="occupant-priority">${vitals.priority}</div>
+            <div class="occupant-vitals-grid">
+              <div class="occupant-vital">
+                <span class="occupant-vital-label">HR</span>
+                <span class="occupant-vital-value">${vitals.hr} BPM</span>
+              </div>
+              <div class="occupant-vital">
+                <span class="occupant-vital-label">RR</span>
+                <span class="occupant-vital-value">${vitals.rr} RPM</span>
+              </div>
+              <div class="occupant-vital">
+                <span class="occupant-vital-label">SpO2</span>
+                <span class="occupant-vital-value">${vitals.spo2}%</span>
+              </div>
+              <div class="occupant-vital state-vital">
+                <span class="occupant-vital-label">State</span>
+                <span class="occupant-vital-value">${vitals.conscious}</span>
+              </div>
+            </div>
+            <div class="occupant-action">${vitals.action}</div>
+          </div>
+        `;
+      }).join('');
+    }
 
     // ==========================================
     // 3. REAL-TIME WAVEFORM DRAWING (CANVAS)
@@ -1656,7 +1899,6 @@
       respX = 0;
     }
     window.addEventListener('resize', resizeCanvases);
-    resizeCanvases();
 
     // Wave sweep states
     let ecgX = 0;
@@ -1666,6 +1908,7 @@
     const wavePointsECG = [];
     const wavePointsResp = [];
     const gapWidth = 35; // Eraser gap size
+    resizeCanvases();
     
     // ECG Cardiac cycle math
     function getECGValue(phase) {
@@ -1960,6 +2203,7 @@
     let simulationInterval = setInterval(updateTelemetryTargets, 2000);
     setInterval(interpolateTelemetry, 33);
     updateTelemetryTargets();
+    renderOccupantTriage();
 
     // ==========================================
     // 5. TYPEWRITER EFFECT FOR PARAMEDIC BOX
@@ -2005,7 +2249,7 @@
 
       trackingStatusBadge.style.background = 'rgba(255, 59, 48, 0.06)';
       trackingStatusBadge.style.borderColor = 'rgba(255, 59, 48, 0.25)';
-      trackingStatusText.textContent = "CRITICAL AFTERMATH PROTOCOL ACTIVE";
+      trackingStatusText.textContent = "3 OCCUPANTS DETECTED // TRIAGE ACTIVE";
       trackingStatusDot.style.backgroundColor = '#ff3b30';
       trackingStatusDot.style.boxShadow = '0 0 8px #ff3b30';
 
@@ -2019,6 +2263,7 @@
       clearInterval(simulationInterval);
       simulationInterval = setInterval(updateTelemetryTargets, 500);
       updateTelemetryTargets();
+      renderOccupantTriage();
 
       // Emergency alarm chirp
       playBeep(880, 'sine', 0.2);
@@ -2027,7 +2272,7 @@
 
       paramedicBox.classList.add('show');
       
-      const dispatchMessage = "CRITICAL TELEMETRY TRANSMISSION: Occupant Anes Abbas involved in high-impact collision. Sensor fusion data indicates consciousness with immediate onset of severe tachycardia (138 bpm) and tachypnea (30 rpm). Pre-existing history of Asthma flags immediate risk of acute respiratory distress. 999 Emergency Services notified with exact biometric stream so first responders can prepare targeted respiratory management equipment en route.";
+      const dispatchMessage = "CRITICAL TELEMETRY TRANSMISSION: Vehicle WXY 4821, eCall ID MY-CB-WXY4821. 3 occupants detected after high-impact collision. Priority 1: Daniel Lim, rear-left passenger, unresponsive with SpO2 86%, RR 8 rpm, HR 42 bpm, known heart condition. Recommended action: check airway first and prepare oxygen plus cardiac response. Priority 2: Driver Anes Abbas, asthma history with tachycardia 138 bpm and tachypnea 30 rpm. Recommended action: respiratory support and bronchodilator readiness. Priority 3: Front passenger Maya Tan, conscious with mild whiplash risk. 999 Emergency Services receives vehicle identity and occupant-specific triage instead of blind dispatch.";
       
       setTimeout(() => {
         typeText(summaryText, dispatchMessage, 18);
@@ -2072,6 +2317,7 @@
       trackingStatusText.textContent = "Pre-Crash Baseline Tracking";
       trackingStatusDot.style.backgroundColor = 'var(--success-color)';
       trackingStatusDot.style.boxShadow = '0 0 6px var(--success-color)';
+      renderOccupantTriage();
 
       emergencyBanner.classList.remove('slide-down');
 
