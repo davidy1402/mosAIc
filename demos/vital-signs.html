@@ -1976,43 +1976,68 @@
 
       // ECG Speed & Phase calculations
       const ecgFreq = telemetryData.hr / 60; 
+      const prevEcgPhase = ecgPhase;
       ecgPhase += delta * ecgFreq;
       if (ecgPhase >= 1.0) {
         ecgPhase -= 1.0;
         playBeep(isCrashMode ? 680 : 480, isCrashMode ? 'triangle' : 'sine', isCrashMode ? 0.03 : 0.05);
       }
+      const currentEcgPhase = ecgPhase;
+
+      let unwrappedEndEcgPhase = currentEcgPhase;
+      if (unwrappedEndEcgPhase < prevEcgPhase) {
+        unwrappedEndEcgPhase += 1.0;
+      }
 
       const respFreq = telemetryData.rr / 60;
+      const prevRespPhase = respPhase;
       respPhase += delta * respFreq;
       if (respPhase >= 1.0) respPhase -= 1.0;
+      const currentRespPhase = respPhase;
+
+      let unwrappedEndRespPhase = currentRespPhase;
+      if (unwrappedEndRespPhase < prevRespPhase) {
+        unwrappedEndRespPhase += 1.0;
+      }
 
       // 1. ECG Sweep-eraser math - Ensures ALL horizontal index elements are populated
       const ecgSpeed = w / 4; 
       prevEcgX = ecgX;
       ecgX += ecgSpeed * delta;
       
-      let ecgValue = getECGValue(ecgPhase);
-      if (isCrashMode) {
-        ecgValue += (Math.random() - 0.5) * 0.05; // panic tremor noise
-      }
-      const ecgY = (h / 2) - (ecgValue * (h * 0.32));
-
       let startECG = Math.floor(prevEcgX);
       let endECG = Math.floor(ecgX);
 
       if (endECG >= w) {
-        // Fill up to edge
+        let range = w - startECG;
         for (let x = startECG; x < w; x++) {
-          wavePointsECG[x] = ecgY;
+          let fraction = range > 0 ? (x - startECG) / range : 0;
+          let p = prevEcgPhase + fraction * (unwrappedEndEcgPhase - prevEcgPhase);
+          p = p % 1.0;
+          
+          let ecgValue = getECGValue(p);
+          if (isCrashMode) {
+            ecgValue += (Math.random() - 0.5) * 0.05; // panic tremor noise
+          }
+          wavePointsECG[x] = (h / 2) - (ecgValue * (h * 0.32));
         }
         ecgX -= w;
         startECG = 0;
         endECG = Math.floor(ecgX);
       }
-      // Fill current range
+      
+      let rangeECG = endECG - startECG;
       for (let x = startECG; x <= endECG; x++) {
         if (x >= 0 && x < w) {
-          wavePointsECG[x] = ecgY;
+          let fraction = rangeECG > 0 ? (x - startECG) / rangeECG : 0;
+          let p = prevEcgPhase + fraction * (unwrappedEndEcgPhase - prevEcgPhase);
+          p = p % 1.0;
+          
+          let ecgValue = getECGValue(p);
+          if (isCrashMode) {
+            ecgValue += (Math.random() - 0.5) * 0.05; // panic tremor noise
+          }
+          wavePointsECG[x] = (h / 2) - (ecgValue * (h * 0.32));
         }
       }
 
@@ -2021,24 +2046,35 @@
       prevRespX = respX;
       respX += respSpeed * delta;
 
-      const respAmp = isCrashMode ? 0.15 : 0.35;
-      const respValue = Math.sin(respPhase * 2 * Math.PI) * respAmp;
-      const respY = (h / 2) - (respValue * (h * 0.7));
-
       let startResp = Math.floor(prevRespX);
       let endResp = Math.floor(respX);
 
+      const respAmp = isCrashMode ? 0.15 : 0.35;
+
       if (endResp >= w) {
+        let range = w - startResp;
         for (let x = startResp; x < w; x++) {
-          wavePointsResp[x] = respY;
+          let fraction = range > 0 ? (x - startResp) / range : 0;
+          let p = prevRespPhase + fraction * (unwrappedEndRespPhase - prevRespPhase);
+          p = p % 1.0;
+          
+          const respValue = Math.sin(p * 2 * Math.PI) * respAmp;
+          wavePointsResp[x] = (h / 2) - (respValue * (h * 0.7));
         }
         respX -= w;
         startResp = 0;
         endResp = Math.floor(respX);
       }
+      
+      let rangeResp = endResp - startResp;
       for (let x = startResp; x <= endResp; x++) {
         if (x >= 0 && x < w) {
-          wavePointsResp[x] = respY;
+          let fraction = rangeResp > 0 ? (x - startResp) / rangeResp : 0;
+          let p = prevRespPhase + fraction * (unwrappedEndRespPhase - prevRespPhase);
+          p = p % 1.0;
+          
+          const respValue = Math.sin(p * 2 * Math.PI) * respAmp;
+          wavePointsResp[x] = (h / 2) - (respValue * (h * 0.7));
         }
       }
 
@@ -2046,7 +2082,7 @@
       ctxECG.clearRect(0, 0, w, h);
       
       // ECG Grid Lines
-      ctxECG.strokeStyle = 'rgba(255, 255, 255, 0.02)';
+      ctxECG.strokeStyle = 'rgba(255, 255, 255, 0.015)';
       ctxECG.lineWidth = 1;
       for (let x = 0; x < w; x += 20) {
         ctxECG.beginPath(); ctxECG.moveTo(x, 0); ctxECG.lineTo(x, h); ctxECG.stroke();
@@ -2055,20 +2091,20 @@
         ctxECG.beginPath(); ctxECG.moveTo(0, y); ctxECG.lineTo(w, y); ctxECG.stroke();
       }
 
-      ctxECG.lineWidth = 2;
-      ctxECG.shadowBlur = 8;
+      // ECG Glow Pass
+      ctxECG.lineWidth = 4.5;
+      ctxECG.shadowBlur = 14;
       if (isCrashMode) {
-        ctxECG.strokeStyle = '#ff3b30';
-        ctxECG.shadowColor = 'rgba(255, 59, 48, 0.4)';
+        ctxECG.strokeStyle = 'rgba(255, 59, 48, 0.4)';
+        ctxECG.shadowColor = 'rgba(255, 59, 48, 0.85)';
       } else {
-        ctxECG.strokeStyle = '#00ebd6';
-        ctxECG.shadowColor = 'rgba(0, 235, 214, 0.4)';
+        ctxECG.strokeStyle = 'rgba(0, 235, 214, 0.4)';
+        ctxECG.shadowColor = 'rgba(0, 235, 214, 0.85)';
       }
 
       ctxECG.beginPath();
       let first = true;
       for (let i = 0; i < w; i++) {
-        // Skip drawing inside the eraser gap
         const isGap = (ecgX < i && i < ecgX + gapWidth) || (ecgX + gapWidth > w && i < (ecgX + gapWidth) - w);
         if (isGap) {
           first = true;
@@ -2086,19 +2122,44 @@
         }
       }
       ctxECG.stroke();
+
+      // ECG Core Pass (White hot center)
+      ctxECG.lineWidth = 2.0;
       ctxECG.shadowBlur = 0;
+      ctxECG.strokeStyle = '#ffffff';
+
+      ctxECG.beginPath();
+      first = true;
+      for (let i = 0; i < w; i++) {
+        const isGap = (ecgX < i && i < ecgX + gapWidth) || (ecgX + gapWidth > w && i < (ecgX + gapWidth) - w);
+        if (isGap) {
+          first = true;
+          continue;
+        }
+        
+        const yVal = wavePointsECG[i];
+        if (yVal !== undefined) {
+          if (first) {
+            ctxECG.moveTo(i, yVal);
+            first = false;
+          } else {
+            ctxECG.lineTo(i, yVal);
+          }
+        }
+      }
+      ctxECG.stroke();
 
       // Glow Tip
       ctxECG.fillStyle = isCrashMode ? '#ff453a' : '#00ebd6';
       ctxECG.beginPath();
-      ctxECG.arc(ecgX, wavePointsECG[Math.round(ecgX)] || h/2, 3, 0, Math.PI * 2);
+      ctxECG.arc(ecgX, wavePointsECG[Math.round(ecgX)] || h/2, 3.5, 0, Math.PI * 2);
       ctxECG.fill();
 
       // 4. DRAW RESPIRATION TRACE
       ctxResp.clearRect(0, 0, w, h);
       
       // Respiration Grid Lines
-      ctxResp.strokeStyle = 'rgba(255, 255, 255, 0.015)';
+      ctxResp.strokeStyle = 'rgba(255, 255, 255, 0.01)';
       ctxResp.lineWidth = 1;
       for (let x = 0; x < w; x += 25) {
         ctxResp.beginPath(); ctxResp.moveTo(x, 0); ctxResp.lineTo(x, h); ctxResp.stroke();
@@ -2107,14 +2168,15 @@
         ctxResp.beginPath(); ctxResp.moveTo(0, y); ctxResp.lineTo(w, y); ctxResp.stroke();
       }
 
-      ctxResp.lineWidth = 2;
-      ctxResp.shadowBlur = 6;
+      // Respiration Glow Pass
+      ctxResp.lineWidth = 4.5;
+      ctxResp.shadowBlur = 14;
       if (isCrashMode) {
-        ctxResp.strokeStyle = '#ff9f0a';
-        ctxResp.shadowColor = 'rgba(255, 159, 10, 0.35)';
+        ctxResp.strokeStyle = 'rgba(255, 159, 10, 0.4)';
+        ctxResp.shadowColor = 'rgba(255, 159, 10, 0.85)';
       } else {
-        ctxResp.strokeStyle = '#00ebd6';
-        ctxResp.shadowColor = 'rgba(0, 235, 214, 0.35)';
+        ctxResp.strokeStyle = 'rgba(0, 235, 214, 0.4)';
+        ctxResp.shadowColor = 'rgba(0, 235, 214, 0.85)';
       }
 
       ctxResp.beginPath();
@@ -2137,12 +2199,37 @@
         }
       }
       ctxResp.stroke();
+
+      // Respiration Core Pass (White hot center)
+      ctxResp.lineWidth = 2.0;
       ctxResp.shadowBlur = 0;
+      ctxResp.strokeStyle = '#ffffff';
+
+      ctxResp.beginPath();
+      first = true;
+      for (let i = 0; i < w; i++) {
+        const isGap = (respX < i && i < respX + gapWidth) || (respX + gapWidth > w && i < (respX + gapWidth) - w);
+        if (isGap) {
+          first = true;
+          continue;
+        }
+
+        const yVal = wavePointsResp[i];
+        if (yVal !== undefined) {
+          if (first) {
+            ctxResp.moveTo(i, yVal);
+            first = false;
+          } else {
+            ctxResp.lineTo(i, yVal);
+          }
+        }
+      }
+      ctxResp.stroke();
 
       // Glow Tip
       ctxResp.fillStyle = isCrashMode ? '#ff9f0a' : '#00ebd6';
       ctxResp.beginPath();
-      ctxResp.arc(respX, wavePointsResp[Math.round(respX)] || h/2, 3, 0, Math.PI * 2);
+      ctxResp.arc(respX, wavePointsResp[Math.round(respX)] || h/2, 3.5, 0, Math.PI * 2);
       ctxResp.fill();
 
       requestAnimationFrame(renderWaves);
