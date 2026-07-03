@@ -16,8 +16,8 @@
     :root {
       --bg-color: #03050a;
       --mbux-frame-bg: #070a14;
-      --card-bg: rgba(12, 17, 30, 0.7);
-      --border-color: rgba(255, 255, 255, 0.07);
+      --card-bg: rgba(255, 255, 255, 0.05);
+      --border-color: rgba(255, 255, 255, 0.08);
       
       --accent-cyan: #00ebd6;
       --accent-cyan-glow: rgba(0, 235, 214, 0.3);
@@ -26,10 +26,10 @@
       --accent-red-glow: rgba(255, 59, 48, 0.4);
       --accent-orange: #ff9f0a;
       
-      --font-primary: 'Outfit', sans-serif;
+      --font-primary: 'Inter', sans-serif;
       --font-mono: 'JetBrains Mono', monospace;
       --transition-standard: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-      --transition-fast: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      --transition-fast: all 0.2s ease;
     }
 
     * {
@@ -124,6 +124,19 @@
       background: rgba(5, 7, 12, 0.5);
       position: relative;
       z-index: 20;
+    }
+
+    .dashboard-header::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at 50% 0%, rgba(0, 235, 214, 0.15) 0%, rgba(0, 136, 255, 0.05) 60%, transparent 100%);
+      pointer-events: none;
+      z-index: -1;
     }
 
     .brand-group {
@@ -325,11 +338,11 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      background: rgba(255, 255, 255, 0.015);
-      border: 1px solid var(--border-color);
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
       padding: 6px 16px;
       border-radius: 16px;
-      backdrop-filter: blur(10px);
+      backdrop-filter: blur(12px);
     }
 
     .tabs-group {
@@ -360,7 +373,8 @@
 
     .tab-trigger:hover {
       color: #fff;
-      background: rgba(255, 255, 255, 0.02);
+      background: rgba(255, 255, 255, 0.05);
+      box-shadow: 0 0 12px rgba(0, 235, 214, 0.35);
     }
 
     .tab-trigger.active-tab {
@@ -372,17 +386,24 @@
         inset 0 0 8px rgba(0, 235, 214, 0.02);
     }
 
-    .tab-trigger.active-tab::after {
+    .tab-trigger::after {
       content: '';
       position: absolute;
       bottom: -7px;
       left: 50%;
       transform: translateX(-50%);
-      width: 40px;
+      width: 0;
       height: 2px;
       background: var(--accent-cyan);
       border-radius: 2px;
       box-shadow: 0 0 8px var(--accent-cyan);
+      opacity: 0;
+      transition: width 0.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
+    }
+
+    .tab-trigger.active-tab::after {
+      width: 40px;
+      opacity: 1;
     }
 
     /* Tab secondary controls */
@@ -393,7 +414,7 @@
 
     .fullscreen-btn {
       padding: 8px 16px;
-      border: 1px solid rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.08);
       background: rgba(255,255,255,0.02);
       border-radius: 8px;
       color: #94a3b8;
@@ -406,13 +427,14 @@
       display: flex;
       align-items: center;
       gap: 8px;
-      transition: var(--transition-fast);
+      transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease, color 0.2s ease;
     }
 
     .fullscreen-btn:hover {
       color: #fff;
-      background: rgba(255,255,255,0.05);
-      border-color: rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.08);
+      border-color: rgba(0, 235, 214, 0.4);
+      box-shadow: 0 0 12px rgba(0, 235, 214, 0.35);
     }
 
     .trust-strip {
@@ -517,8 +539,9 @@
       flex: 1;
       height: 75vh;
       border-radius: 16px;
-      border: 1px solid var(--border-color);
-      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(12px);
       position: relative;
       overflow: hidden;
       box-shadow: 
@@ -563,8 +586,8 @@
       right: 20px;
       z-index: 1000;
       padding: 10px 20px;
-      border: 1.5px solid var(--accent-cyan);
-      background: rgba(10, 14, 24, 0.9);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.02);
       color: var(--accent-cyan);
       border-radius: 8px;
       cursor: pointer;
@@ -576,15 +599,16 @@
       display: flex;
       align-items: center;
       gap: 8px;
-      box-shadow: 0 0 15px rgba(0, 235, 214, 0.3);
-      transition: var(--transition-fast);
-      backdrop-filter: blur(10px);
+      box-shadow: 0 0 15px rgba(0, 235, 214, 0.2);
+      transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease, color 0.2s ease;
+      backdrop-filter: blur(12px);
     }
 
     .exit-expand-btn:hover {
-      background: var(--accent-cyan);
-      color: #03050a;
-      box-shadow: 0 0 25px var(--accent-cyan);
+      background: rgba(0, 235, 214, 0.15);
+      color: #fff;
+      border-color: var(--accent-cyan);
+      box-shadow: 0 0 12px rgba(0, 235, 214, 0.35);
     }
 
     /* Widescreen simulation HUD overlay overlay */
@@ -615,14 +639,15 @@
     .hud-box {
       width: 80%;
       max-width: 650px;
-      background: rgba(18, 22, 33, 0.85);
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(12px);
       border: 1.5px solid var(--accent-red);
       box-shadow: 
         0 20px 60px rgba(0, 0, 0, 0.9),
         0 0 35px rgba(255, 59, 48, 0.15),
         inset 0 0 20px rgba(255, 59, 48, 0.05);
-      border-radius: 20px;
-      padding: 30px 40px;
+      border-radius: 16px;
+      padding: 24px;
       text-align: center;
       position: relative;
       overflow: hidden;
@@ -932,6 +957,15 @@
         font-size: 1rem;
       }
     }
+    #pitch-trigger:hover {
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan)) !important;
+      box-shadow: 0 0 25px rgba(0, 136, 255, 0.7) !important;
+      transform: translateY(-1px);
+      color: #fff !important;
+    }
+    #pitch-trigger:active {
+      transform: translateY(1px);
+    }
 
     /* ==========================================
        MERCEDES ME BOOT / PROFILE OVERLAY
@@ -1226,9 +1260,12 @@
       </div>
 
       <!-- Main Action Button -->
-      <div class="sim-button-wrap">
+      <div class="sim-button-wrap" style="display: flex; gap: 10px;">
         <button class="sim-btn" id="sim-trigger">
           <i class="fa-solid fa-triangle-exclamation"></i> Simulate Crash Event 
+        </button>
+        <button class="sim-btn" id="pitch-trigger" style="background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue)); color: var(--bg-dark); border: none; font-weight: 700; box-shadow: 0 0 15px rgba(0, 235, 214, 0.45);">
+          <i class="fa-solid fa-play"></i> Start Pitch Demo
         </button>
       </div>
 
@@ -1265,6 +1302,9 @@
           </button>
           <button class="tab-trigger" onclick="switchTab('vitals')">
             <i class="fa-solid fa-heart-pulse"></i> Vital Signs · Rescue
+          </button>
+          <button class="tab-trigger" onclick="switchTab('autopilot')">
+            <i class="fa-solid fa-compass"></i> Autopilot HUD
           </button>
         </div>
 
@@ -1325,6 +1365,7 @@
         <iframe id="iframe-reconstruction" class="module-iframe active-iframe" src="demos/crash-reconstruction.html"></iframe>
         <iframe id="iframe-vitals" class="module-iframe" src="demos/vital-signs.html"></iframe>
         <iframe id="iframe-road" class="module-iframe" src="demos/road-memory.html"></iframe>
+        <iframe id="iframe-autopilot" class="module-iframe" src="demos/driving-visualization.html"></iframe>
 
         <!-- Diagnostic Simulation HUD overlay overlay -->
         <div class="sim-hud-overlay" id="sim-overlay">
@@ -1361,7 +1402,7 @@
     let isCrashActive = false;
 
     // Key order must match the tab button order in the tab bar (switchTab maps by index).
-    // Storyline: Road Memory (drive) → crash → Reconstruction → Vitals → Road Memory update → Evidence Packet.
+    // Storyline: Road Memory (drive) → crash → Reconstruction → Vitals → Road Memory update → Evidence Packet → Autopilot.
     const tabs = {
       road: {
         iframeId: 'iframe-road',
@@ -1374,6 +1415,10 @@
       vitals: {
         iframeId: 'iframe-vitals',
         filePath: 'demos/vital-signs.html'
+      },
+      autopilot: {
+        iframeId: 'iframe-autopilot',
+        filePath: 'demos/driving-visualization.html'
       }
     };
 
@@ -1409,6 +1454,8 @@
         setTimeout(() => postToIframe('iframe-road', 'MAP_VISIBLE'), 80);
       } else if (tabKey === 'vitals') {
         setTimeout(() => postToIframe('iframe-vitals', 'VITALS_VISIBLE'), 80);
+      } else if (tabKey === 'autopilot') {
+        setTimeout(() => postToIframe('iframe-autopilot', 'AUTOPILOT_VISIBLE'), 80);
       }
 
       // Trigger immediate resize check
@@ -1523,6 +1570,7 @@
       switchTab('reconstruction');
       hudMessage.innerText = "Impact detected. Reconstructing crash truth...";
       postToIframe('iframe-reconstruction', 'START_CRASH_RECONSTRUCTION');
+      postToIframe('iframe-autopilot', 'START_CRASH_RECONSTRUCTION');
 
       // Step 2: Vital Signs (after 3.5s)
       setTimeout(() => {
@@ -1613,6 +1661,11 @@
     function resetSystem() {
       isCrashActive = false;
       
+      // Stop pitch demo if running
+      if (typeof isPitchActive !== 'undefined' && isPitchActive) {
+        clearPitchTimeouts();
+      }
+
       // Restore parent HUD badges and simulation button
       badge.classList.remove('danger-badge');
       badgeText.innerText = "Active Monitoring";
@@ -1626,6 +1679,7 @@
       postToIframe('iframe-reconstruction', 'RESET_DEMO');
       postToIframe('iframe-road', 'RESET_DEMO');
       postToIframe('iframe-vitals', 'RESET_DEMO');
+      postToIframe('iframe-autopilot', 'RESET_DEMO');
       trustUnlock.querySelector('.trust-icon').innerHTML = '<i class="fa-solid fa-lock"></i>';
       setTrustState('baseline');
     }
@@ -1647,6 +1701,85 @@
         runSimulation();
       }
     });
+
+    // Pitch Presentation Mode Automation Script
+    const pitchBtn = document.getElementById('pitch-trigger');
+    let isPitchActive = false;
+    let pitchTimeoutIds = [];
+
+    function clearPitchTimeouts() {
+      pitchTimeoutIds.forEach(id => clearTimeout(id));
+      pitchTimeoutIds = [];
+      isPitchActive = false;
+      if (pitchBtn) {
+        pitchBtn.innerHTML = '<i class="fa-solid fa-play"></i> Start Pitch Demo';
+        pitchBtn.style.background = 'linear-gradient(135deg, var(--accent-cyan), var(--accent-blue))';
+      }
+    }
+
+    function runPitchDemo() {
+      if (isPitchActive) {
+        clearPitchTimeouts();
+        resetSystem();
+        return;
+      }
+
+      isPitchActive = true;
+      if (pitchBtn) {
+        pitchBtn.innerHTML = '<i class="fa-solid fa-stop-circle"></i> Stop Pitch Demo';
+        pitchBtn.style.background = 'var(--accent-red)';
+      }
+
+      // Reset the cockpit system first to clear old states
+      resetSystem();
+      isCrashActive = true; // prevent manual triggering while demo is active
+
+      // Step 1: Switch to Autopilot HUD and trigger sensor timeline
+      switchTab('autopilot');
+      postToIframe('iframe-autopilot', 'START_CRASH_RECONSTRUCTION');
+
+      // Step 2: Allow Autopilot to brake, swerve, and spin-out (takes 4s)
+      pitchTimeoutIds.push(setTimeout(() => {
+        // Switch to Crash Reconstruction
+        switchTab('reconstruction');
+        postToIframe('iframe-reconstruction', 'START_CRASH_RECONSTRUCTION');
+      }, 4000));
+
+      // Step 3: Trigger Blockchain ledger audit and smart claims receipt popup (after 3.5s of reconstruction)
+      pitchTimeoutIds.push(setTimeout(() => {
+        postToIframe('iframe-reconstruction', 'TRIGGER_BLOCKCHAIN_VERIFY');
+      }, 7500));
+
+      // Step 4: Switch to Vital Signs monitoring (after 3.5s of ledger verification)
+      pitchTimeoutIds.push(setTimeout(() => {
+        switchTab('vitals');
+        postToIframe('iframe-vitals', 'START_VITALS_EMERGENCY');
+      }, 11000));
+
+      // Step 5: Switch to collective Road Memory map (after 3.5s of vitals)
+      pitchTimeoutIds.push(setTimeout(() => {
+        switchTab('road');
+        postToIframe('iframe-road', 'ADD_ROAD_MEMORY_INCIDENT');
+      }, 14500));
+
+      // Step 6: Automatically trigger compiled PDF report download (after 4s of map mapping)
+      pitchTimeoutIds.push(setTimeout(() => {
+        const evidenceBtn = document.getElementById('evidence-btn');
+        if (evidenceBtn) {
+          evidenceBtn.click();
+        }
+      }, 18500));
+
+      // Step 7: Return back to reconstruction at the end of the presentation (after 1s)
+      pitchTimeoutIds.push(setTimeout(() => {
+        switchTab('reconstruction');
+        clearPitchTimeouts();
+      }, 19500));
+    }
+
+    if (pitchBtn) {
+      pitchBtn.addEventListener('click', runPitchDemo);
+    }
 
     // Expand / Collapse Iframe view within the same tab
     const screenPanel = document.getElementById('main-screen-panel');
