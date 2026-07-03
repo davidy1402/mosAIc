@@ -6,10 +6,8 @@
   <title>mosAIc // ClearBox Vital Signs Intelligence</title>
   
   <!-- Premium Fonts & Icons -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="../assets/vendor/fonts.css" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/vendor/fontawesome/css/all.min.css">
   
   <style>
     /* ==========================================
@@ -473,6 +471,50 @@
 
     .sensor-status.scanning {
       color: var(--accent-color);
+    }
+
+    /* Sensor tiers: ONBOARD = hardware in today's Mercedes, ROADMAP = future fusion */
+    .tier-badge {
+      font-size: 0.52rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+
+    .tier-badge.onboard {
+      color: var(--accent-color);
+      background: rgba(0, 235, 214, 0.06);
+      border: 1px solid rgba(0, 235, 214, 0.25);
+    }
+
+    .tier-badge.roadmap {
+      color: #64748b;
+      background: rgba(100, 116, 139, 0.08);
+      border: 1px solid rgba(100, 116, 139, 0.3);
+    }
+
+    .sensor-item.roadmap {
+      opacity: 0.45;
+      filter: saturate(0.3);
+    }
+
+    .sensor-item.roadmap:hover {
+      opacity: 0.7;
+    }
+
+    .sensor-item.roadmap .sensor-status {
+      color: #64748b;
+    }
+
+    .sensor-tier-legend {
+      font-size: 0.6rem;
+      color: #64748b;
+      letter-spacing: 0.4px;
+      margin-top: 10px;
+      line-height: 1.5;
     }
 
     /* Core Micro-animations for sensor statuses */
@@ -1435,28 +1477,11 @@
         <div class="glass-card">
           <div class="card-title">
             <span>Hardware Status feeds</span>
-            <span style="font-size: 0.65rem; color: var(--accent-color);">Contactless Fusion</span>
+            <span style="font-size: 0.65rem; color: var(--accent-color);">Zero New Hardware</span>
           </div>
           <div class="sensor-feeds-list">
-            
-            <!-- Feed 1 -->
-            <div class="sensor-item">
-              <div class="sensor-info">
-                <div class="sensor-icon-wrap">
-                  <svg viewBox="0 0 24 24" fill="none" stroke-linejoin="round" stroke-linecap="round">
-                    <circle cx="12" cy="12" r="10"/>
-                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
-                    <path d="M2 12h20"/>
-                  </svg>
-                </div>
-                <div class="sensor-name">Steering Wheel Electrodes</div>
-              </div>
-              <div class="sensor-status" id="sensorStatus1">
-                <div class="pulse-dot"></div> Connected
-              </div>
-            </div>
 
-            <!-- Feed 2 -->
+            <!-- Feed: rPPG Camera (onboard today — the MBUX driver camera) -->
             <div class="sensor-item">
               <div class="sensor-info">
                 <div class="sensor-icon-wrap">
@@ -1465,29 +1490,14 @@
                     <circle cx="12" cy="13" r="4"/>
                   </svg>
                 </div>
-                <div class="sensor-name">rPPG Cabin Camera Matrix</div>
+                <div class="sensor-name">rPPG Cabin Camera Matrix<span class="tier-badge onboard">Onboard</span></div>
               </div>
               <div class="sensor-status scanning" id="sensorStatus2">
                 <div class="scan-circle"></div> Scanning
               </div>
             </div>
 
-            <!-- Feed 3 -->
-            <div class="sensor-item">
-              <div class="sensor-info">
-                <div class="sensor-icon-wrap">
-                  <svg viewBox="0 0 24 24" fill="none" stroke-linejoin="round" stroke-linecap="round">
-                    <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
-                  </svg>
-                </div>
-                <div class="sensor-name">Seat Pressure Sensors</div>
-              </div>
-              <div class="sensor-status" id="sensorStatus3">
-                <div class="pulse-dot"></div> Active
-              </div>
-            </div>
-
-            <!-- Feed 4 -->
+            <!-- Feed: Microphone (onboard today) -->
             <div class="sensor-item">
               <div class="sensor-info">
                 <div class="sensor-icon-wrap">
@@ -1495,7 +1505,7 @@
                     <path d="M12 1v22M17 5v14M22 9v6M7 5v14M2 9v6"/>
                   </svg>
                 </div>
-                <div class="sensor-name">Acoustic Microphone Array</div>
+                <div class="sensor-name">Acoustic Microphone Array<span class="tier-badge onboard">Onboard</span></div>
               </div>
               <div class="sensor-status" id="sensorStatus4">
                 <div class="audio-waves">
@@ -1507,6 +1517,42 @@
               </div>
             </div>
 
+            <!-- Feed: Steering wheel electrodes (roadmap — not in today's cars) -->
+            <div class="sensor-item roadmap">
+              <div class="sensor-info">
+                <div class="sensor-icon-wrap">
+                  <svg viewBox="0 0 24 24" fill="none" stroke-linejoin="round" stroke-linecap="round">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                    <path d="M2 12h20"/>
+                  </svg>
+                </div>
+                <div class="sensor-name">Steering Wheel Electrodes<span class="tier-badge roadmap">Roadmap</span></div>
+              </div>
+              <div class="sensor-status" id="sensorStatus1">
+                Future Fusion
+              </div>
+            </div>
+
+            <!-- Feed: Wearables / smart fabric (roadmap) -->
+            <div class="sensor-item roadmap">
+              <div class="sensor-info">
+                <div class="sensor-icon-wrap">
+                  <svg viewBox="0 0 24 24" fill="none" stroke-linejoin="round" stroke-linecap="round">
+                    <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
+                  </svg>
+                </div>
+                <div class="sensor-name">Wearables &amp; Smart-Fabric Seats<span class="tier-badge roadmap">Roadmap</span></div>
+              </div>
+              <div class="sensor-status" id="sensorStatus3">
+                Opt-in Pairing
+              </div>
+            </div>
+
+          </div>
+          <div class="sensor-tier-legend">
+            <strong style="color:#94a3b8;">ONBOARD</strong> — hardware already in today's Mercedes (MVP runs on these only) &nbsp;·&nbsp;
+            <strong style="color:#94a3b8;">ROADMAP</strong> — future ecosystem fusion for higher accuracy
           </div>
         </div>
 
@@ -1514,7 +1560,7 @@
         <div class="glass-card occupant-card">
           <div class="avatar-container">
             <div class="avatar-glow-ring"></div>
-            <img class="avatar-img" src="avatar.png" alt="Anes Abbas" onerror="if(this.src.indexOf('avatar.png') !== -1) this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj4KICA8ZGVmcz4KICAgIDxyYWRpYWxHcmFkaWVudCBpZD0iYmciIGN4PSI1MCUiIGN5PSI1MCUiIHI9IjUwJSI+CiAgICAgIDxzdG9wIG9mZnNldD0iMCUiIHN0b3AtY29sb3I9IiMxMTE2MjUiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSIxMDAlIiBzdG9wLWNvbG9yPSIjMDcwYTEyIi8+CiAgICA8L3JhZGlhbEdyYWRpZW50PgogICAgPGxpbmVhckdyYWRpZW50IGlkPSJib2R5IiB4MT0iMCUiIHkxPSIwJSIgeDI9IjEwMCUiIHkyPSIxMDAlIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iIzAwZWJkNiIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiMwODkxYjIiLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImZhY2UiIHgxPSIwJSIgeTE9IjAlIiB4Mj0iMTAwJSIgeTI9IjEwMCUiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjMzhiZGY4Ii8+CiAgICAgIDxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzAzNjlhMSIvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICA8L2RlZnM+CiAgPGNpcmNsZSBjeD0iNTAiIGN5PSI1MCIgcj0iNDgiIGZpbGw9InVybCgjYmcpIiBzdHJva2U9IiMwMGViZDYiIHN0cm9rZS13aWR0aD0iMS41IiBzdHJva2Utb3BhY2l0eT0iMC4zIi8+CiAgCiAgPCEtLSBPdXRlciBUZWNoIEFjY2VudHMgLS0+CiAgPGNpcmNsZSBjeD0iNTAiIGN5PSI1MCIgcj0iNDUiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzAwZWJkNiIgc3Ryb2tlLXdpZHRoPSIwLjgiIHN0cm9rZS1kYXNoYXJyYXk9IjYsIDMwIiBzdHJva2Utb3BhY2l0eT0iMC41Ii8+CiAgPGNpcmNsZSBjeD0iNTAiIGN5PSI1MCIgcj0iNDIiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzAwZWJkNiIgc3Ryb2tlLXdpZHRoPSIwLjUiIHN0cm9rZS1vcGFjaXR5PSIwLjE1Ii8+CiAgCiAgPCEtLSBBdmF0YXIgQm9keSAtLT4KICA8cGF0aCBkPSJNMjYgNzggQzI2IDYyLCAzNCA1NCwgNTAgNTQgQzY2IDU0LCA3NCA2MiwgNzQgNzggQzc0IDgxLCA3MSA4MywgNTAgODMgQzI5IDgzLCAyNiA4MSwgMjYgNzggWiIgZmlsbD0idXJsKCNib2R5KSIvPgogIAogIDwhLS0gQXZhdGFyIEhlYWQgLS0+CiAgPGNpcmNsZSBjeD0iNTAiIGN5PSIzOCIgcj0iMTUiIGZpbGw9InVybCgjZmFjZSkiLz4KICAKICA8IS0tIFRhcmdldCBSZXRpY2xlIC8gVGVjaCBvdmVybGF5IC0tPgogIDxjaXJjbGUgY3g9IjUwIiBjeT0iMzgiIHI9IjIyIiBmaWxsPSJub25lIiBzdHJva2U9IiMwMGViZDYiIHN0cm9rZS13aWR0aD0iMC44IiBzdHJva2UtZGFzaGFycmF5PSIyLCA2IiBzdHJva2Utb3BhY2l0eT0iMC42Ii8+CiAgPGxpbmUgeDE9IjI0IiB5MT0iMzgiIHgyPSI3NiIgeTI9IjM4IiBzdHJva2U9IiMwMGViZDYiIHN0cm9rZS13aWR0aD0iMC41IiBzdHJva2Utb3BhY2l0eT0iMC4zIi8+CiAgPGxpbmUgeDE9IjUwIiB5MT0iMTIiIHgyPSI1MCIgeTI9IjY0IiBzdHJva2U9IiMwMGViZDYiIHN0cm9rZS13aWR0aD0iMC41IiBzdHJva2Utb3BhY2l0eT0iMC4zIi8+Cjwvc3ZnPg==';">
+            <img class="avatar-img" src="avatar.svg" alt="Anes Abbas" onerror="if(this.src.indexOf('avatar.svg') !== -1) this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj4KICA8ZGVmcz4KICAgIDxyYWRpYWxHcmFkaWVudCBpZD0iYmciIGN4PSI1MCUiIGN5PSI1MCUiIHI9IjUwJSI+CiAgICAgIDxzdG9wIG9mZnNldD0iMCUiIHN0b3AtY29sb3I9IiMxMTE2MjUiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSIxMDAlIiBzdG9wLWNvbG9yPSIjMDcwYTEyIi8+CiAgICA8L3JhZGlhbEdyYWRpZW50PgogICAgPGxpbmVhckdyYWRpZW50IGlkPSJib2R5IiB4MT0iMCUiIHkxPSIwJSIgeDI9IjEwMCUiIHkyPSIxMDAlIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iIzAwZWJkNiIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiMwODkxYjIiLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImZhY2UiIHgxPSIwJSIgeTE9IjAlIiB4Mj0iMTAwJSIgeTI9IjEwMCUiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjMzhiZGY4Ii8+CiAgICAgIDxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzAzNjlhMSIvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICA8L2RlZnM+CiAgPGNpcmNsZSBjeD0iNTAiIGN5PSI1MCIgcj0iNDgiIGZpbGw9InVybCgjYmcpIiBzdHJva2U9IiMwMGViZDYiIHN0cm9rZS13aWR0aD0iMS41IiBzdHJva2Utb3BhY2l0eT0iMC4zIi8+CiAgCiAgPCEtLSBPdXRlciBUZWNoIEFjY2VudHMgLS0+CiAgPGNpcmNsZSBjeD0iNTAiIGN5PSI1MCIgcj0iNDUiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzAwZWJkNiIgc3Ryb2tlLXdpZHRoPSIwLjgiIHN0cm9rZS1kYXNoYXJyYXk9IjYsIDMwIiBzdHJva2Utb3BhY2l0eT0iMC41Ii8+CiAgPGNpcmNsZSBjeD0iNTAiIGN5PSI1MCIgcj0iNDIiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzAwZWJkNiIgc3Ryb2tlLXdpZHRoPSIwLjUiIHN0cm9rZS1vcGFjaXR5PSIwLjE1Ii8+CiAgCiAgPCEtLSBBdmF0YXIgQm9keSAtLT4KICA8cGF0aCBkPSJNMjYgNzggQzI2IDYyLCAzNCA1NCwgNTAgNTQgQzY2IDU0LCA3NCA2MiwgNzQgNzggQzc0IDgxLCA3MSA4MywgNTAgODMgQzI5IDgzLCAyNiA4MSwgMjYgNzggWiIgZmlsbD0idXJsKCNib2R5KSIvPgogIAogIDwhLS0gQXZhdGFyIEhlYWQgLS0+CiAgPGNpcmNsZSBjeD0iNTAiIGN5PSIzOCIgcj0iMTUiIGZpbGw9InVybCgjZmFjZSkiLz4KICAKICA8IS0tIFRhcmdldCBSZXRpY2xlIC8gVGVjaCBvdmVybGF5IC0tPgogIDxjaXJjbGUgY3g9IjUwIiBjeT0iMzgiIHI9IjIyIiBmaWxsPSJub25lIiBzdHJva2U9IiMwMGViZDYiIHN0cm9rZS13aWR0aD0iMC44IiBzdHJva2UtZGFzaGFycmF5PSIyLCA2IiBzdHJva2Utb3BhY2l0eT0iMC42Ii8+CiAgPGxpbmUgeDE9IjI0IiB5MT0iMzgiIHgyPSI3NiIgeTI9IjM4IiBzdHJva2U9IiMwMGViZDYiIHN0cm9rZS13aWR0aD0iMC41IiBzdHJva2Utb3BhY2l0eT0iMC4zIi8+CiAgPGxpbmUgeDE9IjUwIiB5MT0iMTIiIHgyPSI1MCIgeTI9IjY0IiBzdHJva2U9IiMwMGViZDYiIHN0cm9rZS13aWR0aD0iMC41IiBzdHJva2Utb3BhY2l0eT0iMC4zIi8+Cjwvc3ZnPg==';">
           </div>
           <div class="occupant-name">Anes Abbas</div>
           <div class="medical-badge">
@@ -1555,7 +1601,7 @@
                 <span class="telemetry-value" id="valHR">72</span>
                 <span class="telemetry-unit">BPM</span>
               </div>
-              <div class="telemetry-source">Steering Wheel / rPPG Camera</div>
+              <div class="telemetry-source">rPPG Cabin Camera · Contactless</div>
             </div>
             
             <div class="glass-card telemetry-wave-card">
@@ -1577,7 +1623,7 @@
                 <span class="telemetry-value" id="valRR">14</span>
                 <span class="telemetry-unit">RPM</span>
               </div>
-              <div class="telemetry-source">Seat Biomimetic Sensors</div>
+              <div class="telemetry-source">Camera Chest Micro-Motion Analysis</div>
             </div>
 
             <div class="glass-card telemetry-wave-card">
@@ -2242,9 +2288,8 @@
       sysStatusBadge.classList.add('critical');
       sysStatusText.textContent = "CRITICAL IMPACT DETECTED — DATA ANCHORED TO IMMUTABLE LEDGER";
       
-      sensorStatus1.innerHTML = '<span style="color:#ff3b30"><span class="pulse-dot" style="background:#ff3b30;box-shadow:0 0 6px #ff3b30"></span> DISRUPTED</span>';
+      // sensorStatus1/3 are roadmap-tier (not in today's cars) — they stay static
       sensorStatus2.innerHTML = '<span style="color:#ff3b30"><span class="scan-circle" style="background:#ff3b30;box-shadow:0 0 6px #ff3b30"></span> DISRUPTED</span>';
-      sensorStatus3.innerHTML = '<span style="color:#ff3b30"><span class="pulse-dot" style="background:#ff3b30;box-shadow:0 0 6px #ff3b30"></span> OVERLOADED</span>';
       sensorStatus4.innerHTML = '<span style="color:#ff3b30">VOICE OVERLOAD</span>';
 
       trackingStatusBadge.style.background = 'rgba(255, 59, 48, 0.06)';
@@ -2300,9 +2345,9 @@
       sysStatusBadge.classList.remove('critical');
       sysStatusText.textContent = "System Active // Baseline Tracking";
 
-      sensorStatus1.innerHTML = '<div class="pulse-dot"></div> Connected';
+      sensorStatus1.innerHTML = 'Future Fusion';
       sensorStatus2.innerHTML = '<div class="scan-circle"></div> Scanning';
-      sensorStatus3.innerHTML = '<div class="pulse-dot"></div> Active';
+      sensorStatus3.innerHTML = 'Opt-in Pairing';
       sensorStatus4.innerHTML = `
         <div class="audio-waves">
           <div class="audio-bar"></div>
