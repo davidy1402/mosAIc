@@ -54,8 +54,10 @@ Rubric this script is built against: Innovation 20% · AI Utilization 20% · Imp
 **[CLICK: Crash Reconstruction tab — drag the 3D splat scene, rotate it once]**
 > This is the witness. A Gaussian-splat reconstruction you can rotate — no blind spots, no he-said-she-said, cryptographically signed at the moment of impact.
 
-**[CLICK: "Evidence Packet" — show the PDF for 2 seconds, close]**
+**[CLICK: the pulsing "Evidence Packet" button — show the PDF for 2 seconds, close]**
 > And this is what the insurer and the police receive.
+
+*(The Evidence Packet button starts pulsing cyan when the sequence finishes — that's your cue, and it draws the judges' eyes to the final step.)*
 
 ## 2:30 – 3:10 · Technical honesty (Speaker A)
 
