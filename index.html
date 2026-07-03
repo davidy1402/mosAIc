@@ -6,13 +6,11 @@
   <title>ClearBox // AI-Defined Vehicle Incident Intelligence - Mercedes-Benz Vibathon</title>
   
   <!-- Fonts & Icons -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="assets/vendor/fonts.css" rel="stylesheet">
+  <link rel="stylesheet" href="assets/vendor/fontawesome/css/all.min.css">
 
   <!-- jsPDF Library -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="assets/vendor/jspdf.umd.min.js"></script>
 
   <style>
     :root {
@@ -968,11 +966,271 @@
     #pitch-trigger:active {
       transform: translateY(1px);
     }
+
+    /* ==========================================
+       MERCEDES ME BOOT / PROFILE OVERLAY
+       ========================================== */
+    .me-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 500;
+      background: rgba(3, 5, 10, 0.92);
+      backdrop-filter: blur(24px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.7s;
+    }
+
+    .me-overlay.dismissed {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .me-card {
+      width: min(460px, calc(100vw - 48px));
+      background: rgba(12, 17, 30, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 22px;
+      padding: 36px 34px 30px;
+      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6), inset 0 0 30px rgba(0, 235, 214, 0.02);
+      text-align: center;
+    }
+
+    .me-brand {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 6px;
+    }
+
+    .me-brand img {
+      width: 34px;
+      height: 34px;
+      object-fit: contain;
+    }
+
+    .me-brand-name {
+      font-size: 1.3rem;
+      font-weight: 300;
+      letter-spacing: 1px;
+      color: #fff;
+    }
+
+    .me-brand-name strong {
+      font-weight: 700;
+    }
+
+    .me-tagline {
+      font-size: 0.62rem;
+      text-transform: uppercase;
+      letter-spacing: 2.5px;
+      color: #64748b;
+      margin-bottom: 24px;
+    }
+
+    .me-avatar {
+      width: 76px;
+      height: 76px;
+      border-radius: 50%;
+      border: 2px solid rgba(0, 235, 214, 0.4);
+      box-shadow: 0 0 25px rgba(0, 235, 214, 0.15);
+      object-fit: cover;
+      margin-bottom: 12px;
+    }
+
+    .me-driver-name {
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .me-driver-meta {
+      font-size: 0.7rem;
+      color: #64748b;
+      letter-spacing: 0.5px;
+      margin: 4px 0 20px;
+    }
+
+    .me-driver-meta i {
+      color: var(--accent-cyan);
+      margin-right: 4px;
+    }
+
+    .me-info-rows {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      text-align: left;
+      margin-bottom: 22px;
+    }
+
+    .me-info-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 11px 14px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+    }
+
+    .me-info-label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.78rem;
+      color: #94a3b8;
+    }
+
+    .me-info-label i {
+      width: 16px;
+      color: var(--accent-cyan);
+      font-size: 0.8rem;
+    }
+
+    .me-info-value {
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      color: #e2e8f0;
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .me-pill {
+      font-size: 0.58rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      padding: 3px 8px;
+      border-radius: 20px;
+      color: #00e575;
+      background: rgba(0, 229, 117, 0.08);
+      border: 1px solid rgba(0, 229, 117, 0.3);
+    }
+
+    .me-privacy-note {
+      font-size: 0.6rem;
+      color: #64748b;
+      line-height: 1.5;
+      margin-bottom: 20px;
+    }
+
+    .me-start-btn {
+      width: 100%;
+      padding: 14px;
+      border-radius: 14px;
+      border: 1px solid rgba(0, 235, 214, 0.5);
+      background: linear-gradient(135deg, rgba(0, 235, 214, 0.12), rgba(0, 136, 255, 0.1));
+      color: #fff;
+      font-family: var(--font-primary);
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      cursor: pointer;
+      transition: var(--transition-fast);
+      box-shadow: 0 4px 20px rgba(0, 235, 214, 0.12);
+    }
+
+    .me-start-btn:hover {
+      background: linear-gradient(135deg, rgba(0, 235, 214, 0.22), rgba(0, 136, 255, 0.18));
+      box-shadow: 0 6px 30px rgba(0, 235, 214, 0.25);
+      transform: translateY(-1px);
+    }
+
+    .me-footnote {
+      font-size: 0.58rem;
+      letter-spacing: 0.4px;
+      color: #475569;
+      margin-top: 14px;
+    }
+
+    /* Logged-in driver chip in the cockpit header */
+    .driver-chip {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px 6px 6px;
+      border-radius: 30px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+    }
+
+    .driver-chip img {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 1px solid rgba(0, 235, 214, 0.4);
+    }
+
+    .driver-chip-text {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.15;
+    }
+
+    .driver-chip-name {
+      font-size: 0.66rem;
+      font-weight: 600;
+      color: #e2e8f0;
+    }
+
+    .driver-chip-sub {
+      font-size: 0.52rem;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: #64748b;
+    }
   </style>
 </head>
 <body>
 
   <div class="bg-grid"></div>
+
+  <!-- Mercedes me profile / boot overlay -->
+  <div class="me-overlay" id="me-overlay">
+    <div class="me-card">
+      <div class="me-brand">
+        <img src="mercedeslogo.png" alt="Mercedes-Benz">
+        <div class="me-brand-name">Mercedes <strong>me</strong></div>
+      </div>
+      <div class="me-tagline">Connected Services · ClearBox</div>
+
+      <img class="me-avatar" src="demos/avatar.svg" alt="Driver avatar" onerror="this.style.display='none'">
+      <div class="me-driver-name">Taylor swift</div>
+      <div class="me-driver-meta"><i class="fa-solid fa-circle-check"></i>Mercedes me ID verified · Kuala Lumpur, MY</div>
+
+      <div class="me-info-rows">
+        <div class="me-info-row">
+          <div class="me-info-label"><i class="fa-solid fa-car-side"></i>Vehicle</div>
+          <div class="me-info-value">EQS 580 4MATIC · WXY 4821</div>
+        </div>
+        <div class="me-info-row">
+          <div class="me-info-label"><i class="fa-solid fa-tower-broadcast"></i>Emergency Call Service</div>
+          <div class="me-info-value"><span class="me-pill">CLEARBOX TIER ACTIVE</span></div>
+        </div>
+        <div class="me-info-row">
+          <div class="me-info-label"><i class="fa-solid fa-notes-medical"></i>Medical Profile</div>
+          <div class="me-info-value">Acute Asthma · O+ <span class="me-pill">OPT-IN</span></div>
+        </div>
+      </div>
+
+      <div class="me-privacy-note">
+        Medical profile is encrypted on-vehicle and released to 999 responders
+        only when an SOS is dispatched — never before, never to anyone else.
+      </div>
+
+      <button class="me-start-btn" id="me-start-btn">
+        <i class="fa-solid fa-route"></i>&nbsp; Start Drive
+      </button>
+      <div class="me-footnote">ClearBox lives inside the Mercedes me account and eCall service your customers already have.</div>
+    </div>
+  </div>
 
   <!-- Hyperscreen Chassis frame -->
   <div class="hyperscreen-container">
@@ -991,7 +1249,7 @@
       <!-- Main Action Button -->
       <div class="sim-button-wrap" style="display: flex; gap: 10px;">
         <button class="sim-btn" id="sim-trigger">
-          <i class="fa-solid fa-triangle-exclamation"></i> Simulate Crash Event
+          <i class="fa-solid fa-triangle-exclamation"></i> Simulate Crash Event 
         </button>
         <button class="sim-btn" id="pitch-trigger" style="background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue)); color: var(--bg-dark); border: none; font-weight: 700; box-shadow: 0 0 15px rgba(0, 235, 214, 0.45);">
           <i class="fa-solid fa-play"></i> Start Pitch Demo
@@ -1000,6 +1258,13 @@
 
       <!-- Right stats -->
       <div class="system-status">
+        <div class="driver-chip" title="Signed in via Mercedes me">
+          <img src="demos/avatar.svg" alt="" onerror="this.style.display='none'">
+          <div class="driver-chip-text">
+            <span class="driver-chip-name">Taylor swift</span>
+            <span class="driver-chip-sub">Mercedes me</span>
+          </div>
+        </div>
         <div class="sys-badge vehicle-id-badge">
           <i class="fa-solid fa-car-side"></i> <span>WXY 4821</span>
         </div>
@@ -1016,14 +1281,14 @@
       <!-- Interactive Menu Tabs -->
       <div class="tab-bar-container">
         <div class="tabs-group">
-          <button class="tab-trigger active-tab" onclick="switchTab('reconstruction')">
-            <i class="fa-solid fa-circle-nodes"></i> Crash Reconstruction
+          <button class="tab-trigger" onclick="switchTab('road')">
+            <i class="fa-solid fa-chart-network"></i> Road Memory · Drive
           </button>
           <button class="tab-trigger" onclick="switchTab('vitals')">
-            <i class="fa-solid fa-heart-pulse"></i> Vital Signs
+            <i class="fa-solid fa-heart-pulse"></i> Vital Signs · Impact
           </button>
-          <button class="tab-trigger" onclick="switchTab('road')">
-            <i class="fa-solid fa-chart-network"></i> Road Memory
+          <button class="tab-trigger active-tab" onclick="switchTab('reconstruction')">
+            <i class="fa-solid fa-circle-nodes"></i> Crash Reconstruction · Aftermath
           </button>
           <button class="tab-trigger" onclick="switchTab('autopilot')">
             <i class="fa-solid fa-compass"></i> Autopilot HUD
@@ -1123,18 +1388,20 @@
     let currentTab = 'reconstruction';
     let isCrashActive = false;
 
+    // Key order must match the tab button order in the tab bar (switchTab maps by index).
+    // Storyline order: Drive (road) → Impact (vitals) → Aftermath (reconstruction) → Autopilot.
     const tabs = {
-      reconstruction: {
-        iframeId: 'iframe-reconstruction',
-        filePath: 'demos/crash-reconstruction.html'
+      road: {
+        iframeId: 'iframe-road',
+        filePath: 'demos/road-memory.html'
       },
       vitals: {
         iframeId: 'iframe-vitals',
         filePath: 'demos/vital-signs.html'
       },
-      road: {
-        iframeId: 'iframe-road',
-        filePath: 'demos/road-memory.html'
+      reconstruction: {
+        iframeId: 'iframe-reconstruction',
+        filePath: 'demos/crash-reconstruction.html'
       },
       autopilot: {
         iframeId: 'iframe-autopilot',
@@ -1672,7 +1939,7 @@
       // 2. Data Sources
       drawSection('2. Raw Telemetry & Biosignal Diagnostics', [
         '• CAN Bus Telemetry: Real-time speed, steering wheel angle, brake pedal pressure, and IMU G-forces.',
-        '• Cabin Biosignals: Seat pressure sensors, steering wheel ECG electrodes, rPPG camera, and cabin audio.',
+        '• Cabin Biosignals: rPPG cabin camera and cabin audio (onboard today); wearable and smart-fabric fusion (roadmap).',
         '• Collective Grid: Regional hazard records, incident history, risk levels, and warning zone boundaries.'
       ]);
 
@@ -1758,6 +2025,13 @@
 
     // Run periodic check to handle dynamic page expansions (like dialogue typewriter updates)
     setInterval(resizeIframeToFitContent, 300);
+
+    // --- Mercedes me boot overlay ---
+    // Storyline step 1: sign in via Mercedes me, then start the drive on Road Memory
+    document.getElementById('me-start-btn').addEventListener('click', () => {
+      document.getElementById('me-overlay').classList.add('dismissed');
+      switchTab('road');
+    });
 
   </script>
 
