@@ -481,7 +481,8 @@
 
     .splat-viewer {
       position: relative;
-      height: 210px;
+      height: 265px;
+      margin: 12px 0;
       border-radius: 12px;
       overflow: hidden;
       border: 1px solid rgba(0, 235, 214, 0.16);
@@ -1132,17 +1133,17 @@
           <span class="fusion-chip"><i class="fa-solid fa-microchip"></i> Brake CAN</span>
         </div>
 
-        <!-- <div class="splat-viewer" id="splatViewer" aria-label="Interactive 360 Gaussian splat crash reconstruction">
+        <div class="splat-viewer" id="splatViewer" aria-label="Interactive 360 Gaussian splat crash reconstruction">
           <canvas id="splatCanvas"></canvas>
           <div class="splat-viewer-hud">
             <span class="splat-chip"><i class="fa-solid fa-cube"></i> 360 Gaussian Splat PoC</span>
             <span class="splat-chip" id="splatAngle">Yaw 0°</span>
           </div>
           <div class="splat-hint">
-            <span>Drag to rotate scene</span>
+            <span>Drag to rotate · Scroll to zoom</span>
             <span>Multi-camera + Car2X splats</span>
           </div>
-        </div> -->
+        </div>
 
         <div class="alignment-metrics">
           <div class="alignment-metric">
@@ -1744,6 +1745,7 @@
         btnSimulateAccident.classList.add('reset-state');
       }
       if (statusEvidenceHash) statusEvidenceHash.innerText = 'Signed';
+      if (window.replaySplatReveal) window.replaySplatReveal();
     }
 
     function resetAccidentTimeline() {
@@ -1768,9 +1770,15 @@
       const ctx = canvas.getContext('2d');
       let yaw = 0;
       let pitch = -0.18;
+      let camDist = 7.2;
       let dragging = false;
       let lastX = 0;
       let lastY = 0;
+      // Scan-in reveal: splats appear as the reconstruction "scan plane" sweeps
+      // across the scene (restarted whenever a crash is triggered)
+      let revealStart = performance.now();
+      const REVEAL_MS = 2600;
+      window.replaySplatReveal = () => { revealStart = performance.now(); };
 
       const splats = [];
       const addSplat = (x, y, z, r, color, alpha = 0.75) => {
@@ -1782,20 +1790,46 @@
         const x = -5.8 + Math.random() * 11.6;
         const z = -3.2 + Math.random() * 6.4;
         const lane = Math.abs(z) < 0.08 || Math.abs(z - 1.35) < 0.06 || Math.abs(z + 1.35) < 0.06;
-        addSplat(x, -0.85 + Math.random() * 0.05, z, lane ? 2.1 : 1.4, lane ? '#94a3b8' : '#1e293b', lane ? 0.55 : 0.38);
+        addSplat(x, -0.85 + Math.random() * 0.05, z, lane ? 1.5 : 1.0, lane ? '#94a3b8' : '#1e293b', lane ? 0.42 : 0.25);
       }
 
-      const addVehicle = (cx, cz, color, damaged = false) => {
-        for (let i = 0; i < 190; i++) {
-          const x = cx + (Math.random() - 0.5) * 1.65;
-          const y = -0.42 + Math.random() * 0.72;
-          const z = cz + (Math.random() - 0.5) * 0.88;
-          addSplat(x, y, z, damaged && i % 5 === 0 ? 3.2 : 2.2, damaged && i % 7 === 0 ? '#ff3b30' : color, damaged ? 0.8 : 0.7);
+      // Car-shaped point cloud: body shell + cabin greenhouse + four wheels,
+      // rotated by heading so the two vehicles read as a T-bone configuration.
+      const addVehicle = (cx, cz, heading, color, damaged = false) => {
+        const cosH = Math.cos(heading);
+        const sinH = Math.sin(heading);
+        const place = (lx, ly, lz, r, c, a) => {
+          addSplat(cx + lx * cosH - lz * sinH, ly, cz + lx * sinH + lz * cosH, r, c, a);
+        };
+
+        // Lower body shell (hood + boot taper toward the ends)
+        for (let i = 0; i < 340; i++) {
+          const lx = (Math.random() - 0.5) * 2.1;
+          const taper = 1 - Math.min(1, Math.abs(lx) / 1.05) * 0.25;
+          const lz = (Math.random() - 0.5) * 0.92 * taper;
+          const ly = -0.42 + Math.random() * 0.34;
+          const crumpled = damaged && lx > 0.6 && i % 3 === 0;
+          place(lx, ly, lz, crumpled ? 3.0 : 2.1, crumpled ? '#ff3b30' : color, crumpled ? 0.85 : 0.7);
         }
+        // Cabin greenhouse, set slightly rearward and narrower
+        for (let i = 0; i < 110; i++) {
+          const lx = -0.15 + (Math.random() - 0.5) * 1.05;
+          const lz = (Math.random() - 0.5) * 0.72;
+          const ly = -0.08 + Math.random() * 0.34;
+          place(lx, ly, lz, 1.9, color, 0.55);
+        }
+        // Wheels: four dark clusters at the corners
+        [[0.72, 0.48], [0.72, -0.48], [-0.72, 0.48], [-0.72, -0.48]].forEach(([wx, wz]) => {
+          for (let i = 0; i < 14; i++) {
+            place(wx + (Math.random() - 0.5) * 0.22, -0.5 + Math.random() * 0.2,
+                  wz + (Math.random() - 0.5) * 0.1, 1.6, '#0f172a', 0.85);
+          }
+        });
       };
 
-      addVehicle(-0.48, 0.58, '#00ebd6', true);
-      addVehicle(1.15, 0.0, '#e2e8f0', true);
+      // Ego car heading east, struck car crossing — matches the SVG diagram's front-left impact
+      addVehicle(-0.48, 0.58, 0, '#00ebd6', true);
+      addVehicle(1.15, 0.0, Math.PI / 2, '#e2e8f0', true);
 
       // Impact plume, debris, and Car2X witness points
       for (let i = 0; i < 130; i++) {
@@ -1804,9 +1838,9 @@
           0.42 + (Math.random() - 0.5) * (1.8 * spread),
           -0.35 + Math.random() * 1.25,
           0.28 + (Math.random() - 0.5) * (1.5 * spread),
-          1.5 + Math.random() * 4.2,
+          1.2 + Math.random() * 2.4,
           i % 3 === 0 ? '#ff3b30' : (i % 3 === 1 ? '#ff9f0a' : '#ffffff'),
-          0.45 + Math.random() * 0.45
+          0.3 + Math.random() * 0.35
         );
       }
 
@@ -1831,13 +1865,13 @@
         const x1 = point.x * cosY - point.z * sinY;
         const z1 = point.x * sinY + point.z * cosY;
         const y1 = point.y * cosP - z1 * sinP;
-        const z2 = point.y * sinP + z1 * cosP + 7.2;
-        const scale = 120 / z2;
+        const z2 = point.y * sinP + z1 * cosP + camDist;
+        const scale = (Math.min(w, h) * 1.3) / z2;
         return {
           x: w / 2 + x1 * scale,
           y: h / 2 + y1 * scale,
           z: z2,
-          size: Math.max(0.7, point.r * scale * 0.12)
+          size: Math.max(0.45, point.r * scale * 0.05)
         };
       }
 
@@ -1851,17 +1885,38 @@
         ctx.fillStyle = 'rgba(3, 5, 10, 0.84)';
         ctx.fillRect(0, 0, w, h);
 
+        // Scan plane sweeps world-space x from -6 to +6 as the scene "reconstructs"
+        const reveal = Math.min(1, (performance.now() - revealStart) / REVEAL_MS);
+        const scanX = -6 + reveal * 12;
+
         const projected = splats.map(s => ({ s, p: project(s, w, h) })).sort((a, b) => b.p.z - a.p.z);
         projected.forEach(({ s, p }) => {
-          const gradient = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size * 4.2);
-          gradient.addColorStop(0, s.color);
+          if (s.x > scanX) return;
+          // Splats near the scan plane flare bright cyan as they materialize
+          const recency = Math.max(0, 1 - (scanX - s.x) / 1.4);
+          const flare = reveal < 1 ? recency : 0;
+          const gradient = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size * 2.0);
+          gradient.addColorStop(0, flare > 0.35 ? '#00ebd6' : s.color);
           gradient.addColorStop(1, 'rgba(0,0,0,0)');
-          ctx.globalAlpha = s.alpha;
+          ctx.globalAlpha = Math.min(1, s.alpha + flare * 0.3);
           ctx.fillStyle = gradient;
           ctx.beginPath();
-          ctx.arc(p.x, p.y, p.size * 4.2, 0, Math.PI * 2);
+          ctx.arc(p.x, p.y, p.size * 2.0, 0, Math.PI * 2);
           ctx.fill();
         });
+
+        // Visible scan line while reconstructing
+        if (reveal < 1) {
+          const top = project({ x: scanX, y: 1.1, z: 0, r: 0 }, w, h);
+          const bot = project({ x: scanX, y: -0.9, z: 0, r: 0 }, w, h);
+          ctx.globalAlpha = 0.8;
+          ctx.strokeStyle = 'rgba(0, 235, 214, 0.7)';
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.moveTo(top.x, top.y);
+          ctx.lineTo(bot.x, bot.y);
+          ctx.stroke();
+        }
 
         ctx.globalAlpha = 1;
         ctx.strokeStyle = 'rgba(0,235,214,0.18)';
@@ -1889,6 +1944,10 @@
       viewer.addEventListener('pointermove', (event) => pointerMove(event.clientX, event.clientY));
       viewer.addEventListener('pointerup', () => { dragging = false; });
       viewer.addEventListener('pointercancel', () => { dragging = false; });
+      viewer.addEventListener('wheel', (event) => {
+        event.preventDefault();
+        camDist = Math.max(4.2, Math.min(12, camDist + event.deltaY * 0.006));
+      }, { passive: false });
       window.addEventListener('resize', resizeSplatCanvas);
       resizeSplatCanvas();
       drawSplat();
