@@ -1149,6 +1149,19 @@
       margin-top: 14px;
     }
 
+    /* Evidence Packet finale: button pulses once the sequence completes */
+    .fullscreen-btn.evidence-ready {
+      border-color: var(--accent-cyan);
+      background: rgba(0, 235, 214, 0.1);
+      color: #fff;
+      animation: evidence-pulse 1.1s infinite alternate;
+    }
+
+    @keyframes evidence-pulse {
+      from { box-shadow: 0 0 4px rgba(0, 235, 214, 0.25); }
+      to   { box-shadow: 0 0 20px rgba(0, 235, 214, 0.65); }
+    }
+
     /* Logged-in driver chip in the cockpit header */
     .driver-chip {
       display: flex;
@@ -1284,11 +1297,11 @@
           <button class="tab-trigger" onclick="switchTab('road')">
             <i class="fa-solid fa-chart-network"></i> Road Memory · Drive
           </button>
-          <button class="tab-trigger" onclick="switchTab('vitals')">
-            <i class="fa-solid fa-heart-pulse"></i> Vital Signs · Impact
-          </button>
           <button class="tab-trigger active-tab" onclick="switchTab('reconstruction')">
-            <i class="fa-solid fa-circle-nodes"></i> Crash Reconstruction · Aftermath
+            <i class="fa-solid fa-circle-nodes"></i> Crash Reconstruction · Impact
+          </button>
+          <button class="tab-trigger" onclick="switchTab('vitals')">
+            <i class="fa-solid fa-heart-pulse"></i> Vital Signs · Rescue
           </button>
           <button class="tab-trigger" onclick="switchTab('autopilot')">
             <i class="fa-solid fa-compass"></i> Autopilot HUD
@@ -1367,13 +1380,13 @@
 
             <!-- Simulation Diagnostics Step indicator -->
             <div class="step-indicator">
-              <div class="step-node step-active" id="step-node-1">1. Truth</div>
+              <div class="step-node step-active" id="step-node-1">1. Reconstruction</div>
               <div class="step-connector" id="step-conn-1"></div>
-              <div class="step-node" id="step-node-2">2. Health</div>
+              <div class="step-node" id="step-node-2">2. Vital Signs</div>
               <div class="step-connector" id="step-conn-2"></div>
               <div class="step-node" id="step-node-3">3. Road Memory</div>
               <div class="step-connector" id="step-conn-3"></div>
-              <div class="step-node" id="step-node-4">4. Report</div>
+              <div class="step-node" id="step-node-4">4. Evidence Packet</div>
             </div>
           </div>
         </div>
@@ -1389,19 +1402,19 @@
     let isCrashActive = false;
 
     // Key order must match the tab button order in the tab bar (switchTab maps by index).
-    // Storyline order: Drive (road) → Impact (vitals) → Aftermath (reconstruction) → Autopilot.
+    // Storyline: Road Memory (drive) → crash → Reconstruction → Vitals → Road Memory update → Evidence Packet → Autopilot.
     const tabs = {
       road: {
         iframeId: 'iframe-road',
         filePath: 'demos/road-memory.html'
       },
-      vitals: {
-        iframeId: 'iframe-vitals',
-        filePath: 'demos/vital-signs.html'
-      },
       reconstruction: {
         iframeId: 'iframe-reconstruction',
         filePath: 'demos/crash-reconstruction.html'
+      },
+      vitals: {
+        iframeId: 'iframe-vitals',
+        filePath: 'demos/vital-signs.html'
       },
       autopilot: {
         iframeId: 'iframe-autopilot',
@@ -1612,8 +1625,10 @@
         stepNodes[2].className = "step-node step-completed";
         stepNodes[3].className = "step-node step-active";
         stepConns[2].className = "step-connector step-completed";
-        hudMessage.innerText = "Evidence packet compiled for responders and insurers.";
+        hudMessage.innerText = "Evidence packet compiled — ready to download from the toolbar.";
         setTrustState('claim-ready');
+        // Storyline finale: draw the presenter's (and judges') eyes to the packet
+        document.getElementById('evidence-btn').classList.add('evidence-ready');
       }, 9900);
 
       setTimeout(() => {
@@ -1658,7 +1673,8 @@
       simBtn.classList.remove('simulating');
       simBtn.classList.remove('reset-state');
       simBtn.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Simulate Crash Event';
-      
+      document.getElementById('evidence-btn').classList.remove('evidence-ready');
+
       // Propagate reset to other iframes
       postToIframe('iframe-reconstruction', 'RESET_DEMO');
       postToIframe('iframe-road', 'RESET_DEMO');
