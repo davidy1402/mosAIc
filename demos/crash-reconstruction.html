@@ -1434,7 +1434,7 @@
           </div>
           <div class="splat-hint">
             <span>Drag to rotate · Scroll to zoom</span>
-            <span>Multi-camera + Car2X splats</span>
+            <span>Multi-camera splats</span>
           </div>
         </div>
 
@@ -2128,9 +2128,8 @@
     // === ClearBox 360° Scene Reconstruction (Three.js) =====================
     // Physically-lit night scene rebuilt from multi-angle capture: textured
     // asphalt, street lighting, PBR car bodies with crumple-zone vertex
-    // deformation, debris/smoke particles, a Car2X witness vehicle and a
-    // Gaussian-splat shimmer layer — the 360° rotatable evidence model from
-    // the ClearBox proposal.
+    // deformation, debris/smoke particles and a Gaussian-splat shimmer layer
+    // — the 360° rotatable evidence model from the ClearBox proposal.
 
     const CAR_W = 1.82;
     const WHEEL_R = 0.34;
@@ -2139,7 +2138,7 @@
     const IMPACT_T0_X = 1.1;          // ego x at the moment of impact
     const IMPACT_POINT = new THREE.Vector3(3.3, 0.62, 1.38);
 
-    let ego3D, target3D, witness3D;
+    let ego3D, target3D;
     let fxSparks, fxSparkVel, fxGlass, fxGlassVel, fxDebris, fxSmoke;
     let fxShockwave, fxFlashLight, fxScanPlane, fxImpactMarker;
     let skidRibbons = [];
@@ -2730,42 +2729,6 @@
       threeScene.add(fxImpactMarker);
     }
 
-    // --- Car2X witness vehicle + capture frustum -------------------------------
-    function buildWitness() {
-      witness3D = buildCarModel({ paint: 0x1b2026, star: true });
-      witness3D.position.set(9.2, 0, 4.7);
-      witness3D.rotation.y = Math.PI;
-      threeScene.add(witness3D);
-
-      const label = makeLabelSprite('CAR2X WITNESS · MULTI-ANGLE CAPTURE', '#0088ff');
-      label.position.set(0, 2.05, 0);
-      witness3D.add(label);
-
-      // Capture frustum from the witness windshield to the impact zone
-      const apex = new THREE.Vector3(8.7, 1.2, 4.65);
-      const dir = IMPACT_POINT.clone().sub(apex).normalize();
-      const right = new THREE.Vector3().crossVectors(dir, new THREE.Vector3(0, 1, 0)).normalize();
-      const up = new THREE.Vector3().crossVectors(right, dir).normalize();
-      const centre = IMPACT_POINT.clone().add(new THREE.Vector3(0, 0.35, 0));
-      const corners = [
-        centre.clone().add(right.clone().multiplyScalar(1.9)).add(up.clone().multiplyScalar(1.15)),
-        centre.clone().add(right.clone().multiplyScalar(-1.9)).add(up.clone().multiplyScalar(1.15)),
-        centre.clone().add(right.clone().multiplyScalar(-1.9)).add(up.clone().multiplyScalar(-0.9)),
-        centre.clone().add(right.clone().multiplyScalar(1.9)).add(up.clone().multiplyScalar(-0.9))
-      ];
-      const pts = [];
-      corners.forEach((c, i) => {
-        pts.push(apex, c);
-        pts.push(c, corners[(i + 1) % 4]);
-      });
-      const frustumGeo = new THREE.BufferGeometry().setFromPoints(pts);
-      const frustum = new THREE.LineSegments(frustumGeo, new THREE.LineBasicMaterial({
-        color: 0x0088ff, transparent: true, opacity: 0.35
-      }));
-      threeScene.add(frustum);
-      witness3D.userData.frustum = frustum;
-    }
-
     // --- Scene init -------------------------------------------------------------
     function initThreeJS() {
       const container = document.getElementById('three-container');
@@ -2835,7 +2798,6 @@
       targetLabel.position.set(0, 1.95, 0);
       target3D.add(targetLabel);
 
-      buildWitness();
       buildSkidRibbons();
       buildImpactFX();
 
@@ -3310,7 +3272,7 @@
       addVehicle(-0.48, 0.58, 0, '#00ebd6', true);
       addVehicle(1.15, 0.0, Math.PI / 2, '#e2e8f0', true);
 
-      // Impact plume, debris, and Car2X witness points
+      // Impact plume and debris
       for (let i = 0; i < 130; i++) {
         const spread = Math.random();
         addSplat(
@@ -3322,11 +3284,6 @@
           0.3 + Math.random() * 0.35
         );
       }
-
-      const witnessPoints = [
-        [-3.7, 0.65, -2.2], [3.4, 0.65, -2.4], [-2.9, 0.65, 2.3], [3.8, 0.65, 2.1]
-      ];
-      witnessPoints.forEach(([x, y, z]) => addSplat(x, y, z, 4.4, '#0088ff', 0.75));
 
       function resizeSplatCanvas() {
         const rect = viewer.getBoundingClientRect();
