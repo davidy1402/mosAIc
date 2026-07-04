@@ -2136,7 +2136,7 @@
     const LANE_Z = 1.85;              // ego + target lane centre
     const TARGET_X = 5.5;             // parked target vehicle position
     const IMPACT_T0_X = 1.1;          // ego x at the moment of impact
-    const IMPACT_POINT = new THREE.Vector3(3.3, 0.62, 1.38);
+    const IMPACT_POINT = new THREE.Vector3(3.3, 0.62, -1.38);
 
     let ego3D, target3D;
     let fxSparks, fxSparkVel, fxGlass, fxGlassVel, fxDebris, fxSmoke;
@@ -2792,7 +2792,7 @@
 
       // Target (stalled) vehicle
       target3D = buildCarModel({ paint: 0xe8eaed, star: false });
-      target3D.position.set(TARGET_X, 0, LANE_Z);
+      target3D.position.set(TARGET_X, 0, -LANE_Z);
       threeScene.add(target3D);
       const targetLabel = makeLabelSprite('TARGET · STALLED VEHICLE', '#ff9f0a');
       targetLabel.position.set(0, 1.95, 0);
@@ -2829,7 +2829,8 @@
         z = (LANE_Z - 0.95) - 0.14 * e;
         yaw = -0.44 * e;
       }
-      return { x, z, yaw };
+      // Mirrored: lanes run opposite to the raw z/yaw computed above.
+      return { x, z: -z, yaw: -yaw };
     }
 
     function egoPoseCruise(t) {
@@ -2848,14 +2849,16 @@
       } else if (t >= 1.45) {
         z = LANE_Z;
       }
-      return { x, z, yaw };
+      // Mirrored: lanes run opposite to the raw z/yaw computed above.
+      return { x, z: -z, yaw: -yaw };
     }
 
     function targetPose(t) {
-      if (!isCrashTriggered || t < 0) return { x: TARGET_X, z: LANE_Z, yaw: 0 };
+      // Mirrored: lanes run opposite to LANE_Z's raw side.
+      if (!isCrashTriggered || t < 0) return { x: TARGET_X, z: -LANE_Z, yaw: 0 };
       const k = Math.min(t / 0.6, 1);
       const e = 1 - Math.pow(1 - k, 2);
-      return { x: TARGET_X + 0.85 * e, z: LANE_Z + 0.26 * e, yaw: -0.3 * e };
+      return { x: TARGET_X + 0.85 * e, z: -(LANE_Z + 0.26 * e), yaw: 0.3 * e };
     }
 
     // --- Timeline-driven scene update -------------------------------------------
