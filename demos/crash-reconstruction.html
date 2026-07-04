@@ -2060,6 +2060,7 @@
     let skidRibbons = [];
     let fxFocus = new THREE.Vector3(0, 0.6, 0.8);
     let lastTimelineTime = -3.0;
+    let userDragging = false;
 
     function smooth01(a, b, t) {
       if (t <= a) return 0;
@@ -2721,6 +2722,8 @@
       threeControls.minDistance = 3.5;
       threeControls.maxDistance = 28;
       threeControls.target.copy(fxFocus);
+      threeControls.addEventListener('start', () => { userDragging = true; });
+      threeControls.addEventListener('end', () => { userDragging = false; });
 
       buildEnvironment();
 
@@ -3011,6 +3014,25 @@
 
       if (threeControls) {
         threeControls.target.lerp(fxFocus, 0.06);
+
+        // Dolly the camera so both vehicles stay framed together, matching
+        // the 2D HUD where ego and target are always both on screen —
+        // without this the camera (anchored near the impact zone) leaves
+        // ego a distant speck during the long pre-crash approach.
+        if (!userDragging && ego3D && target3D) {
+          const sep = Math.hypot(
+            ego3D.position.x - target3D.position.x,
+            ego3D.position.z - target3D.position.z
+          );
+          const desiredRadius = THREE.MathUtils.clamp(6 + sep * 0.85, 8, 26);
+          const offset = threeCamera.position.clone().sub(threeControls.target);
+          const currentRadius = offset.length();
+          if (currentRadius > 0.001) {
+            const newRadius = currentRadius + (desiredRadius - currentRadius) * 0.05;
+            offset.setLength(newRadius);
+            threeCamera.position.copy(threeControls.target).add(offset);
+          }
+        }
       }
     }
 
