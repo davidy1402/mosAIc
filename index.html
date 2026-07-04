@@ -957,15 +957,6 @@
         font-size: 1rem;
       }
     }
-    #pitch-trigger:hover {
-      background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan)) !important;
-      box-shadow: 0 0 25px rgba(0, 136, 255, 0.7) !important;
-      transform: translateY(-1px);
-      color: #fff !important;
-    }
-    #pitch-trigger:active {
-      transform: translateY(1px);
-    }
 
     /* ==========================================
        MERCEDES ME BOOT / PROFILE OVERLAY
@@ -1262,10 +1253,7 @@
       <!-- Main Action Button -->
       <div class="sim-button-wrap" style="display: flex; gap: 10px;">
         <button class="sim-btn" id="sim-trigger">
-          <i class="fa-solid fa-triangle-exclamation"></i> Simulate Crash Event 
-        </button>
-        <button class="sim-btn" id="pitch-trigger" style="background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue)); color: var(--bg-dark); border: none; font-weight: 700; box-shadow: 0 0 15px rgba(0, 235, 214, 0.45);">
-          <i class="fa-solid fa-play"></i> Start Pitch Demo
+          <i class="fa-solid fa-triangle-exclamation"></i> Simulate Crash Event
         </button>
       </div>
 
@@ -1302,9 +1290,6 @@
           </button>
           <button class="tab-trigger" onclick="switchTab('vitals')">
             <i class="fa-solid fa-heart-pulse"></i> Vital Signs · Rescue
-          </button>
-          <button class="tab-trigger" onclick="switchTab('autopilot')">
-            <i class="fa-solid fa-compass"></i> Autopilot HUD
           </button>
         </div>
 
@@ -1365,7 +1350,6 @@
         <iframe id="iframe-reconstruction" class="module-iframe active-iframe" src="demos/crash-reconstruction.html"></iframe>
         <iframe id="iframe-vitals" class="module-iframe" src="demos/vital-signs.html"></iframe>
         <iframe id="iframe-road" class="module-iframe" src="demos/road-memory.html"></iframe>
-        <iframe id="iframe-autopilot" class="module-iframe" src="demos/driving-visualization.html"></iframe>
 
         <!-- Diagnostic Simulation HUD overlay overlay -->
         <div class="sim-hud-overlay" id="sim-overlay">
@@ -1402,7 +1386,7 @@
     let isCrashActive = false;
 
     // Key order must match the tab button order in the tab bar (switchTab maps by index).
-    // Storyline: Road Memory (drive) → crash → Reconstruction → Vitals → Road Memory update → Evidence Packet → Autopilot.
+    // Storyline: Road Memory (drive) → crash → Reconstruction → Vitals → Road Memory update → Evidence Packet.
     const tabs = {
       road: {
         iframeId: 'iframe-road',
@@ -1415,10 +1399,6 @@
       vitals: {
         iframeId: 'iframe-vitals',
         filePath: 'demos/vital-signs.html'
-      },
-      autopilot: {
-        iframeId: 'iframe-autopilot',
-        filePath: 'demos/driving-visualization.html'
       }
     };
 
@@ -1454,8 +1434,6 @@
         setTimeout(() => postToIframe('iframe-road', 'MAP_VISIBLE'), 80);
       } else if (tabKey === 'vitals') {
         setTimeout(() => postToIframe('iframe-vitals', 'VITALS_VISIBLE'), 80);
-      } else if (tabKey === 'autopilot') {
-        setTimeout(() => postToIframe('iframe-autopilot', 'AUTOPILOT_VISIBLE'), 80);
       }
 
       // Trigger immediate resize check
@@ -1570,7 +1548,6 @@
       switchTab('reconstruction');
       hudMessage.innerText = "Impact detected. Reconstructing crash truth...";
       postToIframe('iframe-reconstruction', 'START_CRASH_RECONSTRUCTION');
-      postToIframe('iframe-autopilot', 'START_CRASH_RECONSTRUCTION');
 
       // Step 2: Vital Signs (after 3.5s)
       setTimeout(() => {
@@ -1660,11 +1637,6 @@
 
     function resetSystem() {
       isCrashActive = false;
-      
-      // Stop pitch demo if running
-      if (typeof isPitchActive !== 'undefined' && isPitchActive) {
-        clearPitchTimeouts();
-      }
 
       // Restore parent HUD badges and simulation button
       badge.classList.remove('danger-badge');
@@ -1679,7 +1651,6 @@
       postToIframe('iframe-reconstruction', 'RESET_DEMO');
       postToIframe('iframe-road', 'RESET_DEMO');
       postToIframe('iframe-vitals', 'RESET_DEMO');
-      postToIframe('iframe-autopilot', 'RESET_DEMO');
       trustUnlock.querySelector('.trust-icon').innerHTML = '<i class="fa-solid fa-lock"></i>';
       setTrustState('baseline');
     }
@@ -1701,85 +1672,6 @@
         runSimulation();
       }
     });
-
-    // Pitch Presentation Mode Automation Script
-    const pitchBtn = document.getElementById('pitch-trigger');
-    let isPitchActive = false;
-    let pitchTimeoutIds = [];
-
-    function clearPitchTimeouts() {
-      pitchTimeoutIds.forEach(id => clearTimeout(id));
-      pitchTimeoutIds = [];
-      isPitchActive = false;
-      if (pitchBtn) {
-        pitchBtn.innerHTML = '<i class="fa-solid fa-play"></i> Start Pitch Demo';
-        pitchBtn.style.background = 'linear-gradient(135deg, var(--accent-cyan), var(--accent-blue))';
-      }
-    }
-
-    function runPitchDemo() {
-      if (isPitchActive) {
-        clearPitchTimeouts();
-        resetSystem();
-        return;
-      }
-
-      isPitchActive = true;
-      if (pitchBtn) {
-        pitchBtn.innerHTML = '<i class="fa-solid fa-stop-circle"></i> Stop Pitch Demo';
-        pitchBtn.style.background = 'var(--accent-red)';
-      }
-
-      // Reset the cockpit system first to clear old states
-      resetSystem();
-      isCrashActive = true; // prevent manual triggering while demo is active
-
-      // Step 1: Switch to Autopilot HUD and trigger sensor timeline
-      switchTab('autopilot');
-      postToIframe('iframe-autopilot', 'START_CRASH_RECONSTRUCTION');
-
-      // Step 2: Allow Autopilot to brake, swerve, and spin-out (takes 4s)
-      pitchTimeoutIds.push(setTimeout(() => {
-        // Switch to Crash Reconstruction
-        switchTab('reconstruction');
-        postToIframe('iframe-reconstruction', 'START_CRASH_RECONSTRUCTION');
-      }, 4000));
-
-      // Step 3: Trigger Blockchain ledger audit and smart claims receipt popup (after 3.5s of reconstruction)
-      pitchTimeoutIds.push(setTimeout(() => {
-        postToIframe('iframe-reconstruction', 'TRIGGER_BLOCKCHAIN_VERIFY');
-      }, 7500));
-
-      // Step 4: Switch to Vital Signs monitoring (after 3.5s of ledger verification)
-      pitchTimeoutIds.push(setTimeout(() => {
-        switchTab('vitals');
-        postToIframe('iframe-vitals', 'START_VITALS_EMERGENCY');
-      }, 11000));
-
-      // Step 5: Switch to collective Road Memory map (after 3.5s of vitals)
-      pitchTimeoutIds.push(setTimeout(() => {
-        switchTab('road');
-        postToIframe('iframe-road', 'ADD_ROAD_MEMORY_INCIDENT');
-      }, 14500));
-
-      // Step 6: Automatically trigger compiled PDF report download (after 4s of map mapping)
-      pitchTimeoutIds.push(setTimeout(() => {
-        const evidenceBtn = document.getElementById('evidence-btn');
-        if (evidenceBtn) {
-          evidenceBtn.click();
-        }
-      }, 18500));
-
-      // Step 7: Return back to reconstruction at the end of the presentation (after 1s)
-      pitchTimeoutIds.push(setTimeout(() => {
-        switchTab('reconstruction');
-        clearPitchTimeouts();
-      }, 19500));
-    }
-
-    if (pitchBtn) {
-      pitchBtn.addEventListener('click', runPitchDemo);
-    }
 
     // Expand / Collapse Iframe view within the same tab
     const screenPanel = document.getElementById('main-screen-panel');
