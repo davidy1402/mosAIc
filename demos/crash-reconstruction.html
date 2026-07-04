@@ -97,7 +97,7 @@
     .dashboard {
       flex: 1;
       display: grid;
-      grid-template-columns: 260px 1fr 260px;
+      grid-template-columns: 230px 1fr 230px;
       gap: 16px;
       padding: 16px;
       position: relative;
@@ -147,7 +147,7 @@
       }
 
       .canvas-container {
-        height: 260px;
+        aspect-ratio: 800 / 270;
         flex: none;
       }
     }
@@ -509,7 +509,7 @@
 
     .canvas-container {
       width: 100%;
-      aspect-ratio: 800 / 220;
+      aspect-ratio: 800 / 270;
       flex: none;
       position: relative;
       display: flex;
@@ -1222,7 +1222,7 @@
 
       <!-- Vector canvas area -->
       <div class="canvas-container">
-        <svg id="collision-svg" viewBox="0 90 800 220" xmlns="http://www.w3.org/2000/svg">
+        <svg id="collision-svg" viewBox="0 65 800 270" xmlns="http://www.w3.org/2000/svg">
           <!-- Defs for gradients & patterns & markers -->
           <defs>
             <!-- Arrow marker -->
