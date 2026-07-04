@@ -957,6 +957,7 @@
         font-size: 1rem;
       }
     }
+
     /* ==========================================
        MERCEDES ME BOOT / PROFILE OVERLAY
        ========================================== */
@@ -1290,9 +1291,6 @@
           <button class="tab-trigger" onclick="switchTab('vitals')">
             <i class="fa-solid fa-heart-pulse"></i> Vital Signs · Rescue
           </button>
-          <button class="tab-trigger" onclick="switchTab('autopilot')">
-            <i class="fa-solid fa-compass"></i> Autopilot HUD
-          </button>
         </div>
 
         <div class="tab-controls">
@@ -1352,7 +1350,6 @@
         <iframe id="iframe-reconstruction" class="module-iframe active-iframe" src="demos/crash-reconstruction.html"></iframe>
         <iframe id="iframe-vitals" class="module-iframe" src="demos/vital-signs.html"></iframe>
         <iframe id="iframe-road" class="module-iframe" src="demos/road-memory.html"></iframe>
-        <iframe id="iframe-autopilot" class="module-iframe" src="demos/driving-visualization.html"></iframe>
 
         <!-- Diagnostic Simulation HUD overlay overlay -->
         <div class="sim-hud-overlay" id="sim-overlay">
@@ -1389,7 +1386,7 @@
     let isCrashActive = false;
 
     // Key order must match the tab button order in the tab bar (switchTab maps by index).
-    // Storyline: Road Memory (drive) → crash → Reconstruction → Vitals → Road Memory update → Evidence Packet → Autopilot.
+    // Storyline: Road Memory (drive) → crash → Reconstruction → Vitals → Road Memory update → Evidence Packet.
     const tabs = {
       road: {
         iframeId: 'iframe-road',
@@ -1402,10 +1399,6 @@
       vitals: {
         iframeId: 'iframe-vitals',
         filePath: 'demos/vital-signs.html'
-      },
-      autopilot: {
-        iframeId: 'iframe-autopilot',
-        filePath: 'demos/driving-visualization.html'
       }
     };
 
@@ -1441,8 +1434,6 @@
         setTimeout(() => postToIframe('iframe-road', 'MAP_VISIBLE'), 80);
       } else if (tabKey === 'vitals') {
         setTimeout(() => postToIframe('iframe-vitals', 'VITALS_VISIBLE'), 80);
-      } else if (tabKey === 'autopilot') {
-        setTimeout(() => postToIframe('iframe-autopilot', 'AUTOPILOT_VISIBLE'), 80);
       }
 
       // Trigger immediate resize check
@@ -1557,7 +1548,6 @@
       switchTab('reconstruction');
       hudMessage.innerText = "Impact detected. Reconstructing crash truth...";
       postToIframe('iframe-reconstruction', 'START_CRASH_RECONSTRUCTION');
-      postToIframe('iframe-autopilot', 'START_CRASH_RECONSTRUCTION');
 
       // Step 2: Vital Signs (after 3.5s)
       setTimeout(() => {
@@ -1661,7 +1651,6 @@
       postToIframe('iframe-reconstruction', 'RESET_DEMO');
       postToIframe('iframe-road', 'RESET_DEMO');
       postToIframe('iframe-vitals', 'RESET_DEMO');
-      postToIframe('iframe-autopilot', 'RESET_DEMO');
       trustUnlock.querySelector('.trust-icon').innerHTML = '<i class="fa-solid fa-lock"></i>';
       setTrustState('baseline');
     }
