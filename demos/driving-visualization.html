@@ -490,6 +490,7 @@
         overflow: visible;
       }
       .canvas-container {
+        flex: none;
         height: 380px;
       }
       .dashboard > .visualizer-card {
@@ -761,6 +762,10 @@
 
     // --- Three.js Scene Setup (realistic PBR night scene) ---
     const WHEEL_R = 0.34;
+    // Minimum sane container size; below this the layout is mid-transition
+    // (e.g. still hidden behind display:none) so sizing logic falls back
+    // to a default rather than collapsing the renderer/canvas to a sliver.
+    const MIN_CANVAS_DIM = 40;
     let egoModel, obstacleModel;
     let scrollProps = [];
 
@@ -987,8 +992,8 @@
       const container = document.getElementById('three-container');
       if (!container) return;
 
-      const w = container.clientWidth || 860;
-      const h = container.clientHeight || 480;
+      const w = container.clientWidth >= MIN_CANVAS_DIM ? container.clientWidth : 860;
+      const h = container.clientHeight >= MIN_CANVAS_DIM ? container.clientHeight : 480;
 
       threeScene = new THREE.Scene();
       threeScene.fog = new THREE.FogExp2(0x04060b, 0.014);
@@ -1780,14 +1785,24 @@
 
     function triggerCanvasResize() {
       const threeContainer = document.getElementById('three-container');
-      if (threeContainer && threeRenderer && threeCamera) {
-        threeRenderer.setSize(threeContainer.clientWidth, threeContainer.clientHeight);
-        threeCamera.aspect = threeContainer.clientWidth / threeContainer.clientHeight;
-        threeCamera.updateProjectionMatrix();
-      }
+      if (!threeContainer || !threeRenderer || !threeCamera) return;
+      const w = threeContainer.clientWidth;
+      const h = threeContainer.clientHeight;
+      if (w < MIN_CANVAS_DIM || h < MIN_CANVAS_DIM) return;
+      threeRenderer.setSize(w, h);
+      threeCamera.aspect = w / h;
+      threeCamera.updateProjectionMatrix();
     }
 
     window.addEventListener('resize', triggerCanvasResize);
+
+    // Keep the renderer in lockstep with the container's actual box at all
+    // times (tab switches, iframe reflows, font/layout shifts) instead of
+    // relying on guessed setTimeout delays after each trigger.
+    const threeContainerEl = document.getElementById('three-container');
+    if (threeContainerEl && window.ResizeObserver) {
+      new ResizeObserver(() => triggerCanvasResize()).observe(threeContainerEl);
+    }
 
     // --- Init App ---
     window.addEventListener('DOMContentLoaded', () => {
