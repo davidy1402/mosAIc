@@ -1652,6 +1652,8 @@
       let egoY = 160;
       let egoRot = 0;
       let otherX = 450; // Stopped car position
+      let otherY = 160;
+      let otherRot = 0;
 
       if (!isCrashTriggered) {
         // Cruising Path
@@ -1699,20 +1701,28 @@
           }
         } else {
           egoX = getInterpolatedVal(405, 315, 0.0, 1.5, time);
-          egoY = getInterpolatedVal(190, 232, 0.0, 0.6, time);
+          // Ego spins out roughly where it hit rather than crossing lanes —
+          // it's the struck car (below) that gets knocked into the next lane.
+          egoY = getInterpolatedVal(190, 206, 0.0, 0.6, time);
           egoRot = getInterpolatedVal(11, -32, 0.0, 0.5, time);
         }
 
-        // Other car displacement after collision
+        // Other car: struck from behind while parked, flung forward and
+        // knocked clear across into the adjacent lane (y 160 -> 240) —
+        // the same lane the ego would have escaped into had it swerved in time.
         if (time >= 0) {
           otherX = getInterpolatedVal(450, 575, 0.0, 1.5, time);
+          otherY = getInterpolatedVal(160, 240, 0.0, 0.8, time);
+          otherRot = getInterpolatedVal(0, 22, 0.0, 0.8, time);
         } else {
           otherX = 450;
+          otherY = 160;
+          otherRot = 0;
         }
       }
 
       egoCar.setAttribute('transform', `translate(${egoX}, ${egoY}) rotate(${egoRot})`);
-      otherCar.setAttribute('transform', `translate(${otherX}, 160)`);
+      otherCar.setAttribute('transform', `translate(${otherX}, ${otherY}) rotate(${otherRot})`);
 
       // 2. Vector line & skid marks opacity
       let vectorLen = 80;
@@ -2809,9 +2819,12 @@
 
     function targetPose(t) {
       if (!isCrashTriggered || t < 0) return { x: TARGET_X, z: LANE_Z, yaw: 0 };
-      const k = Math.min(t / 0.6, 1);
+      const k = Math.min(t / 0.7, 1);
       const e = 1 - Math.pow(1 - k, 2);
-      return { x: TARGET_X + 0.85 * e, z: LANE_Z + 0.26 * e, yaw: -0.3 * e };
+      // Struck from behind while parked: flung forward and knocked clear
+      // across into the adjacent lane (the same lane the ego would have
+      // escaped into had it noticed in time).
+      return { x: TARGET_X + 1.1 * e, z: LANE_Z - 3.35 * e, yaw: -0.55 * e };
     }
 
     // --- Timeline-driven scene update -------------------------------------------
