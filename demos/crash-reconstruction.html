@@ -1533,6 +1533,31 @@
     let isPlaying = false;
     let playInterval = null;
     let isCrashTriggered = false;
+    let impactSoundFired = false;
+
+    // --- Crash impact sound effect (recorded clip) --------------------------
+    const crashImpactAudio = new Audio('../assets/audio/crash-impact.mp3');
+    crashImpactAudio.preload = 'auto';
+    crashImpactAudio.volume = 1.0;
+
+    // Unlock playback during the click gesture (muted play + immediate
+    // pause) so the later, un-muted play() at the impact moment isn't
+    // blocked by the browser's autoplay policy.
+    function warmUpCrashAudio() {
+      crashImpactAudio.muted = true;
+      crashImpactAudio.play().then(() => {
+        crashImpactAudio.pause();
+        crashImpactAudio.currentTime = 0;
+        crashImpactAudio.muted = false;
+      }).catch(() => {
+        crashImpactAudio.muted = false;
+      });
+    }
+
+    function playCrashImpactSound() {
+      crashImpactAudio.currentTime = 0;
+      crashImpactAudio.play().catch(() => {});
+    }
     const timeline = document.getElementById('timeline');
     const timeDisplay = document.getElementById('time-display');
     const playPauseBtn = document.getElementById('play-pause-btn');
@@ -1753,8 +1778,15 @@
       // 3. Impact Flash (flashes at T = 0.0s to 0.65s)
       if (isCrashTriggered && time >= 0 && time <= 0.65) {
         impactGroup.setAttribute('opacity', getInterpolatedVal(1, 0, 0.0, 0.65, time));
+        if (!impactSoundFired) {
+          impactSoundFired = true;
+          playCrashImpactSound();
+        }
       } else {
         impactGroup.setAttribute('opacity', 0);
+        if (time < 0) {
+          impactSoundFired = false;
+        }
       }
 
       // 4. Telemetry numerical data updates
@@ -3076,7 +3108,7 @@
       playPauseBtn.classList.remove('replay-state');
       
       playInterval = setInterval(() => {
-        let val = parseFloat(timeline.value) + (isCrashTriggered ? 0.08 : 0.05);
+        let val = parseFloat(timeline.value) + (isCrashTriggered ? 0.32 : 0.05);
         if (isCrashTriggered) {
           if (val > 1.5) {
             val = 1.5;
@@ -3122,6 +3154,7 @@
     });
 
     function triggerAccidentTimeline() {
+      warmUpCrashAudio(); // unlock playback on this user gesture
       isCrashTriggered = true;
       buildLogFeed();
       updateTimelineState(-3.0);

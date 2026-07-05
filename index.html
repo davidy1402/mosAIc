@@ -797,7 +797,7 @@
       width: 0%;
       background: linear-gradient(90deg, var(--accent-red), var(--accent-cyan));
       border-radius: 2px;
-      transition: width 3.5s linear;
+      transition: width 0.875s linear;
     }
 
     @media (max-width: 1100px) {
@@ -1540,7 +1540,7 @@
       hudBar.style.transition = 'none';
       hudBar.style.width = '0%';
       setTimeout(() => {
-        hudBar.style.transition = 'width 3.5s linear';
+        hudBar.style.transition = 'width 0.875s linear';
         hudBar.style.width = '100%';
       }, 50);
 
@@ -1549,7 +1549,7 @@
       hudMessage.innerText = "Impact detected. Reconstructing crash truth...";
       postToIframe('iframe-reconstruction', 'START_CRASH_RECONSTRUCTION');
 
-      // Step 2: Vital Signs (after 3.5s)
+      // Step 2: Vital Signs (after 0.875s)
       setTimeout(() => {
         switchTab('vitals');
         hudMessage.innerText = "Irregular vitals detected. Preparing emergency medical data...";
@@ -1563,7 +1563,7 @@
         hudBar.style.transition = 'none';
         hudBar.style.width = '0%';
         setTimeout(() => {
-          hudBar.style.transition = 'width 3.5s linear';
+          hudBar.style.transition = 'width 0.875s linear';
           hudBar.style.width = '100%';
         }, 50);
 
@@ -1571,9 +1571,9 @@
         postToIframe('iframe-vitals', 'START_VITALS_EMERGENCY');
         setTrustState('signed');
 
-      }, 3500);
+      }, 875);
 
-      // Step 3: Road Memory (after another 3.5s)
+      // Step 3: Road Memory (after another 0.875s)
       setTimeout(() => {
         switchTab('road');
         hudMessage.innerText = "Incident added to collective road memory.";
@@ -1587,7 +1587,7 @@
         hudBar.style.transition = 'none';
         hudBar.style.width = '0%';
         setTimeout(() => {
-          hudBar.style.transition = 'width 3.5s linear';
+          hudBar.style.transition = 'width 0.875s linear';
           hudBar.style.width = '100%';
         }, 50);
 
@@ -1595,9 +1595,9 @@
         postToIframe('iframe-road', 'ADD_ROAD_MEMORY_INCIDENT');
         setTrustState('unlocked');
 
-      }, 7000);
+      }, 1750);
 
-      // Final: Finish Sequence (after final 3.5s)
+      // Final: Finish Sequence (after final 0.875s)
       setTimeout(() => {
         stepNodes[2].className = "step-node step-completed";
         stepNodes[3].className = "step-node step-active";
@@ -1606,7 +1606,7 @@
         setTrustState('claim-ready');
         // Storyline finale: draw the presenter's (and judges') eyes to the packet
         document.getElementById('evidence-btn').classList.add('evidence-ready');
-      }, 9900);
+      }, 2475);
 
       setTimeout(() => {
         stepNodes[3].className = "step-node step-completed";
@@ -1620,7 +1620,7 @@
         simBtn.classList.add('reset-state');
         simBtn.innerHTML = '<i class="fa-solid fa-rotate-left"></i> Reset Dashboard';
 
-      }, 11500);
+      }, 2875);
     }
 
     // Helper function to send message to iframe
