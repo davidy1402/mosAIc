@@ -1533,6 +1533,77 @@
     let isPlaying = false;
     let playInterval = null;
     let isCrashTriggered = false;
+    let impactSoundFired = false;
+
+    // --- Sound Effects (synthesized via Web Audio API, no external assets) --
+    let sfxCtx = null;
+    function getSfxCtx() {
+      if (!sfxCtx) {
+        try {
+          sfxCtx = new (window.AudioContext || window.webkitAudioContext)();
+        } catch (e) {
+          return null;
+        }
+      }
+      if (sfxCtx.state === 'suspended') sfxCtx.resume();
+      return sfxCtx;
+    }
+
+    // Loud, low-end-heavy crash boom: a filtered noise burst (crunch) layered
+    // with a downward-sweeping thud, run through a compressor so both layers
+    // sit at max loudness together without clipping.
+    function playCrashImpactSound() {
+      const ctx = getSfxCtx();
+      if (!ctx) return;
+      const now = ctx.currentTime;
+
+      const master = ctx.createGain();
+      master.gain.setValueAtTime(1.4, now);
+      const compressor = ctx.createDynamicsCompressor();
+      compressor.threshold.setValueAtTime(-16, now);
+      compressor.knee.setValueAtTime(6, now);
+      compressor.ratio.setValueAtTime(16, now);
+      compressor.attack.setValueAtTime(0.001, now);
+      compressor.release.setValueAtTime(0.3, now);
+      master.connect(compressor);
+      compressor.connect(ctx.destination);
+
+      // Noise burst - metal/glass crunch
+      const duration = 0.5;
+      const bufferSize = Math.floor(ctx.sampleRate * duration);
+      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufferSize, 2);
+      }
+      const noise = ctx.createBufferSource();
+      noise.buffer = buffer;
+      const noiseFilter = ctx.createBiquadFilter();
+      noiseFilter.type = 'bandpass';
+      noiseFilter.frequency.setValueAtTime(1800, now);
+      noiseFilter.Q.setValueAtTime(0.6, now);
+      const noiseGain = ctx.createGain();
+      noiseGain.gain.setValueAtTime(1.0, now);
+      noiseGain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+      noise.connect(noiseFilter);
+      noiseFilter.connect(noiseGain);
+      noiseGain.connect(master);
+      noise.start(now);
+      noise.stop(now + duration + 0.05);
+
+      // Low-frequency thud - the actual "impact"
+      const thud = ctx.createOscillator();
+      thud.type = 'triangle';
+      thud.frequency.setValueAtTime(150, now);
+      thud.frequency.exponentialRampToValueAtTime(35, now + 0.35);
+      const thudGain = ctx.createGain();
+      thudGain.gain.setValueAtTime(1.0, now);
+      thudGain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+      thud.connect(thudGain);
+      thudGain.connect(master);
+      thud.start(now);
+      thud.stop(now + 0.45);
+    }
     const timeline = document.getElementById('timeline');
     const timeDisplay = document.getElementById('time-display');
     const playPauseBtn = document.getElementById('play-pause-btn');
@@ -1753,8 +1824,15 @@
       // 3. Impact Flash (flashes at T = 0.0s to 0.65s)
       if (isCrashTriggered && time >= 0 && time <= 0.65) {
         impactGroup.setAttribute('opacity', getInterpolatedVal(1, 0, 0.0, 0.65, time));
+        if (!impactSoundFired) {
+          impactSoundFired = true;
+          playCrashImpactSound();
+        }
       } else {
         impactGroup.setAttribute('opacity', 0);
+        if (time < 0) {
+          impactSoundFired = false;
+        }
       }
 
       // 4. Telemetry numerical data updates
@@ -3122,6 +3200,7 @@
     });
 
     function triggerAccidentTimeline() {
+      getSfxCtx(); // warm up / resume audio on this user gesture
       isCrashTriggered = true;
       buildLogFeed();
       updateTimelineState(-3.0);
