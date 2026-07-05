@@ -1153,6 +1153,50 @@
       to   { box-shadow: 0 0 20px rgba(0, 235, 214, 0.65); }
     }
 
+    /* Intro gate: black screen, click to play the opening video */
+    .intro-gate {
+      position: fixed;
+      inset: 0;
+      background: #000;
+      z-index: 99999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: opacity 0.6s ease;
+    }
+
+    .intro-gate.intro-hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    #intro-video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: none;
+    }
+
+    #intro-video.intro-playing {
+      display: block;
+    }
+
+    .intro-hint {
+      color: rgba(255, 255, 255, 0.35);
+      font-family: var(--font-primary);
+      font-size: 0.75rem;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      opacity: 0;
+      animation: intro-hint-fade 1.5s ease 1s forwards;
+      pointer-events: none;
+    }
+
+    @keyframes intro-hint-fade {
+      to { opacity: 1; }
+    }
+
     /* Logged-in driver chip in the cockpit header */
     .driver-chip {
       display: flex;
@@ -1193,6 +1237,36 @@
   </style>
 </head>
 <body>
+
+  <!-- Intro gate: black screen until clicked, then plays the opening video -->
+  <div class="intro-gate" id="intro-gate">
+    <video id="intro-video" src="assets/video/gold.mp4" playsinline></video>
+    <div class="intro-hint" id="intro-hint">Click to begin</div>
+  </div>
+  <script>
+    (function() {
+      const gate = document.getElementById('intro-gate');
+      const video = document.getElementById('intro-video');
+      const hint = document.getElementById('intro-hint');
+      let started = false;
+
+      function finishIntro() {
+        gate.classList.add('intro-hidden');
+        setTimeout(() => gate.remove(), 650);
+      }
+
+      function startIntro() {
+        if (started) return;
+        started = true;
+        hint.style.display = 'none';
+        video.classList.add('intro-playing');
+        video.play().catch(finishIntro);
+      }
+
+      gate.addEventListener('click', startIntro);
+      video.addEventListener('ended', finishIntro);
+    })();
+  </script>
 
   <div class="bg-grid"></div>
 
