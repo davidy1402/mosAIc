@@ -3076,7 +3076,7 @@
       playPauseBtn.classList.remove('replay-state');
       
       playInterval = setInterval(() => {
-        let val = parseFloat(timeline.value) + (isCrashTriggered ? 0.08 : 0.05);
+        let val = parseFloat(timeline.value) + (isCrashTriggered ? 0.16 : 0.05);
         if (isCrashTriggered) {
           if (val > 1.5) {
             val = 1.5;
