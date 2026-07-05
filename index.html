@@ -1182,21 +1182,6 @@
       display: block;
     }
 
-    .intro-hint {
-      color: rgba(255, 255, 255, 0.35);
-      font-family: var(--font-primary);
-      font-size: 0.75rem;
-      letter-spacing: 3px;
-      text-transform: uppercase;
-      opacity: 0;
-      animation: intro-hint-fade 1.5s ease 1s forwards;
-      pointer-events: none;
-    }
-
-    @keyframes intro-hint-fade {
-      to { opacity: 1; }
-    }
-
     /* Logged-in driver chip in the cockpit header */
     .driver-chip {
       display: flex;
@@ -1246,7 +1231,6 @@
     (function() {
       const gate = document.getElementById('intro-gate');
       const video = document.getElementById('intro-video');
-      const hint = document.getElementById('intro-hint');
       let started = false;
 
       function finishIntro() {
@@ -1257,7 +1241,6 @@
       function startIntro() {
         if (started) return;
         started = true;
-        hint.style.display = 'none';
         video.classList.add('intro-playing');
         video.play().catch(finishIntro);
       }
