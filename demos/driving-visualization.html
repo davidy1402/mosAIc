@@ -1,0 +1,1844 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ClearBox // Autopilot Vision HUD</title>
+  
+  <!-- Fonts & Icons -->
+  <link href="../assets/vendor/fonts.css" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/vendor/fontawesome/css/all.min.css">
+
+  <!-- Three.js & OrbitControls -->
+  <script src="../assets/vendor/three.min.js"></script>
+  <script src="../assets/vendor/three-orbitcontrols.js"></script>
+
+  <style>
+    :root {
+      --bg-dark: #05070c;
+      --panel-bg: rgba(10, 14, 24, 0.45);
+      --border-color: rgba(255, 255, 255, 0.06);
+      --accent-cyan: #00ebd6;
+      --accent-blue: #0088ff;
+      --accent-red: #ff3b30;
+      --accent-orange: #ff9f0a;
+      --success-green: #00e575;
+      --text-main: #f3f4f6;
+      --text-muted: #64748b;
+      --transition-fast: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      --transition-standard: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      min-height: 100vh;
+      overflow-x: hidden;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    /* Ambient lighting */
+    body::before {
+      content: '';
+      position: fixed;
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(0, 136, 255, 0.04) 0%, rgba(0,0,0,0) 70%);
+      top: -10%;
+      left: -10%;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Grid pattern */
+    .bg-grid {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image: 
+        linear-gradient(to right, rgba(255, 255, 255, 0.005) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.005) 1px, transparent 1px);
+      background-size: 40px 40px;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* Dashboard Layout */
+    .dashboard {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 320px 1fr 320px;
+      gap: 16px;
+      padding: 16px;
+      position: relative;
+      z-index: 10;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .column {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      height: 100%;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    /* Custom Scrollbar for columns */
+    .column::-webkit-scrollbar {
+      width: 4px;
+    }
+    .column::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .column::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 2px;
+    }
+
+    /* Glassmorphism Panel Cards */
+    .glass-card {
+      background: var(--panel-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(25px);
+      transition: var(--transition-standard);
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .glass-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.01) 0%, rgba(255, 255, 255, 0) 100%);
+      pointer-events: none;
+    }
+
+    .glass-card:hover {
+      border-color: rgba(255, 255, 255, 0.09);
+    }
+
+    .card-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card-title i {
+      color: var(--accent-blue);
+    }
+
+    /* Telemetry Lists */
+    .telemetry-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    }
+
+    .telemetry-row:last-child {
+      border-bottom: none;
+    }
+
+    .telemetry-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      letter-spacing: 0.5px;
+    }
+
+    .telemetry-val {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .telemetry-val.accent {
+      color: var(--accent-blue);
+    }
+
+    .telemetry-val.warning {
+      color: var(--accent-orange);
+    }
+
+    .telemetry-val.danger {
+      color: var(--accent-red);
+      text-shadow: 0 0 10px rgba(255, 59, 48, 0.3);
+    }
+
+    .telemetry-val.success {
+      color: var(--success-green);
+    }
+
+    /* Main Visualizer Area */
+    .visualizer-card {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      overflow: hidden;
+    }
+
+    .canvas-container {
+      flex: 1;
+      position: relative;
+      background: rgba(0, 0, 0, 0.55);
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.02);
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+
+    #three-container {
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+
+    /* HUD alerts */
+    .collision-alert {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(255, 59, 48, 0.15);
+      border: 1px solid var(--accent-red);
+      color: #fff;
+      padding: 10px 24px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      backdrop-filter: blur(15px);
+      box-shadow: 0 0 20px rgba(255, 59, 48, 0.25);
+      z-index: 100;
+      opacity: 0;
+      transition: all 0.3s ease;
+      pointer-events: none;
+    }
+
+    .collision-alert.show {
+      opacity: 1;
+      top: 30px;
+      animation: alert-pulse 1s infinite alternate;
+    }
+
+    @keyframes alert-pulse {
+      0% { box-shadow: 0 0 10px rgba(255, 59, 48, 0.2); }
+      100% { box-shadow: 0 0 25px rgba(255, 59, 48, 0.4); }
+    }
+
+    /* Red Screen border flash */
+    .screen-red-flash {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      box-shadow: inset 0 0 50px rgba(255, 59, 48, 0);
+      pointer-events: none;
+      z-index: 99;
+      transition: all 0.2s ease;
+    }
+
+    .screen-red-flash.active {
+      box-shadow: inset 0 0 60px rgba(255, 59, 48, 0.4);
+      animation: border-flash 0.5s infinite alternate;
+    }
+
+    @keyframes border-flash {
+      0% { box-shadow: inset 0 0 30px rgba(255, 59, 48, 0.25); }
+      100% { box-shadow: inset 0 0 70px rgba(255, 59, 48, 0.55); }
+    }
+
+    /* Orange Screen border flash for PRE-SAFE */
+    .screen-orange-flash {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      box-shadow: inset 0 0 50px rgba(255, 159, 10, 0);
+      pointer-events: none;
+      z-index: 99;
+      transition: all 0.2s ease;
+      border-radius: 12px;
+    }
+
+    .screen-orange-flash.active {
+      box-shadow: inset 0 0 60px rgba(255, 159, 10, 0.35);
+      animation: border-flash-orange 0.5s infinite alternate;
+    }
+
+    @keyframes border-flash-orange {
+      0% { box-shadow: inset 0 0 25px rgba(255, 159, 10, 0.2); }
+      100% { box-shadow: inset 0 0 55px rgba(255, 159, 10, 0.45); }
+    }
+
+    .presafe-alert {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(255, 159, 10, 0.15);
+      border: 1px solid var(--accent-orange);
+      color: #fff;
+      padding: 10px 24px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      backdrop-filter: blur(15px);
+      box-shadow: 0 0 20px rgba(255, 159, 10, 0.25);
+      z-index: 100;
+      opacity: 0;
+      transition: all 0.3s ease;
+      pointer-events: none;
+    }
+
+    .presafe-alert.show {
+      opacity: 1;
+      top: 30px;
+      animation: alert-pulse-orange 1s infinite alternate;
+    }
+
+    @keyframes alert-pulse-orange {
+      0% { box-shadow: 0 0 10px rgba(255, 159, 10, 0.2); }
+      100% { box-shadow: 0 0 25px rgba(255, 159, 10, 0.4); }
+    }
+
+
+    /* Control HUD Bar */
+    .playback-controls {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      background: rgba(0, 0, 0, 0.25);
+      padding: 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.03);
+    }
+
+    .slider-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .time-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      font-weight: 700;
+      width: 60px;
+      text-align: center;
+      color: var(--accent-blue);
+    }
+
+    .timeline-slider {
+      flex: 1;
+      -webkit-appearance: none;
+      appearance: none;
+      background: rgba(255, 255, 255, 0.08);
+      height: 6px;
+      border-radius: 3px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .timeline-slider::-webkit-slider-runnable-track {
+      width: 100%;
+      height: 6px;
+    }
+
+    .timeline-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--accent-blue);
+      box-shadow: 0 0 10px var(--accent-blue);
+      cursor: pointer;
+      margin-top: -5px;
+      transition: transform 0.1s ease;
+    }
+
+    .timeline-slider::-webkit-slider-thumb:hover {
+      transform: scale(1.2);
+    }
+
+    .buttons-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .play-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: 1px solid rgba(0, 136, 255, 0.3);
+      background: rgba(0, 136, 255, 0.06);
+      color: var(--accent-blue);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      transition: var(--transition-fast);
+    }
+
+    .play-btn:hover {
+      background: var(--accent-blue);
+      color: var(--bg-dark);
+      box-shadow: 0 0 15px var(--accent-blue);
+      border-color: var(--accent-blue);
+    }
+
+    .play-btn:active {
+      transform: scale(0.95);
+    }
+
+    .accident-btn {
+      padding: 6px 14px;
+      border-radius: 20px;
+      border: 1px solid var(--accent-red);
+      background: rgba(255, 59, 48, 0.08);
+      color: #fff;
+      font-family: var(--font-primary);
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: var(--transition-fast);
+      box-shadow: 0 0 10px rgba(255, 59, 48, 0.15);
+    }
+
+    .accident-btn:hover {
+      background: var(--accent-red);
+      box-shadow: 0 0 15px var(--accent-red);
+      transform: translateY(-1px);
+    }
+
+    .accident-btn:active {
+      transform: translateY(1px);
+    }
+
+    .accident-btn.reset-state {
+      border-color: var(--accent-cyan);
+      background: rgba(0, 235, 214, 0.08);
+      box-shadow: 0 0 10px rgba(0, 235, 214, 0.15);
+    }
+
+    .accident-btn.reset-state:hover {
+      background: var(--accent-cyan);
+      color: var(--bg-dark);
+      box-shadow: 0 0 15px var(--accent-cyan);
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 1180px) {
+      .dashboard {
+        grid-template-columns: 1fr;
+        height: auto;
+        overflow: visible;
+      }
+      .canvas-container {
+        flex: none;
+        height: 380px;
+      }
+      .dashboard > .visualizer-card {
+        order: 1;
+      }
+      .dashboard > .column:nth-child(1) {
+        order: 2;
+      }
+      .dashboard > .column:nth-child(3) {
+        order: 3;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="bg-grid"></div>
+
+  <div class="dashboard">
+    <!-- Left Column: Autopilot Diagnostics -->
+    <div class="column">
+      <div class="glass-card">
+        <div class="card-title">
+          <i class="fa-solid fa-compass"></i> Autopilot Diagnostics
+        </div>
+        
+        <div class="telemetry-row">
+          <span class="telemetry-label">Status</span>
+          <span class="telemetry-val success" id="val-ap-status">Active</span>
+        </div>
+        <div class="telemetry-row">
+          <span class="telemetry-label">Radar Tracking</span>
+          <span class="telemetry-val success" id="val-radar-status">Target Lock</span>
+        </div>
+        <div class="telemetry-row">
+          <span class="telemetry-label">Lead Distance</span>
+          <span class="telemetry-val accent" id="val-lead-dist">32m</span>
+        </div>
+        <div class="telemetry-row">
+          <span class="telemetry-label">Forward Target</span>
+          <span class="telemetry-val accent" id="val-forward-target">Obstacle [Box]</span>
+        </div>
+      </div>
+
+      <div class="glass-card">
+        <div class="card-title">
+          <i class="fa-solid fa-car"></i> Dynamic Vehicle State
+        </div>
+        
+        <div class="telemetry-row">
+          <span class="telemetry-label">Target Speed</span>
+          <span class="telemetry-val" id="val-target-speed">90 km/h</span>
+        </div>
+        <div class="telemetry-row">
+          <span class="telemetry-label">Actual Speed</span>
+          <span class="telemetry-val accent" id="val-actual-speed">90 km/h</span>
+        </div>
+        <div class="telemetry-row">
+          <span class="telemetry-label">Steering Yaw</span>
+          <span class="telemetry-val" id="val-steering-yaw">0.0°</span>
+        </div>
+        <div class="telemetry-row">
+          <span class="telemetry-label">Tire Slip Angle</span>
+          <span class="telemetry-val success" id="val-tire-slip">0.02°</span>
+        </div>
+      </div>
+
+      <!-- Mercedes PRE-SAFE® Diagnostics -->
+      <div class="glass-card">
+        <div class="card-title">
+          <i class="fa-solid fa-shield-halved"></i> Mercedes PRE-SAFE®
+        </div>
+        
+        <div class="telemetry-row">
+          <span class="telemetry-label">Belt Tensioning</span>
+          <span class="telemetry-val" id="val-ps-belt">Nominal</span>
+        </div>
+        <div class="telemetry-row">
+          <span class="telemetry-label">PRE-SAFE® Sound</span>
+          <span class="telemetry-val" id="val-ps-sound">Standby</span>
+        </div>
+        <div class="telemetry-row">
+          <span class="telemetry-label">Impulse Side</span>
+          <span class="telemetry-val" id="val-ps-impulse">Standby</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Center Column: 3D Tesla-style HUD Visualizer -->
+    <div class="glass-card visualizer-card">
+      <div class="card-title">
+        <i class="fa-solid fa-eye"></i> Autopilot 3D Environment View
+      </div>
+
+      <div class="canvas-container">
+        <!-- Visual effects overlays -->
+        <div class="collision-alert" id="col-alert">
+          <i class="fa-solid fa-circle-exclamation"></i> Collision Detected
+        </div>
+        <div class="presafe-alert" id="presafe-alert">
+          <i class="fa-solid fa-shield-halved"></i> PRE-SAFE® Active: Brace for Impact
+        </div>
+        <div class="screen-red-flash" id="col-flash"></div>
+        <div class="screen-orange-flash" id="presafe-flash"></div>
+        
+        <!-- Three.js Canvas container -->
+        <div id="three-container"></div>
+      </div>
+
+
+      <div class="playback-controls">
+        <div class="slider-row">
+          <button class="play-btn" id="play-pause-btn"><i class="fa-solid fa-play"></i></button>
+          <input type="range" min="-3.0" max="1.5" step="0.05" value="-3.0" class="timeline-slider" id="timeline">
+          <div class="time-label" id="time-display">-3.00s</div>
+        </div>
+        
+        <div class="buttons-row">
+          <div class="stage-indicator" id="stage-ind" style="font-size: 11px; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px;">
+            <div style="width: 8px; height: 8px; border-radius: 50%; background: var(--accent-blue); box-shadow: 0 0 8px var(--accent-blue);" id="stage-dot"></div>
+            <span id="stage-text">Active Autopilot Path Following</span>
+          </div>
+          <button class="accident-btn" id="btnSimulateAccident">
+            <i class="fa-solid fa-triangle-exclamation"></i> Simulate Accident
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: Live Physics Telemetry -->
+    <div class="column">
+      <div class="glass-card">
+        <div class="card-title">
+          <i class="fa-solid fa-gauge-high"></i> Physics Diagnostics
+        </div>
+        
+        <div class="telemetry-row">
+          <span class="telemetry-label">Long. G-Force</span>
+          <span class="telemetry-val" id="val-g-long">0.05 G</span>
+        </div>
+        <div class="telemetry-row">
+          <span class="telemetry-label">Lat. G-Force</span>
+          <span class="telemetry-val" id="val-g-lat">0.02 G</span>
+        </div>
+        <div class="telemetry-row">
+          <span class="telemetry-label">Yaw Rate</span>
+          <span class="telemetry-val" id="val-yaw-rate">0.00 rad/s</span>
+        </div>
+        <div class="telemetry-row">
+          <span class="telemetry-label">Deceleration</span>
+          <span class="telemetry-val" id="val-decel">0.0 m/s²</span>
+        </div>
+      </div>
+
+      <div class="glass-card">
+        <div class="card-title">
+          <i class="fa-solid fa-bolt"></i> Impact Telemetry
+        </div>
+        
+        <div class="telemetry-row">
+          <span class="telemetry-label">Impact Point</span>
+          <span class="telemetry-val" id="val-impact-point">--</span>
+        </div>
+        <div class="telemetry-row">
+          <span class="telemetry-label">Peak G-Force</span>
+          <span class="telemetry-val" id="val-peak-g">--</span>
+        </div>
+        <div class="telemetry-row">
+          <span class="telemetry-label">Impact Torque</span>
+          <span class="telemetry-val" id="val-impact-torque">--</span>
+        </div>
+        <div class="telemetry-row">
+          <span class="telemetry-label">Slip State</span>
+          <span class="telemetry-val success" id="val-slip-state">Nominal</span>
+        </div>
+
+        <!-- Mercedes 2D Chassis Heatmap -->
+        <div class="chassis-heatmap-container" style="display: flex; justify-content: center; align-items: center; padding-top: 12px; margin-top: 6px; border-top: 1px solid rgba(255, 255, 255, 0.04);">
+          <svg viewBox="0 0 100 200" class="chassis-svg" style="width: 100px; height: 150px;">
+            <!-- Car body silhouette outline -->
+            <path d="M 30,30 Q 30,15 50,15 Q 70,15 70,30 L 72,60 Q 75,90 75,120 L 72,175 Q 70,190 50,190 Q 30,190 28,175 L 25,120 Q 25,90 28,60 Z" 
+                  fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="1.5" id="chassis-body" />
+            
+            <!-- Cabin outline -->
+            <path d="M 34,70 Q 34,50 50,48 Q 66,50 66,70 L 65,130 Q 64,150 50,150 Q 36,150 35,130 Z" 
+                  fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="1" />
+            
+            <!-- Steering wheel symbol inside cabin -->
+            <circle cx="42" cy="72" r="6" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="1" />
+            <line x1="42" y1="66" x2="42" y2="78" stroke="rgba(255,255,255,0.15)" stroke-width="1" />
+            <line x1="36" y1="72" x2="48" y2="72" stroke="rgba(255,255,255,0.15)" stroke-width="1" />
+
+            <!-- Dynamic wheels -->
+            <rect x="18" y="38" width="8" height="18" rx="2" fill="none" stroke="var(--accent-cyan)" stroke-width="1.5" id="wheel-node-fl" class="wheel-node" style="transform-origin: 22px 47px; transition: transform 0.1s ease, stroke 0.2s ease;" />
+            <rect x="74" y="38" width="8" height="18" rx="2" fill="none" stroke="var(--accent-cyan)" stroke-width="1.5" id="wheel-node-fr" class="wheel-node" style="transform-origin: 78px 47px; transition: transform 0.1s ease, stroke 0.2s ease;" />
+            <rect x="18" y="142" width="8" height="18" rx="2" fill="none" stroke="var(--accent-cyan)" stroke-width="1.5" id="wheel-node-rl" class="wheel-node" style="transition: stroke 0.2s ease;" />
+            <rect x="74" y="142" width="8" height="18" rx="2" fill="none" stroke="var(--accent-cyan)" stroke-width="1.5" id="wheel-node-rr" class="wheel-node" style="transition: stroke 0.2s ease;" />
+
+            <!-- Front-Left Impact shockwave arcs -->
+            <path d="M 12,28 A 12,12 0 0,0 28,12" fill="none" stroke="var(--accent-red)" stroke-width="2" class="shockwave-ring" id="ring1" style="opacity:0; stroke-dasharray: 4, 4; transition: opacity 0.15s ease;" />
+            <path d="M 6,28 A 20,20 0 0,0 28,6" fill="none" stroke="var(--accent-orange)" stroke-width="1.5" class="shockwave-ring" id="ring2" style="opacity:0; transition: opacity 0.15s ease;" />
+            <path d="M 0,28 A 28,28 0 0,0 28,0" fill="none" stroke="var(--accent-red)" stroke-width="1" class="shockwave-ring" id="ring3" style="opacity:0; transition: opacity 0.15s ease;" />
+
+            <!-- Impact Point Red Indicator -->
+            <circle cx="22" cy="22" r="5" fill="var(--accent-red)" id="impact-flash-node" style="opacity:0; transition: opacity 0.15s ease;" />
+          </svg>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // --- State Variables ---
+    let isPlaying = false;
+    let playInterval = null;
+    let isCrashTriggered = false;
+
+    // DOM bindings
+    const timeline = document.getElementById('timeline');
+    const timeDisplay = document.getElementById('time-display');
+    const playPauseBtn = document.getElementById('play-pause-btn');
+    const btnSimulateAccident = document.getElementById('btnSimulateAccident');
+    const colAlert = document.getElementById('col-alert');
+    const colFlash = document.getElementById('col-flash');
+
+    // Diagnostics bindings
+    const valApStatus = document.getElementById('val-ap-status');
+    const valRadarStatus = document.getElementById('val-radar-status');
+    const valLeadDist = document.getElementById('val-lead-dist');
+    const valForwardTarget = document.getElementById('val-forward-target');
+    const valActualSpeed = document.getElementById('val-actual-speed');
+    const valSteeringYaw = document.getElementById('val-steering-yaw');
+    const valTireSlip = document.getElementById('val-tire-slip');
+    const valGLong = document.getElementById('val-g-long');
+    const valGLat = document.getElementById('val-g-lat');
+    const valYawRate = document.getElementById('val-yaw-rate');
+    const valDecel = document.getElementById('val-decel');
+    const valImpactPoint = document.getElementById('val-impact-point');
+    const valPeakG = document.getElementById('val-peak-g');
+    const valImpactTorque = document.getElementById('val-impact-torque');
+    const valSlipState = document.getElementById('val-slip-state');
+    const stageDot = document.getElementById('stage-dot');
+    const stageText = document.getElementById('stage-text');
+
+    // PRE-SAFE bindings
+    const valPsBelt = document.getElementById('val-ps-belt');
+    const valPsSound = document.getElementById('val-ps-sound');
+    const valPsImpulse = document.getElementById('val-ps-impulse');
+    const presafeAlert = document.getElementById('presafe-alert');
+    const presafeFlash = document.getElementById('presafe-flash');
+
+    // Chassis SVG elements
+    const wheelNodeFL = document.getElementById('wheel-node-fl');
+    const wheelNodeFR = document.getElementById('wheel-node-fr');
+    const wheelNodeRL = document.getElementById('wheel-node-rl');
+    const wheelNodeRR = document.getElementById('wheel-node-rr');
+    const ring1 = document.getElementById('ring1');
+    const ring2 = document.getElementById('ring2');
+    const ring3 = document.getElementById('ring3');
+    const impactFlashNode = document.getElementById('impact-flash-node');
+
+
+    // Three.js State Variables
+    let threeScene, threeCamera, threeRenderer, threeControls;
+    let egoCar, obstacleCar, targetBoundingBox, pathLine;
+    let laneMarkers = [];
+    let tireSkidTrails = [];
+    let threeSparks, threeSparkVelocities;
+
+    // --- Three.js Scene Setup (realistic PBR night scene) ---
+    const WHEEL_R = 0.34;
+    // Minimum sane container size; below this the layout is mid-transition
+    // (e.g. still hidden behind display:none) so sizing logic falls back
+    // to a default rather than collapsing the renderer/canvas to a sliver.
+    const MIN_CANVAS_DIM = 40;
+    let egoModel, obstacleModel;
+    let scrollProps = [];
+
+    function smooth01(a, b, t) {
+      if (t <= a) return 0;
+      if (t >= b) return 1;
+      const k = (t - a) / (b - a);
+      return k * k * (3 - 2 * k);
+    }
+
+    function buildRoadTexture() {
+      const c = document.createElement('canvas');
+      c.width = 512; c.height = 1024;
+      const g = c.getContext('2d');
+      g.fillStyle = '#17191d';
+      g.fillRect(0, 0, 512, 1024);
+      for (let i = 0; i < 9000; i++) {
+        const v = 14 + Math.random() * 28;
+        g.fillStyle = `rgba(${v + 6 | 0},${v + 7 | 0},${v + 11 | 0},${0.25 + Math.random() * 0.4})`;
+        g.fillRect(Math.random() * 512, Math.random() * 1024, 1.7, 1.7);
+      }
+      // tyre-polished bands along each lane (road runs along v)
+      g.fillStyle = 'rgba(8, 9, 11, 0.35)';
+      [92, 200, 300, 408].forEach(x => g.fillRect(x, 0, 24, 1024));
+      // solid edge lines (centre dashes come from the scrolling markers)
+      g.fillStyle = 'rgba(198, 200, 192, 0.6)';
+      g.fillRect(20, 0, 5, 1024);
+      g.fillRect(487, 0, 5, 1024);
+      const tex = new THREE.CanvasTexture(c);
+      tex.wrapT = THREE.RepeatWrapping;
+      tex.repeat.set(1, 9);
+      tex.anisotropy = 4;
+      tex.encoding = THREE.sRGBEncoding;
+      return tex;
+    }
+
+    // Realistic procedural car; nose = +X in local space
+    function buildCarModel(opts) {
+      const paintMat = new THREE.MeshStandardMaterial({ color: opts.paint, metalness: 0.72, roughness: 0.34 });
+      const trimMat = new THREE.MeshStandardMaterial({ color: 0x0c0e11, metalness: 0.4, roughness: 0.62 });
+      const chromeMat = new THREE.MeshStandardMaterial({ color: 0xd9dee4, metalness: 1.0, roughness: 0.16 });
+      const glassMat = new THREE.MeshStandardMaterial({
+        color: 0x0a1016, metalness: 0.92, roughness: 0.08, transparent: true, opacity: 0.94
+      });
+      const tyreMat = new THREE.MeshStandardMaterial({ color: 0x0a0a0c, roughness: 0.95, metalness: 0.05 });
+
+      const group = new THREE.Group();
+
+      const bodyShape = new THREE.Shape();
+      bodyShape.moveTo(-2.18, 0.3);
+      bodyShape.lineTo(-2.2, 0.62);
+      bodyShape.quadraticCurveTo(-2.14, 0.8, -1.88, 0.84);
+      bodyShape.quadraticCurveTo(-1.3, 0.92, -0.6, 0.93);
+      bodyShape.lineTo(0.72, 0.92);
+      bodyShape.quadraticCurveTo(1.5, 0.84, 1.95, 0.72);
+      bodyShape.quadraticCurveTo(2.18, 0.65, 2.2, 0.55);
+      bodyShape.lineTo(2.22, 0.34);
+      bodyShape.quadraticCurveTo(2.22, 0.22, 2.0, 0.22);
+      bodyShape.lineTo(-1.98, 0.22);
+      bodyShape.quadraticCurveTo(-2.18, 0.22, -2.18, 0.3);
+
+      const bodyDepth = 1.48;
+      const bodyGeo = new THREE.ExtrudeGeometry(bodyShape, {
+        depth: bodyDepth, bevelEnabled: true, bevelThickness: 0.15,
+        bevelSize: 0.14, bevelSegments: 4, curveSegments: 12
+      });
+      bodyGeo.translate(0, 0, -bodyDepth / 2);
+      const body = new THREE.Mesh(bodyGeo, paintMat);
+      body.name = 'car_body';
+      body.castShadow = true;
+      group.add(body);
+
+      const canopyShape = new THREE.Shape();
+      canopyShape.moveTo(0.68, 0.9);
+      canopyShape.quadraticCurveTo(0.32, 1.3, -0.05, 1.36);
+      canopyShape.quadraticCurveTo(-0.55, 1.4, -0.85, 1.34);
+      canopyShape.quadraticCurveTo(-1.2, 1.24, -1.42, 0.9);
+      canopyShape.lineTo(0.68, 0.9);
+
+      const canopyDepth = 1.04;
+      const canopyGeo = new THREE.ExtrudeGeometry(canopyShape, {
+        depth: canopyDepth, bevelEnabled: true, bevelThickness: 0.09,
+        bevelSize: 0.08, bevelSegments: 3, curveSegments: 10
+      });
+      canopyGeo.translate(0, 0, -canopyDepth / 2);
+      const canopy = new THREE.Mesh(canopyGeo, glassMat);
+      canopy.name = 'car_canopy';
+      canopy.castShadow = true;
+      group.add(canopy);
+
+      const grille = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.2, 0.92), trimMat);
+      grille.position.set(2.2, 0.48, 0);
+      group.add(grille);
+
+      if (opts.star) {
+        const starGroup = new THREE.Group();
+        const ring = new THREE.Mesh(new THREE.TorusGeometry(0.105, 0.014, 8, 28), chromeMat);
+        starGroup.add(ring);
+        for (let i = 0; i < 3; i++) {
+          const holder = new THREE.Group();
+          holder.rotation.z = (i * Math.PI * 2) / 3 + Math.PI;
+          const blade = new THREE.Mesh(new THREE.BoxGeometry(0.026, 0.1, 0.018), chromeMat);
+          blade.position.y = 0.052;
+          holder.add(blade);
+          starGroup.add(holder);
+        }
+        starGroup.rotation.y = Math.PI / 2;
+        starGroup.position.set(2.24, 0.5, 0);
+        group.add(starGroup);
+      }
+
+      const headMat = new THREE.MeshStandardMaterial({
+        color: 0xbfd2e6, emissive: 0xcfe2ff, emissiveIntensity: 1.6, roughness: 0.3
+      });
+      const tailMat = new THREE.MeshStandardMaterial({
+        color: 0x550a08, emissive: 0xff2218, emissiveIntensity: 0.8, roughness: 0.35
+      });
+      const sigMat = new THREE.MeshStandardMaterial({
+        color: 0x4c2e05, emissive: 0xff9f0a, emissiveIntensity: 0.05, roughness: 0.4
+      });
+
+      const headlights = [];
+      [-0.52, 0.52].forEach(z => {
+        const hl = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.09, 0.34), headMat.clone());
+        hl.position.set(2.19, 0.58, z);
+        hl.rotation.y = z > 0 ? -0.12 : 0.12;
+        group.add(hl);
+        headlights.push(hl);
+      });
+
+      const taillights = [];
+      [-0.5, 0.5].forEach(z => {
+        const tl = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.09, 0.42), tailMat.clone());
+        tl.position.set(-2.19, 0.66, z);
+        group.add(tl);
+        taillights.push(tl);
+      });
+
+      const signals = [];
+      [[2.16, 0.52, -0.82], [2.16, 0.52, 0.82], [-2.14, 0.62, -0.8], [-2.14, 0.62, 0.8]].forEach(([x, y, z]) => {
+        const sg = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.06, 0.14), sigMat.clone());
+        sg.position.set(x, y, z);
+        group.add(sg);
+        signals.push(sg);
+      });
+
+      [-0.97, 0.97].forEach(z => {
+        const mirror = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.08, 0.17), trimMat);
+        mirror.position.set(0.58, 1.0, z);
+        group.add(mirror);
+      });
+
+      const wheels = {};
+      [['fl', 1.38, -0.79], ['fr', 1.38, 0.79], ['rl', -1.38, -0.79], ['rr', -1.38, 0.79]].forEach(([name, x, z]) => {
+        const steer = new THREE.Group();
+        steer.position.set(x, WHEEL_R, z);
+        const spin = new THREE.Group();
+        steer.add(spin);
+
+        const tyre = new THREE.Mesh(new THREE.CylinderGeometry(WHEEL_R, WHEEL_R, 0.26, 24), tyreMat);
+        tyre.rotation.x = Math.PI / 2;
+        tyre.castShadow = true;
+        spin.add(tyre);
+
+        const rim = new THREE.Mesh(new THREE.CylinderGeometry(0.19, 0.19, 0.27, 18), chromeMat);
+        rim.rotation.x = Math.PI / 2;
+        spin.add(rim);
+
+        for (let i = 0; i < 5; i++) {
+          [-0.14, 0.14].forEach(zOff => {
+            const spoke = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.29, 0.02), chromeMat);
+            spoke.rotation.z = (i * Math.PI * 2) / 5;
+            spoke.position.z = zOff;
+            spin.add(spoke);
+          });
+        }
+
+        group.add(steer);
+        wheels[name] = { steer, spin };
+      });
+
+      const deformables = [];
+      [body, canopy].forEach(mesh => {
+        mesh.userData.orig = mesh.geometry.attributes.position.array.slice();
+        deformables.push(mesh);
+      });
+
+      group.userData = { deformables, wheels, headlights, taillights, signals, lastCrumple: -1 };
+      return group;
+    }
+
+    function applyCrumple(model, px, py, pz, radius, coeff) {
+      if (!model) return;
+      const ud = model.userData;
+      if (Math.abs(ud.lastCrumple - coeff) < 0.004) return;
+      ud.lastCrumple = coeff;
+      const dirX = px > 0 ? -1 : 1;
+      const dirZ = pz > 0 ? -1 : 1;
+      ud.deformables.forEach(mesh => {
+        const attr = mesh.geometry.attributes.position;
+        const orig = mesh.userData.orig;
+        for (let i = 0; i < attr.count; i++) {
+          const ox = orig[i * 3], oy = orig[i * 3 + 1], oz = orig[i * 3 + 2];
+          if (coeff <= 0) { attr.setXYZ(i, ox, oy, oz); continue; }
+          const dx = ox - px, dy = (oy - py) * 1.5, dz = (oz - pz) * 1.2;
+          const d = Math.sqrt(dx * dx + dy * dy + dz * dz);
+          if (d < radius) {
+            const f = Math.pow(1 - d / radius, 1.6) * coeff;
+            const wrinkle = Math.sin(ox * 21 + oz * 17) * 0.05 + Math.sin(oy * 26) * 0.03;
+            attr.setXYZ(i,
+              ox + dirX * f * (0.36 + wrinkle),
+              oy + f * (oy > 0.72 ? 0.11 : -0.05) + f * wrinkle * 0.5,
+              oz + dirZ * f * (0.22 + wrinkle * 0.6));
+          } else {
+            attr.setXYZ(i, ox, oy, oz);
+          }
+        }
+        attr.needsUpdate = true;
+        mesh.geometry.computeVertexNormals();
+      });
+    }
+
+    function initThreeJS() {
+      const container = document.getElementById('three-container');
+      if (!container) return;
+
+      const w = container.clientWidth >= MIN_CANVAS_DIM ? container.clientWidth : 860;
+      const h = container.clientHeight >= MIN_CANVAS_DIM ? container.clientHeight : 480;
+
+      threeScene = new THREE.Scene();
+      threeScene.fog = new THREE.FogExp2(0x04060b, 0.014);
+      threeCamera = new THREE.PerspectiveCamera(45, w / h, 0.1, 300);
+      threeCamera.position.set(0, 3.8, 8.5);
+
+      threeRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      threeRenderer.setSize(w, h);
+      threeRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      threeRenderer.shadowMap.enabled = true;
+      threeRenderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      threeRenderer.outputEncoding = THREE.sRGBEncoding;
+      threeRenderer.toneMapping = THREE.ACESFilmicToneMapping;
+      threeRenderer.toneMappingExposure = 1.12;
+      threeRenderer.setClearColor(0x04060b, 1);
+      container.appendChild(threeRenderer.domElement);
+
+      threeControls = new THREE.OrbitControls(threeCamera, threeRenderer.domElement);
+      threeControls.enableDamping = true;
+      threeControls.dampingFactor = 0.05;
+      threeControls.maxPolarAngle = Math.PI / 2 - 0.08;
+      threeControls.minDistance = 3;
+      threeControls.maxDistance = 25;
+
+      // Lighting
+      threeScene.add(new THREE.HemisphereLight(0x3a4f6e, 0x090c12, 0.85));
+      const moon = new THREE.DirectionalLight(0x9db8e8, 0.7);
+      moon.position.set(9, 15, 7);
+      moon.castShadow = true;
+      moon.shadow.mapSize.set(2048, 2048);
+      moon.shadow.camera.left = -14;
+      moon.shadow.camera.right = 14;
+      moon.shadow.camera.top = 30;
+      moon.shadow.camera.bottom = -30;
+      moon.shadow.camera.near = 2;
+      moon.shadow.camera.far = 45;
+      moon.shadow.bias = -0.0008;
+      threeScene.add(moon);
+
+      // Static pools of warm street light near the action zone
+      [[-5.1, -12], [-5.1, 6]].forEach(([x, z]) => {
+        const lamp = new THREE.SpotLight(0xffd9a8, 0.7, 24, 0.75, 0.6, 1.1);
+        lamp.position.set(x, 5.4, z);
+        lamp.target.position.set(0, -0.55, z + 2);
+        threeScene.add(lamp);
+        threeScene.add(lamp.target);
+      });
+
+      // Textured asphalt (road runs along Z)
+      const road = new THREE.Mesh(
+        new THREE.PlaneGeometry(8.4, 140),
+        new THREE.MeshStandardMaterial({ map: buildRoadTexture(), roughness: 0.92, metalness: 0.05 })
+      );
+      road.rotation.x = -Math.PI / 2;
+      road.position.y = -0.55;
+      road.receiveShadow = true;
+      threeScene.add(road);
+
+      // Verges + curbs
+      [-1, 1].forEach(side => {
+        const verge = new THREE.Mesh(
+          new THREE.PlaneGeometry(12, 140),
+          new THREE.MeshStandardMaterial({ color: 0x0a0d0a, roughness: 1 })
+        );
+        verge.rotation.x = -Math.PI / 2;
+        verge.position.set(side * (4.2 + 6), -0.562, 0);
+        verge.receiveShadow = true;
+        threeScene.add(verge);
+
+        const curb = new THREE.Mesh(
+          new THREE.BoxGeometry(0.26, 0.13, 140),
+          new THREE.MeshStandardMaterial({ color: 0x2b2e33, roughness: 0.8 })
+        );
+        curb.position.set(side * 4.35, -0.495, 0);
+        threeScene.add(curb);
+      });
+
+      // Scrolling roadside props: street light poles + trees (looped with the road)
+      const poleMat = new THREE.MeshStandardMaterial({ color: 0x33373d, metalness: 0.7, roughness: 0.4 });
+      const trunkMat = new THREE.MeshStandardMaterial({ color: 0x18130c, roughness: 1 });
+      const leafMat = new THREE.MeshStandardMaterial({ color: 0x0c1810, roughness: 1 });
+
+      for (let i = 0; i < 5; i++) {
+        const g = new THREE.Group();
+        const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.09, 5.6, 10), poleMat);
+        pole.position.set(-5.1, 2.25, 0);
+        g.add(pole);
+        const arm = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.06, 0.07), poleMat);
+        arm.position.set(-4.55, 4.98, 0);
+        g.add(arm);
+        const head = new THREE.Mesh(
+          new THREE.BoxGeometry(0.18, 0.09, 0.36),
+          new THREE.MeshStandardMaterial({ color: 0x6b5b3a, emissive: 0xffd9a0, emissiveIntensity: 1.6 })
+        );
+        head.position.set(-4.0, 4.94, 0);
+        g.add(head);
+        threeScene.add(g);
+        scrollProps.push({ group: g, baseZ: i * 24 - 48 });
+      }
+
+      for (let i = 0; i < 8; i++) {
+        const g = new THREE.Group();
+        const x = (i % 2 === 0 ? -1 : 1) * (7 + (i * 0.9) % 2.5);
+        const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.18, 1.4, 7), trunkMat);
+        trunk.position.set(x, 0.15, 0);
+        g.add(trunk);
+        const c1 = new THREE.Mesh(new THREE.ConeGeometry(1.15, 2.4, 8), leafMat);
+        c1.position.set(x, 1.85, 0);
+        g.add(c1);
+        const c2 = new THREE.Mesh(new THREE.ConeGeometry(0.85, 1.8, 8), leafMat);
+        c2.position.set(x, 2.95, 0);
+        g.add(c2);
+        threeScene.add(g);
+        scrollProps.push({ group: g, baseZ: i * 15 - 60 });
+      }
+
+      // Lane Markings (scrolled by the timeline to fake forward motion)
+      createLaneMarkings();
+
+      // Ego Mercedes (nose faces -Z)
+      egoCar = new THREE.Group();
+      egoModel = buildCarModel({ paint: 0xb9bfc7, star: true });
+      egoModel.rotation.y = Math.PI / 2;
+      egoCar.add(egoModel);
+      egoCar.position.set(-2.0, -0.55, 0);
+      threeScene.add(egoCar);
+
+      // Headlight beams
+      [-0.52, 0.52].forEach(z => {
+        const beam = new THREE.SpotLight(0xcfe0ff, 0.75, 30, 0.42, 0.55, 1.3);
+        beam.position.set(2.15, 0.6, z);
+        beam.target.position.set(18, 0.1, z * 1.6);
+        egoModel.add(beam);
+        egoModel.add(beam.target);
+      });
+
+      // Stalled lead vehicle
+      obstacleCar = new THREE.Group();
+      obstacleModel = buildCarModel({ paint: 0xe8eaed, star: false });
+      obstacleModel.rotation.y = Math.PI / 2;
+      obstacleCar.add(obstacleModel);
+      obstacleCar.position.set(-2.0, -0.55, -26);
+      threeScene.add(obstacleCar);
+
+      // Radar bounding box around the tracked target
+      const bboxGeo = new THREE.BoxGeometry(2.1, 1.6, 4.8);
+      const bboxMat = new THREE.MeshBasicMaterial({
+        color: 0x0088ff, wireframe: true, transparent: true, opacity: 0.55
+      });
+      targetBoundingBox = new THREE.Mesh(bboxGeo, bboxMat);
+      targetBoundingBox.position.copy(obstacleCar.position);
+      targetBoundingBox.position.y = 0.28;
+      threeScene.add(targetBoundingBox);
+
+      // Autopilot path line
+      const pathCurve = new THREE.LineCurve3(
+        new THREE.Vector3(0, -0.52, 0),
+        new THREE.Vector3(0, -0.52, -45)
+      );
+      const pathGeo = new THREE.BufferGeometry().setFromPoints(pathCurve.getPoints(10));
+      const pathMat = new THREE.LineBasicMaterial({ color: 0x0088ff, linewidth: 2 });
+      pathLine = new THREE.Line(pathGeo, pathMat);
+      threeScene.add(pathLine);
+
+      // Sparks particle spray emitter
+      const sparkCount = 60;
+      const sparkGeo = new THREE.BufferGeometry();
+      const sparkPos = new Float32Array(sparkCount * 3);
+      threeSparkVelocities = new Float32Array(sparkCount * 3);
+      for (let i = 0; i < sparkCount; i++) {
+        threeSparkVelocities[i * 3] = (Math.random() - 0.25) * 2.5;
+        threeSparkVelocities[i * 3 + 1] = Math.random() * 2.2;
+        threeSparkVelocities[i * 3 + 2] = (Math.random() - 0.2) * 2.5;
+      }
+      sparkGeo.setAttribute('position', new THREE.BufferAttribute(sparkPos, 3));
+      const sparkMat = new THREE.PointsMaterial({
+        color: 0xffa54d, size: 0.09, transparent: true, opacity: 0,
+        blending: THREE.AdditiveBlending, depthWrite: false
+      });
+      threeSparks = new THREE.Points(sparkGeo, sparkMat);
+      threeSparks.position.set(-1.2, -0.1, -1.6);
+      threeScene.add(threeSparks);
+
+      animate();
+    }
+
+    // Creates lane marking meshes
+    function createLaneMarkings() {
+      const lineGeo = new THREE.BoxGeometry(0.12, 0.02, 3.5);
+      const lineMat = new THREE.MeshBasicMaterial({ color: 0xd6d8ce, transparent: true, opacity: 0.55 });
+      for (let z = -50; z <= 50; z += 12) {
+        const mark = new THREE.Mesh(lineGeo, lineMat);
+        mark.position.set(0.0, -0.535, z);
+        threeScene.add(mark);
+        laneMarkers.push(mark);
+      }
+    }
+
+    // Animation & rendering loop
+    function animate() {
+      requestAnimationFrame(animate);
+
+      const now = Date.now();
+      const blink = Math.floor(now / 420) % 2 === 0;
+
+      // Stalled vehicle hazards always flashing; ego hazards after impact
+      if (obstacleModel) {
+        obstacleModel.userData.signals.forEach(sg => {
+          sg.material.emissiveIntensity = blink ? 1.7 : 0.05;
+        });
+      }
+      if (egoModel) {
+        const t = parseFloat(timeline.value);
+        const hazardsOn = isCrashTriggered && t >= 0.35;
+        egoModel.userData.signals.forEach(sg => {
+          sg.material.emissiveIntensity = hazardsOn && blink ? 1.7 : 0.05;
+        });
+        const dead = isCrashTriggered && t >= 0;
+        egoModel.userData.headlights[0].material.emissiveIntensity =
+          dead ? (Math.random() < 0.12 ? 0.9 : 0.05) : 1.6;
+      }
+
+      // Slow camera drift when the user is not dragging
+      if (isCrashTriggered && parseFloat(timeline.value) >= 0.0) {
+        threeCamera.position.x += (1.8 - threeCamera.position.x) * 0.02;
+        threeCamera.position.y += (4.2 - threeCamera.position.y) * 0.02;
+        threeCamera.position.z += (9.2 - threeCamera.position.z) * 0.02;
+      }
+
+      threeControls.update();
+      threeRenderer.render(threeScene, threeCamera);
+    }
+
+
+    // Interpolates float numbers
+    function getInterpolatedVal(x1, x2, t1, t2, t) {
+      if (t <= t1) return x1;
+      if (t >= t2) return x2;
+      return x1 + ((x2 - x1) * (t - t1)) / (t2 - t1);
+    }
+
+    // Core driving & collision simulator equations
+    function updateTimelineState(time) {
+      timeline.value = time;
+      timeDisplay.innerText = `${time >= 0 ? '+' : ''}${time.toFixed(2)}s`;
+
+      // 1. Cruise Lane Scroll & Traffic Speeds
+      let roadSpeedCoeff = 1.0; 
+      let egoPosX = 0.0;
+      let egoYaw = 0.0;
+      let egoSpinAngle = 0.0;
+      let leadCarZ = -26; // lead obstacle car initial distance
+      
+      let speed = 90; // km/h
+      let decel = 0.0; // m/s2
+      let gLong = 0.05;
+      let gLat = 0.02;
+      let yawRate = 0.0;
+      let slipAngle = 0.02;
+
+      // Autopilot Path lines highlight
+      pathLine.material.color.setHex(0x0088ff);
+
+      if (!isCrashTriggered) {
+        // Cruising Path: Nominal state
+        roadSpeedCoeff = 1.0;
+        leadCarZ = getInterpolatedVal(-76, 24, -3.0, 1.5, time);
+        
+        // Lane change logic matching 2D Crash Reconstruction:
+        if (time < -2.0) {
+          egoPosX = -2.0 + 0.06 * Math.sin(Date.now() / 800);
+          egoYaw = 0.015 * Math.sin(Date.now() / 800);
+        } else if (time < -1.0) {
+          egoPosX = getInterpolatedVal(-2.0, 2.0, -2.0, -1.0, time);
+          let yawVal = getInterpolatedVal(0.0, -0.08, -2.0, -1.5, time);
+          if (time >= -1.5) yawVal = getInterpolatedVal(-0.08, 0.0, -1.5, -1.0, time);
+          egoYaw = yawVal;
+        } else if (time < 0.5) {
+          egoPosX = 2.0 + 0.06 * Math.sin(Date.now() / 800);
+          egoYaw = 0.015 * Math.sin(Date.now() / 800);
+        } else if (time < 1.5) {
+          egoPosX = getInterpolatedVal(2.0, -2.0, 0.5, 1.5, time);
+          let yawVal = getInterpolatedVal(0.0, 0.08, 0.5, 1.0, time);
+          if (time >= 1.0) yawVal = getInterpolatedVal(0.08, 0.0, 1.0, 1.5, time);
+          egoYaw = yawVal;
+        } else {
+          egoPosX = -2.0 + 0.06 * Math.sin(Date.now() / 800);
+          egoYaw = 0.015 * Math.sin(Date.now() / 800);
+        }
+
+        speed = 90 + Math.sin(time) * 0.8;
+        decel = 0.0;
+        gLong = 0.05 + 0.01 * Math.sin(time);
+        gLat = 0.02 + 0.01 * Math.sin(time);
+        yawRate = 0.0;
+        slipAngle = 0.02;
+
+        colAlert.classList.remove('show');
+        colFlash.classList.remove('active');
+        
+        // Restore standby diagnostics text
+        valApStatus.innerText = 'Active';
+        valApStatus.className = 'telemetry-val success';
+        
+        // Radar locks forward target when leadCarZ < 0
+        if (leadCarZ < 0) {
+          valLeadDist.innerText = `${Math.round(Math.abs(leadCarZ))}m`;
+          valRadarStatus.innerText = 'Target Lock';
+          valRadarStatus.className = 'telemetry-val success';
+          valForwardTarget.innerText = 'Stalled Vehicle';
+          valForwardTarget.className = 'telemetry-val accent';
+        } else {
+          valLeadDist.innerText = '--';
+          valRadarStatus.innerText = 'Searching...';
+          valRadarStatus.className = 'telemetry-val warning';
+          valForwardTarget.innerText = 'Clear Road';
+          valForwardTarget.className = 'telemetry-val success';
+        }
+        valSlipState.innerText = 'Nominal';
+        valSlipState.className = 'telemetry-val success';
+        stageDot.style.background = 'var(--accent-blue)';
+        stageDot.style.boxShadow = '0 0 8px var(--accent-blue)';
+        stageText.innerText = 'Active Autopilot Path Following';
+
+        valImpactPoint.innerText = '--';
+        valPeakG.innerText = '--';
+        valImpactTorque.innerText = '--';
+
+        // PRE-SAFE resets
+        if (valPsBelt) {
+          valPsBelt.innerText = 'Nominal';
+          valPsBelt.className = 'telemetry-val';
+          valPsSound.innerText = 'Standby';
+          valPsSound.className = 'telemetry-val';
+          valPsImpulse.innerText = 'Standby';
+          valPsImpulse.className = 'telemetry-val';
+        }
+        if (presafeAlert) presafeAlert.classList.remove('show');
+        if (presafeFlash) presafeFlash.classList.remove('active');
+
+        // Chassis Heatmap Reset
+        if (wheelNodeFL) {
+          wheelNodeFL.style.stroke = "var(--accent-cyan)";
+          wheelNodeFR.style.stroke = "var(--accent-cyan)";
+          wheelNodeRL.style.stroke = "var(--accent-cyan)";
+          wheelNodeRR.style.stroke = "var(--accent-cyan)";
+          wheelNodeFL.style.transform = "rotate(0deg)";
+          wheelNodeFR.style.transform = "rotate(0deg)";
+        }
+        if (ring1) {
+          ring1.style.opacity = 0;
+          ring2.style.opacity = 0;
+          ring3.style.opacity = 0;
+          impactFlashNode.style.opacity = 0;
+        }
+      } else {
+        // Accident path
+        if (time < -1.0) {
+          // Stage 1: Active Cruising, lead vehicle detected ahead on path
+          roadSpeedCoeff = 1.0;
+          egoPosX = -2.0;
+          egoYaw = 0.0;
+          leadCarZ = getInterpolatedVal(-76, -26, -3.0, -1.0, time);
+
+          speed = 90;
+          decel = 0.0;
+          gLong = 0.05;
+          gLat = 0.02;
+          yawRate = 0.0;
+          slipAngle = 0.02;
+
+          colAlert.classList.remove('show');
+          colFlash.classList.remove('active');
+          valApStatus.innerText = 'Active';
+          valApStatus.className = 'telemetry-val success';
+          valRadarStatus.innerText = 'Target Lock';
+          valRadarStatus.className = 'telemetry-val success';
+          valLeadDist.innerText = `${Math.round(getInterpolatedVal(76, 26, -3.0, -1.0, time))}m`;
+          valLeadDist.className = 'telemetry-val accent';
+          valForwardTarget.innerText = 'Stalled Vehicle';
+          valForwardTarget.className = 'telemetry-val accent';
+          valSlipState.innerText = 'Nominal';
+          valSlipState.className = 'telemetry-val success';
+          stageDot.style.background = 'var(--accent-blue)';
+          stageDot.style.boxShadow = '0 0 8px var(--accent-blue)';
+          stageText.innerText = 'Autopilot Object Tracking - Cruise';
+
+          valImpactPoint.innerText = '--';
+          valPeakG.innerText = '--';
+          valImpactTorque.innerText = '--';
+
+          // PRE-SAFE resets
+          if (valPsBelt) {
+            valPsBelt.innerText = 'Nominal';
+            valPsBelt.className = 'telemetry-val';
+            valPsSound.innerText = 'Standby';
+            valPsSound.className = 'telemetry-val';
+            valPsImpulse.innerText = 'Standby';
+            valPsImpulse.className = 'telemetry-val';
+          }
+          if (presafeAlert) presafeAlert.classList.remove('show');
+          if (presafeFlash) presafeFlash.classList.remove('active');
+
+          // Chassis Heatmap Reset
+          if (wheelNodeFL) {
+            wheelNodeFL.style.stroke = "var(--accent-cyan)";
+            wheelNodeFR.style.stroke = "var(--accent-cyan)";
+            wheelNodeRL.style.stroke = "var(--accent-cyan)";
+            wheelNodeRR.style.stroke = "var(--accent-cyan)";
+            wheelNodeFL.style.transform = "rotate(0deg)";
+            wheelNodeFR.style.transform = "rotate(0deg)";
+          }
+          if (ring1) {
+            ring1.style.opacity = 0;
+            ring2.style.opacity = 0;
+            ring3.style.opacity = 0;
+            impactFlashNode.style.opacity = 0;
+          }
+        } else if (time < 0.0) {
+          // Stage 2: Pre-crash Emergency Braking & Swerving (-1.0s to 0.0s)
+          speed = getInterpolatedVal(90, 54, -1.0, 0.0, time);
+          decel = 9.2; // severe deceleration
+          gLong = getInterpolatedVal(0.05, 0.94, -1.0, -0.2, time);
+          gLat = getInterpolatedVal(0.02, 0.28, -1.0, 0.0, time);
+          yawRate = -0.05;
+          slipAngle = getInterpolatedVal(0.02, 4.25, -1.0, 0.0, time);
+
+          roadSpeedCoeff = getInterpolatedVal(1.0, 0.5, -1.0, 0.0, time);
+          egoPosX = getInterpolatedVal(-2.0, -1.55, -1.0, 0.0, time);
+          egoYaw = getInterpolatedVal(0.0, -0.08, -1.0, 0.0, time);
+          leadCarZ = getInterpolatedVal(-26, -3.2, -1.0, 0.0, time);
+
+          colAlert.classList.remove('show');
+          colFlash.classList.remove('active');
+          valApStatus.innerText = 'Pre-Safe Primed';
+          valApStatus.className = 'telemetry-val warning';
+          valRadarStatus.innerText = 'FCW TRIGGERED';
+          valRadarStatus.className = 'telemetry-val danger';
+          valLeadDist.innerText = `${Math.round(getInterpolatedVal(26, 3, -1.0, 0.0, time))}m`;
+          valLeadDist.className = 'telemetry-val danger';
+          valForwardTarget.innerText = 'CRASH IMMINENT';
+          valForwardTarget.className = 'telemetry-val danger';
+          valSlipState.innerText = 'Slipping';
+          valSlipState.className = 'telemetry-val warning';
+          stageDot.style.background = 'var(--accent-orange)';
+          stageDot.style.boxShadow = '0 0 8px var(--accent-orange)';
+          stageText.innerText = 'Pre-Safe Emergency Braking & Swerve';
+
+          pathLine.material.color.setHex(0xff9f0a); // orange path
+
+          // PRE-SAFE Active State
+          if (valPsBelt) {
+            valPsBelt.innerText = 'ACTIVE (1.2kN)';
+            valPsBelt.className = 'telemetry-val warning';
+            valPsSound.innerText = 'TRANSMITTING';
+            valPsSound.className = 'telemetry-val warning';
+            valPsImpulse.innerText = 'ARMED (FL)';
+            valPsImpulse.className = 'telemetry-val warning';
+          }
+          if (presafeAlert) presafeAlert.classList.add('show');
+          if (presafeFlash) presafeFlash.classList.add('active');
+
+          // Chassis Heatmap braking state
+          if (wheelNodeFL) {
+            wheelNodeFL.style.stroke = "var(--accent-orange)";
+            wheelNodeFR.style.stroke = "var(--accent-orange)";
+            wheelNodeRL.style.stroke = "rgba(0, 235, 214, 0.6)";
+            wheelNodeRR.style.stroke = "rgba(0, 235, 214, 0.6)";
+
+            // Front wheels steer right (convert steeringYaw to degrees)
+            let steeringYawRad = getInterpolatedVal(0, 0.48, -1.0, 0.0, time);
+            let steeringAngleDeg = steeringYawRad * (180 / Math.PI);
+            wheelNodeFL.style.transform = `rotate(${steeringAngleDeg}deg)`;
+            wheelNodeFR.style.transform = `rotate(${steeringAngleDeg}deg)`;
+          }
+          if (ring1) {
+            ring1.style.opacity = 0;
+            ring2.style.opacity = 0;
+            ring3.style.opacity = 0;
+            impactFlashNode.style.opacity = 0;
+          }
+        } else {
+          // Stage 3: Physics Collision Spin-out and Sliding (T >= 0.0s)
+          colAlert.classList.add('show');
+          colFlash.classList.add('active');
+
+          valApStatus.innerText = 'SYSTEM OFFLINE';
+          valApStatus.className = 'telemetry-val danger';
+          valRadarStatus.innerText = 'SENSOR FAULT';
+          valRadarStatus.className = 'telemetry-val danger';
+          valLeadDist.innerText = '0m';
+          valLeadDist.className = 'telemetry-val danger';
+          valForwardTarget.innerText = 'COLLISION REGISTERED';
+          valForwardTarget.className = 'telemetry-val danger';
+          valSlipState.innerText = 'SPIN OUT / SLIDE';
+          valSlipState.className = 'telemetry-val danger';
+          stageDot.style.background = 'var(--accent-red)';
+          stageDot.style.boxShadow = '0 0 8px var(--accent-red)';
+          stageText.innerText = 'Post-Collision Spin-out & Slide';
+
+          valImpactPoint.innerText = 'Front-Left Bumper';
+          valPeakG.innerText = '28.4 Gs';
+          valImpactTorque.innerText = '14,250 Nm';
+
+          pathLine.material.color.setHex(0xff3b30); // red warning path
+
+          speed = getInterpolatedVal(12, 0, 0.0, 1.2, time);
+          decel = getInterpolatedVal(28.4, 0, 0.0, 0.8, time);
+          gLong = getInterpolatedVal(24.5, 0.06, 0.0, 1.0, time);
+          gLat = getInterpolatedVal(14.2, 0.05, 0.0, 1.0, time);
+          slipAngle = getInterpolatedVal(45.5, 0, 0.0, 1.4, time);
+
+          roadSpeedCoeff = 0;
+
+          egoPosX = getInterpolatedVal(-1.55, 0.8, 0.0, 1.4, time);
+          egoSpinAngle = getInterpolatedVal(0.0, Math.PI * 0.85, 0.0, 1.3, time);
+          egoYaw = getInterpolatedVal(-0.08, Math.PI * 0.85, 0.0, 1.3, time);
+          leadCarZ = getInterpolatedVal(-3.2, -5.2, 0.0, 1.5, time);
+          yawRate = getInterpolatedVal(6.2, 0, 0.0, 1.3, time);
+
+          // PRE-SAFE post-crash deployed states
+          if (valPsBelt) {
+            valPsBelt.innerText = 'DEPLOYED';
+            valPsBelt.className = 'telemetry-val danger';
+            valPsSound.innerText = 'COMPLETED';
+            valPsSound.className = 'telemetry-val success';
+            valPsImpulse.innerText = 'DEPLOYED';
+            valPsImpulse.className = 'telemetry-val danger';
+          }
+          if (presafeAlert) presafeAlert.classList.remove('show');
+          if (presafeFlash) presafeFlash.classList.remove('active');
+
+          // Chassis Heatmap post-collision states
+          if (wheelNodeFL) {
+            wheelNodeFL.style.stroke = "var(--accent-red)";
+            wheelNodeFR.style.stroke = "var(--accent-orange)";
+            wheelNodeRL.style.stroke = "var(--accent-red)";
+            wheelNodeRR.style.stroke = "var(--accent-red)";
+
+            wheelNodeFL.style.transform = "rotate(26deg)";
+            wheelNodeFR.style.transform = "rotate(26deg)";
+          }
+          if (ring1) {
+            impactFlashNode.style.opacity = time < 0.4 ? 1 : 0;
+            ring1.style.opacity = Math.max(0, 1 - time * 2.5);
+            ring2.style.opacity = time >= 0.1 ? Math.max(0, 1 - (time - 0.1) * 2.0) : 0;
+            ring3.style.opacity = time >= 0.2 ? Math.max(0, 1 - (time - 0.2) * 1.5) : 0;
+          }
+        }
+      }
+
+      // 2. Apply coordinates & angles to Three.js meshes
+      egoCar.position.x = egoPosX;
+      egoCar.rotation.y = egoYaw;
+      obstacleCar.position.x = -2.0;
+      obstacleCar.position.z = leadCarZ;
+      targetBoundingBox.position.x = -2.0;
+      targetBoundingBox.position.z = leadCarZ;
+      pathLine.position.x = egoPosX;
+
+      // Rotate/skew tyres to match steering swerves
+      let steeringYaw = 0;
+      if (isCrashTriggered && time >= -1.0 && time < 0.0) {
+        steeringYaw = getInterpolatedVal(0, 0.48, -1.0, 0.0, time); // front wheels steer right
+      }
+      if (egoModel) {
+        egoModel.userData.wheels.fl.steer.rotation.y = -steeringYaw;
+        egoModel.userData.wheels.fr.steer.rotation.y = -steeringYaw;
+      }
+
+      // 3. Scroll Lane Markings (simulates driving motion)
+      let scrollOffset = 0;
+      if (!isCrashTriggered) {
+        // Cruising: 80 km/h (22.22 m/s) over 4.5s loop duration = exactly 100m, wrapping seamlessly
+        scrollOffset = (time + 3.0) * 22.222;
+      } else {
+        if (time < 0.0) {
+          scrollOffset = leadCarZ + 76;
+        } else {
+          scrollOffset = 72.8; // Stopped at collision point
+        }
+      }
+
+      laneMarkers.forEach((mark, i) => {
+        let offsetZ = (i * 6 - 50 + scrollOffset) % 100;
+        if (offsetZ > 50) offsetZ -= 100;
+        mark.position.z = offsetZ;
+      });
+
+      // Scroll roadside props with the road for a coherent motion illusion
+      scrollProps.forEach(p => {
+        p.group.position.z = ((p.baseZ + scrollOffset) % 120 + 120) % 120 - 60;
+      });
+
+      // Wheel spin follows travelled distance so scrubbing stays consistent
+      if (egoModel) {
+        Object.values(egoModel.userData.wheels).forEach(wh => {
+          wh.spin.rotation.z = -scrollOffset / WHEEL_R;
+        });
+      }
+
+      // Crumple zones + brake lights
+      const crumpleCoeff = isCrashTriggered ? smooth01(0, 0.35, time) : 0;
+      applyCrumple(egoModel, 2.1, 0.6, 0.64, 1.5, crumpleCoeff);
+      applyCrumple(obstacleModel, -2.1, 0.6, -0.5, 1.3, crumpleCoeff);
+      if (egoModel) {
+        const braking = isCrashTriggered && time >= -1.0 && time < 0.3;
+        egoModel.userData.taillights.forEach(tl => {
+          tl.material.emissiveIntensity = braking ? 2.6 : 0.85;
+        });
+      }
+
+      // 4. Spawn Tire Skid Marks
+      animateSkidMarks(time, roadSpeedCoeff);
+
+      // 5. Collision Sparks particles
+      animateCollisionSparks(time);
+
+      // 6. Update HTML text metrics
+      valActualSpeed.innerText = `${Math.round(speed)} km/h`;
+      valSteeringYaw.innerText = `${Math.abs(steeringYaw * (180 / Math.PI)).toFixed(1)}° ${steeringYaw < 0 ? 'L' : steeringYaw > 0 ? 'R' : ''}`;
+      valTireSlip.innerText = `${slipAngle.toFixed(2)}°`;
+      valGLong.innerText = `${gLong.toFixed(2)} G`;
+      valGLat.innerText = `${gLat.toFixed(2)} G`;
+      valYawRate.innerText = `${yawRate.toFixed(2)} rad/s`;
+      valDecel.innerText = `${decel.toFixed(1)} m/s²`;
+    }
+
+    // Handles tire skid mark trails
+    function animateSkidMarks(time, roadSpeedCoeff) {
+      tireSkidTrails.forEach(trail => threeScene.remove(trail));
+      tireSkidTrails = [];
+
+      if (!isCrashTriggered || time < -1.0) return;
+
+      const markMat = new THREE.LineBasicMaterial({ color: 0x010101, linewidth: 3 });
+
+      const trailLeftGeo = new THREE.BufferGeometry();
+      const trailLPoints = [];
+      
+      const trailRightGeo = new THREE.BufferGeometry();
+      const trailRPoints = [];
+
+      const maxT = Math.min(time, 1.5);
+      for (let t = -1.0; t <= maxT; t += 0.05) {
+        let x = 0;
+        let yaw = 0;
+        if (t < 0.0) {
+          x = getInterpolatedVal(-2.0, -1.55, -1.0, 0.0, t);
+          yaw = getInterpolatedVal(0.0, -0.08, -1.0, 0.0, t);
+        } else {
+          x = getInterpolatedVal(-1.55, 0.8, 0.0, 1.4, t);
+          yaw = getInterpolatedVal(-0.08, Math.PI * 0.85, 0.0, 1.3, t);
+        }
+
+        let z = 0;
+        if (t < 0.0) {
+          z = getInterpolatedVal(0, 5.2, -1.0, 0.0, t);
+        } else {
+          z = getInterpolatedVal(5.2, 22.0, 0.0, 1.5, t);
+        }
+
+        const lx = x + Math.cos(yaw) * (-0.75) - Math.sin(yaw) * (-0.95);
+        const lz = z + Math.sin(yaw) * (-0.75) + Math.cos(yaw) * (-0.95);
+        trailLPoints.push(new THREE.Vector3(lx, -0.53, lz));
+
+        const rx = x + Math.cos(yaw) * (0.75) - Math.sin(yaw) * (-0.95);
+        const rz = z + Math.sin(yaw) * (0.75) + Math.cos(yaw) * (-0.95);
+        trailRPoints.push(new THREE.Vector3(rx, -0.53, rz));
+      }
+
+      if (trailLPoints.length > 1) {
+        trailLeftGeo.setFromPoints(trailLPoints);
+        const lineL = new THREE.Line(trailLeftGeo, markMat);
+        threeScene.add(lineL);
+        tireSkidTrails.push(lineL);
+      }
+
+      if (trailRPoints.length > 1) {
+        trailRightGeo.setFromPoints(trailRPoints);
+        const lineR = new THREE.Line(trailRightGeo, markMat);
+        threeScene.add(lineR);
+        tireSkidTrails.push(lineR);
+      }
+    }
+
+    // Handles crash impact sparks
+    function animateCollisionSparks(time) {
+      if (!threeSparks) return;
+
+      const posAttr = threeSparks.geometry.attributes.position;
+      const positions = posAttr.array;
+      const opacity = isCrashTriggered && time >= 0.0 ? getInterpolatedVal(1.0, 0.0, 0.0, 0.5, time) : 0;
+
+      threeSparks.material.opacity = opacity;
+
+      if (opacity > 0) {
+        const dt = time; 
+        for (let i = 0; i < posAttr.count; i++) {
+          const vx = threeSparkVelocities[i * 3];
+          const vy = threeSparkVelocities[i * 3 + 1];
+          const vz = threeSparkVelocities[i * 3 + 2];
+
+          positions[i * 3] = vx * dt;
+          positions[i * 3 + 1] = vy * dt - 1.8 * dt * dt;
+          positions[i * 3 + 2] = vz * dt;
+        }
+      } else {
+        for (let i = 0; i < posAttr.count; i++) {
+          positions[i * 3] = 0;
+          positions[i * 3 + 1] = 0;
+          positions[i * 3 + 2] = 0;
+        }
+      }
+      posAttr.needsUpdate = true;
+    }
+
+    // Timeline Scrubbing Handler
+    timeline.addEventListener('input', (e) => {
+      pauseTimeline();
+      playPauseBtn.classList.remove('replay-state');
+      updateTimelineState(parseFloat(e.target.value));
+    });
+
+    function startPlay() {
+      isPlaying = true;
+      playPauseBtn.innerHTML = '<i class="fa-solid fa-pause"></i>';
+      playPauseBtn.classList.remove('replay-state');
+      
+      playInterval = setInterval(() => {
+        let val = parseFloat(timeline.value) + 0.05;
+        if (isCrashTriggered) {
+          if (val > 1.5) {
+            val = 1.5;
+            pauseTimeline();
+            playPauseBtn.innerHTML = '<i class="fa-solid fa-rotate-right"></i>';
+            playPauseBtn.classList.add('replay-state');
+          }
+        } else {
+          if (val > 1.5) {
+            val = -3.0; // Loop cruise
+          }
+        }
+        updateTimelineState(val);
+      }, 50);
+    }
+
+    function pauseTimeline() {
+      isPlaying = false;
+      if (!playPauseBtn.classList.contains('replay-state')) {
+        playPauseBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
+      }
+      clearInterval(playInterval);
+    }
+
+    playPauseBtn.addEventListener('click', () => {
+      if (playPauseBtn.classList.contains('replay-state')) {
+        playPauseBtn.classList.remove('replay-state');
+        updateTimelineState(-3.0);
+        startPlay();
+      } else if (isPlaying) {
+        pauseTimeline();
+      } else {
+        startPlay();
+      }
+    });
+
+    function triggerAccidentTimeline() {
+      isCrashTriggered = true;
+      updateTimelineState(-3.0);
+      playPauseBtn.classList.remove('replay-state');
+      startPlay();
+      if (btnSimulateAccident) {
+        btnSimulateAccident.innerHTML = '<i class="fa-solid fa-rotate-left"></i> Reset Demo';
+        btnSimulateAccident.classList.add('reset-state');
+      }
+    }
+
+    function resetAccidentTimeline() {
+      isCrashTriggered = false;
+      updateTimelineState(-3.0);
+      playPauseBtn.classList.remove('replay-state');
+      startPlay();
+      if (btnSimulateAccident) {
+        btnSimulateAccident.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Simulate Accident';
+        btnSimulateAccident.classList.remove('reset-state');
+      }
+    }
+
+    function triggerCanvasResize() {
+      const threeContainer = document.getElementById('three-container');
+      if (!threeContainer || !threeRenderer || !threeCamera) return;
+      const w = threeContainer.clientWidth;
+      const h = threeContainer.clientHeight;
+      if (w < MIN_CANVAS_DIM || h < MIN_CANVAS_DIM) return;
+      threeRenderer.setSize(w, h);
+      threeCamera.aspect = w / h;
+      threeCamera.updateProjectionMatrix();
+    }
+
+    window.addEventListener('resize', triggerCanvasResize);
+
+    // Keep the renderer in lockstep with the container's actual box at all
+    // times (tab switches, iframe reflows, font/layout shifts) instead of
+    // relying on guessed setTimeout delays after each trigger.
+    const threeContainerEl = document.getElementById('three-container');
+    if (threeContainerEl && window.ResizeObserver) {
+      new ResizeObserver(() => triggerCanvasResize()).observe(threeContainerEl);
+    }
+
+    // --- Init App ---
+    window.addEventListener('DOMContentLoaded', () => {
+      // Setup Three.js WebGL
+      initThreeJS();
+
+      updateTimelineState(-3.0);
+      startPlay();
+
+      if (btnSimulateAccident) {
+        btnSimulateAccident.addEventListener('click', () => {
+          if (isCrashTriggered) {
+            resetAccidentTimeline();
+          } else {
+            triggerAccidentTimeline();
+          }
+        });
+      }
+
+      // Initial sizing check
+      setTimeout(triggerCanvasResize, 100);
+      setTimeout(triggerCanvasResize, 400);
+    });
+
+    // Listen for messages from parent cockpit shell
+    window.addEventListener('message', (event) => {
+      if (event.data === 'START_CRASH_RECONSTRUCTION') {
+        triggerAccidentTimeline();
+      } else if (event.data === 'RESET_DEMO') {
+        resetAccidentTimeline();
+      } else if (event.data === 'AUTOPILOT_VISIBLE') {
+        // Trigger Three.js canvas size update
+        setTimeout(triggerCanvasResize, 50);
+        setTimeout(triggerCanvasResize, 150);
+      }
+    });
+  </script>
+</body>
+</html>

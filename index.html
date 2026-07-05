@@ -6,17 +6,18 @@
   <title>ClearBox // AI-Defined Vehicle Incident Intelligence - Mercedes-Benz Vibathon</title>
   
   <!-- Fonts & Icons -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="assets/vendor/fonts.css" rel="stylesheet">
+  <link rel="stylesheet" href="assets/vendor/fontawesome/css/all.min.css">
+
+  <!-- jsPDF Library -->
+  <script src="assets/vendor/jspdf.umd.min.js"></script>
 
   <style>
     :root {
       --bg-color: #03050a;
       --mbux-frame-bg: #070a14;
-      --card-bg: rgba(12, 17, 30, 0.7);
-      --border-color: rgba(255, 255, 255, 0.07);
+      --card-bg: rgba(255, 255, 255, 0.05);
+      --border-color: rgba(255, 255, 255, 0.08);
       
       --accent-cyan: #00ebd6;
       --accent-cyan-glow: rgba(0, 235, 214, 0.3);
@@ -25,10 +26,10 @@
       --accent-red-glow: rgba(255, 59, 48, 0.4);
       --accent-orange: #ff9f0a;
       
-      --font-primary: 'Outfit', sans-serif;
+      --font-primary: 'Inter', sans-serif;
       --font-mono: 'JetBrains Mono', monospace;
       --transition-standard: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-      --transition-fast: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      --transition-fast: all 0.2s ease;
     }
 
     * {
@@ -36,6 +37,11 @@
       margin: 0;
       padding: 0;
       -webkit-font-smoothing: antialiased;
+    }
+
+    html {
+      max-width: 100%;
+      overflow-x: hidden;
     }
 
     body {
@@ -53,7 +59,7 @@
     /* Widescreen Ambient Lighting */
     body::before {
       content: '';
-      position: absolute;
+      position: fixed;
       width: 1000px;
       height: 1000px;
       background: radial-gradient(circle, rgba(0, 235, 214, 0.03) 0%, rgba(0,0,0,0) 70%);
@@ -65,7 +71,7 @@
 
     body::after {
       content: '';
-      position: absolute;
+      position: fixed;
       width: 1000px;
       height: 1000px;
       background: radial-gradient(circle, rgba(0, 136, 255, 0.02) 0%, rgba(0,0,0,0) 70%);
@@ -92,17 +98,13 @@
 
     /* MBUX Hyperscreen Chassis frame */
     .hyperscreen-container {
-      width: 98vw;
-      height: 96vh;
-      max-width: 1800px;
-      max-height: 950px;
+      width: 100vw;
+      height: 100vh;
       background: rgba(6, 8, 12, 0.9);
-      border: 1px solid rgba(255, 255, 255, 0.06);
-      border-radius: 24px;
+      border: none;
+      border-radius: 0;
       box-shadow: 
-        0 30px 80px rgba(0, 0, 0, 0.95),
-        inset 0 0 25px rgba(0, 0, 0, 0.8),
-        0 0 100px rgba(0, 235, 214, 0.01);
+        inset 0 0 25px rgba(0, 0, 0, 0.8);
       backdrop-filter: blur(40px);
       display: flex;
       flex-direction: column;
@@ -124,62 +126,29 @@
       z-index: 20;
     }
 
+    .dashboard-header::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at 50% 0%, rgba(0, 235, 214, 0.15) 0%, rgba(0, 136, 255, 0.05) 60%, transparent 100%);
+      pointer-events: none;
+      z-index: -1;
+    }
+
     .brand-group {
       display: flex;
       align-items: center;
       gap: 16px;
     }
 
-    /* Mercedes Logo Representation */
-    .m-benz-logo {
+    .m-benz-logo-img {
       width: 42px;
       height: 42px;
-      border: 2px solid rgba(255, 255, 255, 0.8);
-      border-radius: 50%;
-      position: relative;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      box-shadow: 0 0 12px rgba(255,255,255,0.1);
-      background: rgba(0,0,0,0.3);
-    }
-    .m-benz-logo::before {
-      content: '';
-      position: absolute;
-      width: 2px;
-      height: 16px;
-      top: 3px;
-      background: rgba(255,255,255,0.85);
-    }
-    .m-benz-logo-spokes {
-      width: 100%;
-      height: 100%;
-      position: absolute;
-      transform: rotate(120deg);
-    }
-    .m-benz-logo-spokes::before {
-      content: '';
-      position: absolute;
-      width: 2px;
-      height: 16px;
-      left: 18px;
-      top: 3px;
-      background: rgba(255,255,255,0.85);
-    }
-    .m-benz-logo-spokes2 {
-      width: 100%;
-      height: 100%;
-      position: absolute;
-      transform: rotate(240deg);
-    }
-    .m-benz-logo-spokes2::before {
-      content: '';
-      position: absolute;
-      width: 2px;
-      height: 16px;
-      left: 18px;
-      top: 3px;
-      background: rgba(255,255,255,0.85);
+      object-fit: contain;
     }
 
     .title-area {
@@ -265,6 +234,23 @@
       animation: spin 2s infinite linear;
     }
 
+    .sim-btn.reset-state {
+      border-color: var(--accent-cyan);
+      background: rgba(0, 235, 214, 0.08);
+      color: #fff;
+      box-shadow: 
+        0 4px 15px rgba(0, 235, 214, 0.15),
+        inset 0 0 10px rgba(0, 235, 214, 0.05);
+    }
+
+    .sim-btn.reset-state:hover {
+      background: var(--accent-cyan);
+      color: #03050a;
+      box-shadow: 
+        0 0 25px var(--accent-cyan),
+        0 4px 15px rgba(0, 235, 214, 0.3);
+    }
+
     @keyframes spin {
       100% { transform: rotate(360deg); }
     }
@@ -328,6 +314,13 @@
       box-shadow: 0 0 6px var(--accent-red);
     }
 
+    .vehicle-id-badge {
+      border-color: rgba(255, 255, 255, 0.12);
+      background: rgba(255, 255, 255, 0.025);
+      color: #e2e8f0;
+      font-family: var(--font-mono);
+    }
+
     /* Main Console Workspace */
     .workspace-area {
       flex: 1;
@@ -345,11 +338,11 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      background: rgba(255, 255, 255, 0.015);
-      border: 1px solid var(--border-color);
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
       padding: 6px 16px;
       border-radius: 16px;
-      backdrop-filter: blur(10px);
+      backdrop-filter: blur(12px);
     }
 
     .tabs-group {
@@ -380,7 +373,8 @@
 
     .tab-trigger:hover {
       color: #fff;
-      background: rgba(255, 255, 255, 0.02);
+      background: rgba(255, 255, 255, 0.05);
+      box-shadow: 0 0 12px rgba(0, 235, 214, 0.35);
     }
 
     .tab-trigger.active-tab {
@@ -392,17 +386,24 @@
         inset 0 0 8px rgba(0, 235, 214, 0.02);
     }
 
-    .tab-trigger.active-tab::after {
+    .tab-trigger::after {
       content: '';
       position: absolute;
       bottom: -7px;
       left: 50%;
       transform: translateX(-50%);
-      width: 40px;
+      width: 0;
       height: 2px;
       background: var(--accent-cyan);
       border-radius: 2px;
       box-shadow: 0 0 8px var(--accent-cyan);
+      opacity: 0;
+      transition: width 0.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
+    }
+
+    .tab-trigger.active-tab::after {
+      width: 40px;
+      opacity: 1;
     }
 
     /* Tab secondary controls */
@@ -413,7 +414,7 @@
 
     .fullscreen-btn {
       padding: 8px 16px;
-      border: 1px solid rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.08);
       background: rgba(255,255,255,0.02);
       border-radius: 8px;
       color: #94a3b8;
@@ -426,13 +427,111 @@
       display: flex;
       align-items: center;
       gap: 8px;
-      transition: var(--transition-fast);
+      transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease, color 0.2s ease;
     }
 
     .fullscreen-btn:hover {
       color: #fff;
-      background: rgba(255,255,255,0.05);
-      border-color: rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.08);
+      border-color: rgba(0, 235, 214, 0.4);
+      box-shadow: 0 0 12px rgba(0, 235, 214, 0.35);
+    }
+
+    .trust-strip {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 10px;
+      align-items: stretch;
+    }
+
+    .trust-item {
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      background: rgba(255, 255, 255, 0.018);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+      position: relative;
+    }
+
+    .trust-item:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      right: -8px;
+      top: 50%;
+      width: 6px;
+      height: 6px;
+      border-top: 1px solid rgba(255, 255, 255, 0.22);
+      border-right: 1px solid rgba(255, 255, 255, 0.22);
+      transform: translateY(-50%) rotate(45deg);
+    }
+
+    .trust-icon {
+      width: 26px;
+      height: 26px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex: none;
+      background: rgba(0, 235, 214, 0.06);
+      color: var(--accent-cyan);
+      border: 1px solid rgba(0, 235, 214, 0.14);
+    }
+
+    .trust-copy {
+      min-width: 0;
+    }
+
+    .trust-label {
+      font-size: 0.62rem;
+      color: #64748b;
+      font-weight: 700;
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .trust-value {
+      margin-top: 2px;
+      color: #e2e8f0;
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .trust-item.verified {
+      border-color: rgba(0, 235, 214, 0.22);
+      background: rgba(0, 235, 214, 0.035);
+    }
+
+    .trust-item.warning {
+      border-color: rgba(255, 159, 10, 0.24);
+      background: rgba(255, 159, 10, 0.04);
+    }
+
+    .trust-item.warning .trust-icon {
+      background: rgba(255, 159, 10, 0.08);
+      border-color: rgba(255, 159, 10, 0.2);
+      color: var(--accent-orange);
+    }
+
+    .trust-item.low-risk {
+      border-color: rgba(40, 210, 140, 0.24);
+      background: rgba(40, 210, 140, 0.04);
+    }
+
+    .trust-item.low-risk .trust-icon {
+      background: rgba(40, 210, 140, 0.08);
+      border-color: rgba(40, 210, 140, 0.2);
+      color: #28d28c;
     }
 
     /* Screen display housing the iframes */
@@ -440,8 +539,9 @@
       flex: 1;
       height: 75vh;
       border-radius: 16px;
-      border: 1px solid var(--border-color);
-      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(12px);
       position: relative;
       overflow: hidden;
       box-shadow: 
@@ -486,8 +586,8 @@
       right: 20px;
       z-index: 1000;
       padding: 10px 20px;
-      border: 1.5px solid var(--accent-cyan);
-      background: rgba(10, 14, 24, 0.9);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.02);
       color: var(--accent-cyan);
       border-radius: 8px;
       cursor: pointer;
@@ -499,15 +599,16 @@
       display: flex;
       align-items: center;
       gap: 8px;
-      box-shadow: 0 0 15px rgba(0, 235, 214, 0.3);
-      transition: var(--transition-fast);
-      backdrop-filter: blur(10px);
+      box-shadow: 0 0 15px rgba(0, 235, 214, 0.2);
+      transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease, color 0.2s ease;
+      backdrop-filter: blur(12px);
     }
 
     .exit-expand-btn:hover {
-      background: var(--accent-cyan);
-      color: #03050a;
-      box-shadow: 0 0 25px var(--accent-cyan);
+      background: rgba(0, 235, 214, 0.15);
+      color: #fff;
+      border-color: var(--accent-cyan);
+      box-shadow: 0 0 12px rgba(0, 235, 214, 0.35);
     }
 
     /* Widescreen simulation HUD overlay overlay */
@@ -538,14 +639,15 @@
     .hud-box {
       width: 80%;
       max-width: 650px;
-      background: rgba(18, 22, 33, 0.85);
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(12px);
       border: 1.5px solid var(--accent-red);
       box-shadow: 
         0 20px 60px rgba(0, 0, 0, 0.9),
         0 0 35px rgba(255, 59, 48, 0.15),
         inset 0 0 20px rgba(255, 59, 48, 0.05);
-      border-radius: 20px;
-      padding: 30px 40px;
+      border-radius: 16px;
+      padding: 24px;
       text-align: center;
       position: relative;
       overflow: hidden;
@@ -695,13 +797,500 @@
       width: 0%;
       background: linear-gradient(90deg, var(--accent-red), var(--accent-cyan));
       border-radius: 2px;
-      transition: width 3.5s linear;
+      transition: width 0.875s linear;
+    }
+
+    @media (max-width: 1100px) {
+      body {
+        align-items: flex-start;
+        padding: 10px;
+        height: auto;
+        overflow-y: auto;
+      }
+
+      .hyperscreen-container {
+        width: 100%;
+        height: auto;
+        min-height: 100vh;
+        max-height: none;
+        border-radius: 18px;
+        overflow: visible;
+      }
+
+      .dashboard-header {
+        height: auto;
+        min-height: 84px;
+        padding: 18px 20px;
+        flex-wrap: wrap;
+        gap: 14px;
+      }
+
+      .sim-button-wrap {
+        position: static;
+        transform: none;
+        order: 3;
+        width: 100%;
+      }
+
+      .sim-btn {
+        width: 100%;
+        justify-content: center;
+      }
+
+      .system-status {
+        margin-left: auto;
+        gap: 12px;
+      }
+
+      .workspace-area {
+        padding: 16px;
+        overflow: visible;
+      }
+
+      .tab-bar-container {
+        align-items: stretch;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .tabs-group {
+        display: flex;
+        flex-direction: row;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        gap: 8px;
+        width: 100%;
+      }
+      .tabs-group::-webkit-scrollbar {
+        display: none;
+      }
+
+      .tab-trigger {
+        flex-shrink: 0;
+        padding: 8px 14px;
+        font-size: 12px;
+        justify-content: center;
+      }
+
+      .tab-controls {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+        width: 100%;
+      }
+
+      .trust-strip {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .trust-item::after {
+        display: none;
+      }
+
+      .fullscreen-btn {
+        padding: 8px 12px;
+        font-size: 11px;
+        justify-content: center;
+        width: 100%;
+      }
+
+      .screen-panel {
+        height: auto;
+        min-height: 500px;
+      }
+
+      .step-indicator {
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .step-connector {
+        display: none;
+      }
+    }
+
+    @media (max-width: 520px) {
+      body {
+        padding: 0;
+      }
+
+      .hyperscreen-container {
+        border-radius: 0;
+        border-left: none;
+        border-right: none;
+      }
+
+      .m-benz-logo-img,
+      .sys-time {
+        display: none;
+      }
+
+      .system-status {
+        width: 100%;
+        justify-content: space-between;
+      }
+
+      .main-title {
+        font-size: 1.2rem;
+      }
+
+      .sub-title {
+        letter-spacing: 1.7px;
+        line-height: 1.35;
+      }
+
+      .screen-panel {
+        min-height: 720px;
+      }
+
+      .trust-strip {
+        grid-template-columns: 1fr;
+      }
+
+      .hud-box {
+        width: calc(100% - 24px);
+        padding: 24px 18px;
+      }
+
+      .hud-msg {
+        font-size: 1rem;
+      }
+    }
+
+    /* ==========================================
+       MERCEDES ME BOOT / PROFILE OVERLAY
+       ========================================== */
+    .me-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 500;
+      background: rgba(3, 5, 10, 0.92);
+      backdrop-filter: blur(24px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.7s;
+    }
+
+    .me-overlay.dismissed {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .me-card {
+      width: min(460px, calc(100vw - 48px));
+      background: rgba(12, 17, 30, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 22px;
+      padding: 36px 34px 30px;
+      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6), inset 0 0 30px rgba(0, 235, 214, 0.02);
+      text-align: center;
+    }
+
+    .me-brand {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 6px;
+    }
+
+    .me-brand img {
+      width: 34px;
+      height: 34px;
+      object-fit: contain;
+    }
+
+    .me-brand-name {
+      font-size: 1.3rem;
+      font-weight: 300;
+      letter-spacing: 1px;
+      color: #fff;
+    }
+
+    .me-brand-name strong {
+      font-weight: 700;
+    }
+
+    .me-tagline {
+      font-size: 0.62rem;
+      text-transform: uppercase;
+      letter-spacing: 2.5px;
+      color: #64748b;
+      margin-bottom: 24px;
+    }
+
+    .me-avatar {
+      width: 76px;
+      height: 76px;
+      border-radius: 50%;
+      border: 2px solid rgba(0, 235, 214, 0.4);
+      box-shadow: 0 0 25px rgba(0, 235, 214, 0.15);
+      object-fit: cover;
+      margin-bottom: 12px;
+    }
+
+    .me-driver-name {
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .me-driver-meta {
+      font-size: 0.7rem;
+      color: #64748b;
+      letter-spacing: 0.5px;
+      margin: 4px 0 20px;
+    }
+
+    .me-driver-meta i {
+      color: var(--accent-cyan);
+      margin-right: 4px;
+    }
+
+    .me-info-rows {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      text-align: left;
+      margin-bottom: 22px;
+    }
+
+    .me-info-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 11px 14px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+    }
+
+    .me-info-label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.78rem;
+      color: #94a3b8;
+    }
+
+    .me-info-label i {
+      width: 16px;
+      color: var(--accent-cyan);
+      font-size: 0.8rem;
+    }
+
+    .me-info-value {
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      color: #e2e8f0;
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .me-pill {
+      font-size: 0.58rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      padding: 3px 8px;
+      border-radius: 20px;
+      color: #00e575;
+      background: rgba(0, 229, 117, 0.08);
+      border: 1px solid rgba(0, 229, 117, 0.3);
+    }
+
+    .me-privacy-note {
+      font-size: 0.6rem;
+      color: #64748b;
+      line-height: 1.5;
+      margin-bottom: 20px;
+    }
+
+    .me-start-btn {
+      width: 100%;
+      padding: 14px;
+      border-radius: 14px;
+      border: 1px solid rgba(0, 235, 214, 0.5);
+      background: linear-gradient(135deg, rgba(0, 235, 214, 0.12), rgba(0, 136, 255, 0.1));
+      color: #fff;
+      font-family: var(--font-primary);
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      cursor: pointer;
+      transition: var(--transition-fast);
+      box-shadow: 0 4px 20px rgba(0, 235, 214, 0.12);
+    }
+
+    .me-start-btn:hover {
+      background: linear-gradient(135deg, rgba(0, 235, 214, 0.22), rgba(0, 136, 255, 0.18));
+      box-shadow: 0 6px 30px rgba(0, 235, 214, 0.25);
+      transform: translateY(-1px);
+    }
+
+    .me-footnote {
+      font-size: 0.58rem;
+      letter-spacing: 0.4px;
+      color: #475569;
+      margin-top: 14px;
+    }
+
+    /* Evidence Packet finale: button pulses once the sequence completes */
+    .fullscreen-btn.evidence-ready {
+      border-color: var(--accent-cyan);
+      background: rgba(0, 235, 214, 0.1);
+      color: #fff;
+      animation: evidence-pulse 1.1s infinite alternate;
+    }
+
+    @keyframes evidence-pulse {
+      from { box-shadow: 0 0 4px rgba(0, 235, 214, 0.25); }
+      to   { box-shadow: 0 0 20px rgba(0, 235, 214, 0.65); }
+    }
+
+    /* Intro gate: black screen, click to play the opening video */
+    .intro-gate {
+      position: fixed;
+      inset: 0;
+      background: #000;
+      z-index: 99999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: opacity 0.6s ease;
+    }
+
+    .intro-gate.intro-hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    #intro-video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: none;
+    }
+
+    #intro-video.intro-playing {
+      display: block;
+    }
+
+    /* Logged-in driver chip in the cockpit header */
+    .driver-chip {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px 6px 6px;
+      border-radius: 30px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+    }
+
+    .driver-chip img {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 1px solid rgba(0, 235, 214, 0.4);
+    }
+
+    .driver-chip-text {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.15;
+    }
+
+    .driver-chip-name {
+      font-size: 0.66rem;
+      font-weight: 600;
+      color: #e2e8f0;
+    }
+
+    .driver-chip-sub {
+      font-size: 0.52rem;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: #64748b;
     }
   </style>
 </head>
 <body>
 
+  <!-- Intro gate: black screen until clicked, then plays the opening video -->
+  <div class="intro-gate" id="intro-gate">
+    <video id="intro-video" src="assets/video/gold.mp4" playsinline></video>
+  </div>
+  <script>
+    (function() {
+      const gate = document.getElementById('intro-gate');
+      const video = document.getElementById('intro-video');
+      let started = false;
+
+      function finishIntro() {
+        gate.classList.add('intro-hidden');
+        setTimeout(() => gate.remove(), 650);
+      }
+
+      function startIntro() {
+        if (started) return;
+        started = true;
+        video.classList.add('intro-playing');
+        video.play().catch(finishIntro);
+      }
+
+      gate.addEventListener('click', startIntro);
+      video.addEventListener('ended', finishIntro);
+    })();
+  </script>
+
   <div class="bg-grid"></div>
+
+  <!-- Mercedes me profile / boot overlay -->
+  <div class="me-overlay" id="me-overlay">
+    <div class="me-card">
+      <div class="me-brand">
+        <img src="mercedeslogo.png" alt="Mercedes-Benz">
+        <div class="me-brand-name">Mercedes <strong>me</strong></div>
+      </div>
+      <div class="me-tagline">Connected Services · ClearBox</div>
+
+      <img class="me-avatar" src="demos/avatar.svg" alt="Driver avatar" onerror="this.style.display='none'">
+      <div class="me-driver-name">Taylor swift</div>
+      <div class="me-driver-meta"><i class="fa-solid fa-circle-check"></i>Mercedes me ID verified · Kuala Lumpur, MY</div>
+
+      <div class="me-info-rows">
+        <div class="me-info-row">
+          <div class="me-info-label"><i class="fa-solid fa-car-side"></i>Vehicle</div>
+          <div class="me-info-value">EQS 580 4MATIC · WXY 4821</div>
+        </div>
+        <div class="me-info-row">
+          <div class="me-info-label"><i class="fa-solid fa-tower-broadcast"></i>Emergency Call Service</div>
+          <div class="me-info-value"><span class="me-pill">CLEARBOX TIER ACTIVE</span></div>
+        </div>
+        <div class="me-info-row">
+          <div class="me-info-label"><i class="fa-solid fa-notes-medical"></i>Medical Profile</div>
+          <div class="me-info-value">Acute Asthma · O+ <span class="me-pill">OPT-IN</span></div>
+        </div>
+      </div>
+
+      <div class="me-privacy-note">
+        Medical profile is encrypted on-vehicle and released to 999 responders
+        only when an SOS is dispatched — never before, never to anyone else.
+      </div>
+
+      <button class="me-start-btn" id="me-start-btn">
+        <i class="fa-solid fa-route"></i>&nbsp; Start Drive
+      </button>
+      <div class="me-footnote">ClearBox lives inside the Mercedes me account and eCall service your customers already have.</div>
+    </div>
+  </div>
 
   <!-- Hyperscreen Chassis frame -->
   <div class="hyperscreen-container">
@@ -710,10 +1299,7 @@
     <!-- Top Cockpit Header -->
     <header class="dashboard-header">
       <div class="brand-group">
-        <div class="m-benz-logo">
-          <div class="m-benz-logo-spokes"></div>
-          <div class="m-benz-logo-spokes2"></div>
-        </div>
+        <img src="mercedeslogo.png" class="m-benz-logo-img" alt="Mercedes-Benz Logo">
         <div class="title-area">
           <h1 class="main-title">ClearBox</h1>
           <span class="sub-title">AI-Defined Vehicle Incident Intelligence</span>
@@ -721,7 +1307,7 @@
       </div>
 
       <!-- Main Action Button -->
-      <div class="sim-button-wrap">
+      <div class="sim-button-wrap" style="display: flex; gap: 10px;">
         <button class="sim-btn" id="sim-trigger">
           <i class="fa-solid fa-triangle-exclamation"></i> Simulate Crash Event
         </button>
@@ -729,6 +1315,16 @@
 
       <!-- Right stats -->
       <div class="system-status">
+        <div class="driver-chip" title="Signed in via Mercedes me">
+          <img src="demos/avatar.svg" alt="" onerror="this.style.display='none'">
+          <div class="driver-chip-text">
+            <span class="driver-chip-name">Taylor swift</span>
+            <span class="driver-chip-sub">Mercedes me</span>
+          </div>
+        </div>
+        <div class="sys-badge vehicle-id-badge">
+          <i class="fa-solid fa-car-side"></i> <span>WXY 4821</span>
+        </div>
         <div class="sys-badge" id="system-status-badge">
           <div class="sys-badge-dot"></div> <span id="system-status-text">Active Monitoring</span>
         </div>
@@ -742,21 +1338,62 @@
       <!-- Interactive Menu Tabs -->
       <div class="tab-bar-container">
         <div class="tabs-group">
+          <button class="tab-trigger" onclick="switchTab('road')">
+            <i class="fa-solid fa-chart-network"></i> Road Memory · Drive
+          </button>
           <button class="tab-trigger active-tab" onclick="switchTab('reconstruction')">
-            <i class="fa-solid fa-circle-nodes"></i> Crash Reconstruction
+            <i class="fa-solid fa-circle-nodes"></i> Crash Reconstruction · Impact
           </button>
           <button class="tab-trigger" onclick="switchTab('vitals')">
-            <i class="fa-solid fa-heart-pulse"></i> Vital Signs
-          </button>
-          <button class="tab-trigger" onclick="switchTab('road')">
-            <i class="fa-solid fa-chart-network"></i> Road Memory
+            <i class="fa-solid fa-heart-pulse"></i> Vital Signs · Rescue
           </button>
         </div>
 
         <div class="tab-controls">
+          <button class="fullscreen-btn" id="evidence-btn" aria-label="Download evidence packet">
+            <i class="fa-solid fa-file-arrow-down"></i> Evidence Packet
+          </button>
           <button class="fullscreen-btn" id="full-screen-btn">
             <i class="fa-solid fa-expand"></i> Expand View
           </button>
+        </div>
+      </div>
+
+      <div class="trust-strip" aria-label="ClearBox insurance claim and fraud trust flow">
+        <div class="trust-item verified" id="trust-stream">
+          <div class="trust-icon"><i class="fa-solid fa-car-burst"></i></div>
+          <div class="trust-copy">
+            <div class="trust-label">Crash Detected</div>
+            <div class="trust-value" id="trust-stream-value">WAITING FOR IMPACT</div>
+          </div>
+        </div>
+        <div class="trust-item verified" id="trust-signature">
+          <div class="trust-icon"><i class="fa-solid fa-fingerprint"></i></div>
+          <div class="trust-copy">
+            <div class="trust-label">Evidence Signed</div>
+            <div class="trust-value" id="trust-signature-value">READY TO SIGN</div>
+          </div>
+        </div>
+        <div class="trust-item warning" id="trust-unlock">
+          <div class="trust-icon"><i class="fa-solid fa-lock"></i></div>
+          <div class="trust-copy">
+            <div class="trust-label">Driver + Police Unlock</div>
+            <div class="trust-value" id="trust-unlock-value">CONSENT REQUIRED</div>
+          </div>
+        </div>
+        <div class="trust-item" id="trust-claim">
+          <div class="trust-icon"><i class="fa-solid fa-file-invoice-dollar"></i></div>
+          <div class="trust-copy">
+            <div class="trust-label">Mercedes Insurance Claim Drafted</div>
+            <div class="trust-value" id="trust-claim-value">NOT CREATED YET</div>
+          </div>
+        </div>
+        <div class="trust-item" id="trust-fraud">
+          <div class="trust-icon"><i class="fa-solid fa-shield-halved"></i></div>
+          <div class="trust-copy">
+            <div class="trust-label">Fraud Risk Low</div>
+            <div class="trust-value" id="trust-fraud-value">NOT ASSESSED</div>
+          </div>
         </div>
       </div>
 
@@ -783,11 +1420,13 @@
 
             <!-- Simulation Diagnostics Step indicator -->
             <div class="step-indicator">
-              <div class="step-node step-active" id="step-node-1">1. Truth</div>
+              <div class="step-node step-active" id="step-node-1">1. Reconstruction</div>
               <div class="step-connector" id="step-conn-1"></div>
-              <div class="step-node" id="step-node-2">2. Health</div>
+              <div class="step-node" id="step-node-2">2. Vital Signs</div>
               <div class="step-connector" id="step-conn-2"></div>
               <div class="step-node" id="step-node-3">3. Road Memory</div>
+              <div class="step-connector" id="step-conn-3"></div>
+              <div class="step-node" id="step-node-4">4. Evidence Packet</div>
             </div>
           </div>
         </div>
@@ -800,7 +1439,15 @@
   <script>
     // --- State Management ---
     let currentTab = 'reconstruction';
+    let isCrashActive = false;
+
+    // Key order must match the tab button order in the tab bar (switchTab maps by index).
+    // Storyline: Road Memory (drive) → crash → Reconstruction → Vitals → Road Memory update → Evidence Packet.
     const tabs = {
+      road: {
+        iframeId: 'iframe-road',
+        filePath: 'demos/road-memory.html'
+      },
       reconstruction: {
         iframeId: 'iframe-reconstruction',
         filePath: 'demos/crash-reconstruction.html'
@@ -808,10 +1455,6 @@
       vitals: {
         iframeId: 'iframe-vitals',
         filePath: 'demos/vital-signs.html'
-      },
-      road: {
-        iframeId: 'iframe-road',
-        filePath: 'demos/road-memory.html'
       }
     };
 
@@ -843,6 +1486,14 @@
       }
 
       currentTab = tabKey;
+      if (tabKey === 'road') {
+        setTimeout(() => postToIframe('iframe-road', 'MAP_VISIBLE'), 80);
+      } else if (tabKey === 'vitals') {
+        setTimeout(() => postToIframe('iframe-vitals', 'VITALS_VISIBLE'), 80);
+      }
+
+      // Trigger immediate resize check
+      setTimeout(resizeIframeToFitContent, 50);
     }
 
 
@@ -866,23 +1517,68 @@
     const hudBar = document.getElementById('hud-bar');
     const badge = document.getElementById('system-status-badge');
     const badgeText = document.getElementById('system-status-text');
+    const trustStream = document.getElementById('trust-stream');
+    const trustSignature = document.getElementById('trust-signature');
+    const trustUnlock = document.getElementById('trust-unlock');
+    const trustClaim = document.getElementById('trust-claim');
+    const trustFraud = document.getElementById('trust-fraud');
+    const trustStreamValue = document.getElementById('trust-stream-value');
+    const trustSignatureValue = document.getElementById('trust-signature-value');
+    const trustUnlockValue = document.getElementById('trust-unlock-value');
+    const trustClaimValue = document.getElementById('trust-claim-value');
+    const trustFraudValue = document.getElementById('trust-fraud-value');
+
+    function setTrustState(state) {
+      if (state === 'baseline') {
+        trustStream.className = 'trust-item verified';
+        trustSignature.className = 'trust-item verified';
+        trustUnlock.className = 'trust-item warning';
+        trustClaim.className = 'trust-item';
+        trustFraud.className = 'trust-item';
+        trustStreamValue.innerText = 'WAITING FOR IMPACT';
+        trustSignatureValue.innerText = 'READY TO SIGN';
+        trustUnlockValue.innerText = 'CONSENT REQUIRED';
+        trustClaimValue.innerText = 'NOT CREATED YET';
+        trustFraudValue.innerText = 'NOT ASSESSED';
+      } else if (state === 'capturing') {
+        trustStreamValue.innerText = 'CRASH DATA CAPTURED';
+        trustSignatureValue.innerText = 'HASHING';
+      } else if (state === 'signed') {
+        trustStreamValue.innerText = 'UPLOADED TO VAULT';
+        trustSignatureValue.innerText = 'VEHICLE SIGNED';
+      } else if (state === 'unlocked') {
+        trustUnlock.className = 'trust-item verified';
+        trustUnlock.querySelector('.trust-icon').innerHTML = '<i class="fa-solid fa-unlock-keyhole"></i>';
+        trustUnlockValue.innerText = 'DRIVER + POLICE OK';
+      } else if (state === 'claim-ready') {
+        trustClaim.className = 'trust-item verified';
+        trustFraud.className = 'trust-item low-risk';
+        trustClaimValue.innerText = 'CLAIM DRAFTED';
+        trustFraudValue.innerText = 'LOW RISK';
+      }
+    }
 
     const stepNodes = [
       document.getElementById('step-node-1'),
       document.getElementById('step-node-2'),
-      document.getElementById('step-node-3')
+      document.getElementById('step-node-3'),
+      document.getElementById('step-node-4')
     ];
     const stepConns = [
       document.getElementById('step-conn-1'),
-      document.getElementById('step-conn-2')
+      document.getElementById('step-conn-2'),
+      document.getElementById('step-conn-3')
     ];
 
     function runSimulation() {
+      if (simBtn.classList.contains('simulating')) return;
+
       // 1. Lock simulation button & update status badge
       simBtn.classList.add('simulating');
       simBtn.innerHTML = '<i class="fa-solid fa-spinner"></i> Simulating event...';
       badge.classList.add('danger-badge');
       badgeText.innerText = "CRITICAL EVENT ACTIVE";
+      setTrustState('capturing');
 
       // 2. Open diagnostic overlay
       simOverlay.classList.add('show-overlay');
@@ -891,14 +1587,16 @@
       stepNodes[0].className = "step-node step-active";
       stepNodes[1].className = "step-node";
       stepNodes[2].className = "step-node";
+      stepNodes[3].className = "step-node";
       stepConns[0].className = "step-connector";
       stepConns[1].className = "step-connector";
+      stepConns[2].className = "step-connector";
 
       // Reset loading progress bar
       hudBar.style.transition = 'none';
       hudBar.style.width = '0%';
       setTimeout(() => {
-        hudBar.style.transition = 'width 3.5s linear';
+        hudBar.style.transition = 'width 0.875s linear';
         hudBar.style.width = '100%';
       }, 50);
 
@@ -907,7 +1605,7 @@
       hudMessage.innerText = "Impact detected. Reconstructing crash truth...";
       postToIframe('iframe-reconstruction', 'START_CRASH_RECONSTRUCTION');
 
-      // Step 2: Vital Signs (after 3.5s)
+      // Step 2: Vital Signs (after 0.875s)
       setTimeout(() => {
         switchTab('vitals');
         hudMessage.innerText = "Irregular vitals detected. Preparing emergency medical data...";
@@ -921,16 +1619,17 @@
         hudBar.style.transition = 'none';
         hudBar.style.width = '0%';
         setTimeout(() => {
-          hudBar.style.transition = 'width 3.5s linear';
+          hudBar.style.transition = 'width 0.875s linear';
           hudBar.style.width = '100%';
         }, 50);
 
         // Access the vital-signs iframe content to simulate critical vital triggers
         postToIframe('iframe-vitals', 'START_VITALS_EMERGENCY');
+        setTrustState('signed');
 
-      }, 3500);
+      }, 875);
 
-      // Step 3: Road Memory (after another 3.5s)
+      // Step 3: Road Memory (after another 0.875s)
       setTimeout(() => {
         switchTab('road');
         hudMessage.innerText = "Incident added to collective road memory.";
@@ -944,31 +1643,40 @@
         hudBar.style.transition = 'none';
         hudBar.style.width = '0%';
         setTimeout(() => {
-          hudBar.style.transition = 'width 3.5s linear';
+          hudBar.style.transition = 'width 0.875s linear';
           hudBar.style.width = '100%';
         }, 50);
 
         // Access the road-memory iframe content to trigger collision zone warning map event
         postToIframe('iframe-road', 'ADD_ROAD_MEMORY_INCIDENT');
+        setTrustState('unlocked');
 
-      }, 7000);
+      }, 1750);
 
-      // Final: Finish Sequence (after final 3.5s)
+      // Final: Finish Sequence (after final 0.875s)
       setTimeout(() => {
-        // Complete last node
         stepNodes[2].className = "step-node step-completed";
+        stepNodes[3].className = "step-node step-active";
+        stepConns[2].className = "step-connector step-completed";
+        hudMessage.innerText = "Evidence packet compiled — ready to download from the toolbar.";
+        setTrustState('claim-ready');
+        // Storyline finale: draw the presenter's (and judges') eyes to the packet
+        document.getElementById('evidence-btn').classList.add('evidence-ready');
+      }, 2475);
+
+      setTimeout(() => {
+        stepNodes[3].className = "step-node step-completed";
         
         // Close overlay smoothly
         simOverlay.classList.remove('show-overlay');
 
-        // Restore header status badge and simulation button
-        badge.classList.remove('danger-badge');
-        badgeText.innerText = "Active Monitoring";
-        
+        // Set to crash active, update simulation button to Reset state
+        isCrashActive = true;
         simBtn.classList.remove('simulating');
-        simBtn.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Simulate Crash Event';
+        simBtn.classList.add('reset-state');
+        simBtn.innerHTML = '<i class="fa-solid fa-rotate-left"></i> Reset Dashboard';
 
-      }, 10500);
+      }, 2875);
     }
 
     // Helper function to send message to iframe
@@ -983,32 +1691,49 @@
       }
     }
 
+    function resetSystem() {
+      isCrashActive = false;
+
+      // Restore parent HUD badges and simulation button
+      badge.classList.remove('danger-badge');
+      badgeText.innerText = "Active Monitoring";
+      
+      simBtn.classList.remove('simulating');
+      simBtn.classList.remove('reset-state');
+      simBtn.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Simulate Crash Event';
+      document.getElementById('evidence-btn').classList.remove('evidence-ready');
+
+      // Propagate reset to other iframes
+      postToIframe('iframe-reconstruction', 'RESET_DEMO');
+      postToIframe('iframe-road', 'RESET_DEMO');
+      postToIframe('iframe-vitals', 'RESET_DEMO');
+      trustUnlock.querySelector('.trust-icon').innerHTML = '<i class="fa-solid fa-lock"></i>';
+      setTrustState('baseline');
+    }
+
     // Listen for events from sub-modules
     window.addEventListener('message', (event) => {
       if (event.data === 'RESET_DEMO') {
-        // Restore parent HUD badges and simulation button
-        badge.classList.remove('danger-badge');
-        badgeText.innerText = "Active Monitoring";
-        
-        simBtn.classList.remove('simulating');
-        simBtn.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Simulate Crash Event';
-        
-        // Propagate reset to other iframes
-        postToIframe('iframe-reconstruction', 'RESET_DEMO');
-        postToIframe('iframe-road', 'RESET_DEMO');
-        postToIframe('iframe-vitals', 'RESET_DEMO');
+        resetSystem();
       } else if (event.data === 'START_SIMULATION') {
         runSimulation();
       }
     });
 
     // Attach simulation listener
-    simBtn.addEventListener('click', runSimulation);
+    simBtn.addEventListener('click', () => {
+      if (isCrashActive) {
+        resetSystem();
+      } else {
+        runSimulation();
+      }
+    });
 
     // Expand / Collapse Iframe view within the same tab
     const screenPanel = document.getElementById('main-screen-panel');
     const exitExpandBtn = document.getElementById('exit-expand-btn');
     const fullScreenBtn = document.getElementById('full-screen-btn');
+    const evidenceBtn = document.getElementById('evidence-btn');
 
     fullScreenBtn.addEventListener('click', () => {
       screenPanel.classList.add('expanded-panel');
@@ -1018,6 +1743,258 @@
     exitExpandBtn.addEventListener('click', () => {
       screenPanel.classList.remove('expanded-panel');
       exitExpandBtn.style.display = 'none';
+    });
+
+    evidenceBtn.addEventListener('click', () => {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      });
+
+      // Styling parameters
+      const timestamp = new Date().toLocaleString();
+
+      // Top dark header block
+      doc.setFillColor(3, 5, 10);
+      doc.rect(0, 0, 210, 38, 'F');
+
+      // Title & Subtitle inside the block
+      doc.setTextColor(255, 255, 255);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(20);
+      doc.text('CLEARBOX EVIDENCE PACKET', 15, 17);
+
+      doc.setTextColor(0, 235, 214);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(9);
+      doc.text('AI-DEFINED VEHICLE INCIDENT INTELLIGENCE', 15, 25);
+
+      doc.setTextColor(148, 163, 184);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8.5);
+      doc.text('Vehicle: WXY 4821 // Mercedes EQS Demo Fleet', 15, 32);
+      doc.text(`Generated: ${timestamp}`, 175, 32, { align: 'right' });
+
+      // Mercedes Star Graphic in header
+      doc.setDrawColor(255, 255, 255);
+      doc.setLineWidth(0.4);
+      doc.circle(185, 18, 7, 'S');
+      
+      // Draw three lines for the star (center to edge)
+      doc.line(185, 18, 185, 11);
+      doc.line(185, 18, 178.9, 21.5);
+      doc.line(185, 18, 191.1, 21.5);
+
+      // Cyan accent bar underneath
+      doc.setFillColor(0, 235, 214);
+      doc.rect(0, 38, 210, 2, 'F');
+
+      // 0. Metadata Box
+      doc.setFillColor(245, 247, 250);
+      doc.setDrawColor(226, 232, 240);
+      doc.setLineWidth(0.25);
+      doc.rect(15, 46, 180, 28, 'FD');
+
+      doc.setTextColor(100, 116, 139);
+      doc.setFontSize(7.5);
+      doc.setFont('helvetica', 'bold');
+      doc.text('VEHICLE PROFILE', 19, 51);
+      doc.text('INCIDENT DATA', 82, 51);
+      doc.text('SECURITY & STATUS', 142, 51);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(51, 65, 85);
+      doc.setFontSize(8.5);
+      doc.text('Plate: WXY 4821', 19, 57);
+      doc.text('eCall ID: MY-CB-WXY4821', 19, 62);
+      doc.text('VIN: MBMY-CLEARBOX-0001', 19, 67);
+
+      doc.text(`Time: ${timestamp}`, 82, 57);
+      doc.text('Force: 46.0G Long / 18.0G Lat', 82, 62);
+      doc.text('Airbags: DEPLOYED (FL)', 82, 67);
+
+      doc.text('Integrity: VEHICLE SIGNED', 142, 57);
+      doc.text('Hash: 0x8f9ab3d1a7f052e', 142, 62);
+      doc.setTextColor(255, 59, 48);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Triage: Priority 1 (Critical)', 142, 67);
+
+      let yPos = 84;
+
+      function drawBulletPoint(text, x, y, maxWidth) {
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(9);
+        doc.setTextColor(51, 65, 85);
+
+        // Check if there is a bold label (i.e. starts with "• Label:")
+        const match = text.match(/^(•\s+[^:]+:)(.*)$/);
+        if (match) {
+          const label = match[1];
+          const desc = match[2];
+          
+          doc.setFont('helvetica', 'bold');
+          doc.setTextColor(15, 23, 42);
+          doc.text(label, x, y);
+          
+          const labelWidth = doc.getTextWidth(label);
+          
+          doc.setFont('helvetica', 'normal');
+          doc.setTextColor(51, 65, 85);
+          
+          const descSplit = doc.splitTextToSize(desc, maxWidth - labelWidth - 1.5);
+          descSplit.forEach((line, index) => {
+            if (index === 0) {
+              doc.text(line, x + labelWidth + 1.5, y);
+            } else {
+              y += 4.2;
+              doc.text(line, x + 6, y);
+            }
+          });
+          return descSplit.length * 4.2;
+        } else {
+          const splitText = doc.splitTextToSize(text, maxWidth);
+          splitText.forEach((line, index) => {
+            doc.text(line, x, y);
+            if (index < splitText.length - 1) y += 4.2;
+          });
+          return splitText.length * 4.2;
+        }
+      }
+
+      function drawSection(title, bulletPoints) {
+        // Section Header
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(10.5);
+        doc.setTextColor(15, 23, 42);
+        doc.text(title, 15, yPos);
+
+        // Thin vertical cyan accent bar next to the title
+        doc.setFillColor(0, 235, 214);
+        doc.rect(12, yPos - 3.2, 1.5, 4, 'F');
+
+        // Thin horizontal line under title
+        doc.setDrawColor(226, 232, 240);
+        doc.setLineWidth(0.25);
+        doc.line(15, yPos + 1.5, 195, yPos + 1.5);
+
+        yPos += 5.5;
+
+        // Content
+        bulletPoints.forEach(point => {
+          const heightOffset = drawBulletPoint(point, 15, yPos, 180);
+          yPos += heightOffset + 1.5;
+        });
+        
+        yPos += 3;
+      }
+
+      // 1. Incident Chain
+      drawSection('1. Incident Chain Timeline', [
+        '• ClearBox Philosophy: Streams incident telemetry continuously to a secure cloud evidence vault.',
+        '• Vehicle Profile: Registration WXY 4821, eCall ID MY-CB-WXY4821, simulated VIN MBMY-CLEARBOX-0001.',
+        '• Telemetry Truth: Captures speed, steering, brake pressure, G-forces, Pre-Safe state, and airbag deployment.',
+        '• Health Diagnostics: Detects 3 occupants; flags rear-left occupant Daniel Lim as Critical Priority (low SpO2/respiration).',
+        '• Road Memory: Broadcasts crash coordinates to collective map, warning nearby drivers of hazard context.',
+        '• Report Scope: Prepared for first responders, claims triage, and post-incident compliance audits.'
+      ]);
+
+      // 2. Data Sources
+      drawSection('2. Raw Telemetry & Biosignal Diagnostics', [
+        '• CAN Bus Telemetry: Real-time speed, steering wheel angle, brake pedal pressure, and IMU G-forces.',
+        '• Cabin Biosignals: rPPG cabin camera and cabin audio (onboard today); wearable and smart-fabric fusion (roadmap).',
+        '• Collective Grid: Regional hazard records, incident history, risk levels, and warning zone boundaries.'
+      ]);
+
+      // 3. Emergency SOS Summary
+      drawSection('3. Emergency SOS Summary & Rescue Directives', [
+        '• Dispatch Priority: Rear-left passenger identified as Critical Priority 1 (airway, oxygen, and cardiac support).',
+        '• Vehicle ID: License Plate WXY 4821 transmitted for instant visual identification by responders.',
+        '• SOS Data Payload: GPS coordinates, occupant count, seating arrangement, biometric status, and data hash.'
+      ]);
+
+      // 4. Trust Layer
+      drawSection('4. Evidence Trust Layer & Claim Automation', [
+        '• On-Board Signing: Telemetry data is cryptographically signed at source using secure hardware.',
+        '• Privacy Lock: Encrypted logs require dual key consent (Driver + Police authority) for decryption.',
+        '• Insurer Integration: Claims are auto-drafted and fraud-checked without disclosing raw passenger biosignals.',
+        '• Audit Trail: Immutable chain of custody from vehicle CAN stream to cloud vault to insurer dossier.'
+      ]);
+
+      // 5. Compliance Notice
+      drawSection('5. Compliance Notice', [
+        '• PoC Simulation: Developed for Mercedes-Benz Vibathon using simulated OEM telemetry and medical inputs. Production setup requires certified integrations.'
+      ]);
+
+      // Footer
+      doc.setFont('helvetica', 'italic');
+      doc.setFontSize(8);
+      doc.setTextColor(148, 163, 184);
+      doc.text('ClearBox Incident Response | Mercedes-Benz Hackathon Demo Suite', 15, 286);
+      doc.text('Page 1 of 1', 180, 286);
+
+      doc.save(`clearbox-evidence-packet-${Date.now()}.pdf`);
+    });
+
+    // --- Dynamic Iframe Height Auto-Resizing for Mobile ---
+    function resizeIframeToFitContent() {
+      // Only do this on mobile/tablets (max-width: 1100px)
+      if (window.innerWidth > 1100) {
+        const screenPanel = document.getElementById('main-screen-panel');
+        if (screenPanel) screenPanel.style.height = '';
+        const activeIframe = document.querySelector('.module-iframe.active-iframe');
+        if (activeIframe) activeIframe.style.height = '';
+        return;
+      }
+
+      const activeIframe = document.querySelector('.module-iframe.active-iframe');
+      if (activeIframe && activeIframe.contentWindow && activeIframe.contentDocument) {
+        try {
+          const body = activeIframe.contentDocument.body;
+          const html = activeIframe.contentDocument.documentElement;
+          if (body && html) {
+            // Find the correct content height
+            const height = Math.max(
+              body.scrollHeight,
+              body.offsetHeight,
+              html.clientHeight,
+              html.scrollHeight,
+              html.offsetHeight
+            );
+            
+            if (height > 0) {
+              const screenPanel = document.getElementById('main-screen-panel');
+              if (screenPanel) screenPanel.style.height = `${height}px`;
+              activeIframe.style.height = `${height}px`;
+            }
+          }
+        } catch (e) {
+          console.warn("Unable to resize iframe:", e);
+        }
+      }
+    }
+
+    // Call resize on window actions and iframe load events
+    window.addEventListener('resize', resizeIframeToFitContent);
+
+    window.addEventListener('DOMContentLoaded', () => {
+      const iframes = document.querySelectorAll('.module-iframe');
+      iframes.forEach(iframe => {
+        iframe.addEventListener('load', resizeIframeToFitContent);
+      });
+      // Initial trigger
+      setTimeout(resizeIframeToFitContent, 300);
+    });
+
+    // Run periodic check to handle dynamic page expansions (like dialogue typewriter updates)
+    setInterval(resizeIframeToFitContent, 300);
+
+    // --- Mercedes me boot overlay ---
+    // Storyline step 1: sign in via Mercedes me, then start the drive on Road Memory
+    document.getElementById('me-start-btn').addEventListener('click', () => {
+      document.getElementById('me-overlay').classList.add('dismissed');
+      switchTab('road');
     });
 
   </script>

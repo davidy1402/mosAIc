@@ -6,13 +6,11 @@
   <title>ClearBox // Active Safety Cockpit - Mercedes-Benz Hackathon</title>
   
   <!-- Fonts & Icons -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="../assets/vendor/fonts.css" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/vendor/fontawesome/css/all.min.css">
 
   <!-- Leaflet CSS -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+  <link rel="stylesheet" href="../assets/vendor/leaflet/leaflet.css"/>
   
   <style>
     :root {
@@ -31,6 +29,11 @@
       margin: 0;
       padding: 0;
       user-select: none;
+    }
+
+    html {
+      max-width: 100%;
+      overflow-x: hidden;
     }
 
     body {
@@ -52,7 +55,9 @@
 
     /* Left Console Panel */
     .console-panel {
-      width: 420px;
+      width: 350px;
+      height: 100vh;
+      overflow-y: auto;
       background: var(--panel-bg);
       border-right: 1px solid var(--border-color);
       backdrop-filter: blur(16px);
@@ -61,8 +66,12 @@
       flex-direction: column;
       box-shadow: 10px 0 30px rgba(0, 0, 0, 0.5);
     }
+    .console-panel > * {
+      flex-shrink: 0;
+    }
 
     .brand-section {
+      order: 1;
       padding: 24px;
       border-bottom: 1px solid var(--border-color);
       display: flex;
@@ -70,55 +79,10 @@
       gap: 12px;
     }
 
-    .m-benz-logo {
+    .m-benz-logo-img {
       width: 32px;
       height: 32px;
-      border: 2px solid var(--text-main);
-      border-radius: 50%;
-      position: relative;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-    .m-benz-logo::before, .m-benz-logo::after {
-      content: '';
-      position: absolute;
-      background: var(--text-main);
-    }
-    .m-benz-logo::before {
-      width: 2px;
-      height: 12px;
-      top: 2px;
-    }
-    .m-benz-logo-spokes {
-      width: 100%;
-      height: 100%;
-      position: absolute;
-      transform: rotate(120deg);
-    }
-    .m-benz-logo-spokes::before {
-      content: '';
-      position: absolute;
-      width: 2px;
-      height: 12px;
-      left: 13px;
-      top: 2px;
-      background: var(--text-main);
-    }
-    .m-benz-logo-spokes2 {
-      width: 100%;
-      height: 100%;
-      position: absolute;
-      transform: rotate(240deg);
-    }
-    .m-benz-logo-spokes2::before {
-      content: '';
-      position: absolute;
-      width: 2px;
-      height: 12px;
-      left: 13px;
-      top: 2px;
-      background: var(--text-main);
+      object-fit: contain;
     }
 
     .brand-text h1 {
@@ -139,6 +103,7 @@
 
     /* Alert Banner (Dynamic) */
     .safety-status-card {
+      order: 2;
       margin: 20px;
       padding: 20px;
       border-radius: 12px;
@@ -202,6 +167,7 @@
 
     /* Telemetry Display */
     .telemetry-grid {
+      order: 4;
       display: grid;
       grid-template-columns: repeat(2, 1fr);
       gap: 12px;
@@ -241,6 +207,7 @@
 
     /* Proximity Meter */
     .proximity-meter-container {
+      order: 5;
       padding: 20px;
       display: flex;
       flex-direction: column;
@@ -275,7 +242,9 @@
 
     /* Alert Feed */
     .alert-feed-container {
+      order: 6;
       flex: 1;
+      min-height: 180px;
       padding: 0 20px;
       display: flex;
       flex-direction: column;
@@ -353,8 +322,82 @@
       margin-top: 2px;
     }
 
+    .memory-signal-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .memory-signal {
+      padding: 10px 12px;
+      background: rgba(255, 255, 255, 0.018);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: all 0.25s ease;
+    }
+
+    .memory-signal i {
+      width: 24px;
+      height: 24px;
+      border-radius: 7px;
+      background: rgba(0, 240, 255, 0.07);
+      border: 1px solid rgba(0, 240, 255, 0.16);
+      color: var(--accent-cyan);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex: none;
+      font-size: 11px;
+    }
+
+    .memory-signal-copy {
+      min-width: 0;
+      flex: 1;
+    }
+
+    .memory-signal-label {
+      font-size: 10px;
+      color: var(--text-muted);
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .memory-signal-value {
+      margin-top: 2px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--text-main);
+      font-weight: 700;
+    }
+
+    .memory-signal.active {
+      border-color: rgba(0, 240, 255, 0.28);
+      background: rgba(0, 240, 255, 0.045);
+      box-shadow: inset 0 0 14px rgba(0, 240, 255, 0.035);
+    }
+
+    .memory-signal.warning {
+      border-color: rgba(255, 159, 10, 0.28);
+      background: rgba(255, 159, 10, 0.045);
+    }
+
+    .memory-signal.warning i {
+      background: rgba(255, 159, 10, 0.1);
+      border-color: rgba(255, 159, 10, 0.22);
+      color: var(--accent-orange);
+    }
+
     /* Simulation Control Section */
     .control-panel {
+      order: 3;
       padding: 20px;
       border-top: 1px solid var(--border-color);
       display: flex;
@@ -642,6 +685,147 @@
       box-shadow: 0 0 15px #ff3b30;
       z-index: 10;
     }
+
+    /* Custom Scrollbar for iframe page */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.25);
+    }
+
+    body.in-iframe {
+      height: 100vh;
+      overflow-x: hidden;
+      overflow-y: hidden;
+    }
+    body.in-iframe .dashboard {
+      height: 100vh;
+    }
+    body.in-iframe .console-panel {
+      height: 100%;
+      overflow-y: auto;
+      box-shadow: none;
+    }
+    body.in-iframe .map-container {
+      height: 100%;
+    }
+
+    @media (max-width: 1100px) {
+      body, body.in-iframe {
+        height: auto;
+        min-height: 100vh;
+        overflow-y: auto;
+      }
+      .dashboard, body.in-iframe .dashboard {
+        flex-direction: column;
+        height: auto;
+        min-height: 100vh;
+      }
+      .console-panel, body.in-iframe .console-panel {
+        order: 1;
+        width: 100%;
+        height: auto;
+        min-height: 0;
+        border-right: none;
+        border-bottom: 1px solid var(--border-color);
+        box-shadow: none;
+        overflow-y: visible;
+      }
+      .map-container, body.in-iframe .map-container {
+        order: 2;
+        width: 100% !important;
+        height: clamp(420px, 56vh, 560px) !important;
+        min-height: 420px;
+        flex: none;
+      }
+      #map {
+        height: 100% !important;
+      }
+      .brand-section {
+        padding: 18px 20px;
+      }
+      .safety-status-card {
+        margin: 16px 20px;
+      }
+      .telemetry-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+      .control-panel {
+        order: 3;
+        border-top: none;
+        border-bottom: 1px solid var(--border-color);
+      }
+      .alert-feed-container {
+        flex: none;
+        max-height: 260px;
+      }
+      .map-hud {
+        left: 16px;
+        right: 16px;
+        bottom: 16px;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+    }
+
+    @media (max-width: 620px) {
+      .brand-section {
+        padding: 16px;
+      }
+      .brand-text h1 {
+        font-size: 18px;
+      }
+      .safety-status-card {
+        margin: 14px 16px;
+        padding: 16px;
+      }
+      .status-header {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .status-main-text {
+        font-size: 16px;
+      }
+      .telemetry-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        padding: 0 16px;
+        gap: 10px;
+      }
+      .telemetry-val {
+        font-size: 18px;
+      }
+      .proximity-meter-container,
+      .alert-feed-container,
+      .control-panel {
+        padding-left: 16px;
+        padding-right: 16px;
+      }
+      .control-row {
+        flex-direction: column;
+      }
+      .control-row[style*="align-items"] {
+        align-items: stretch !important;
+      }
+      .map-container, body.in-iframe .map-container {
+        height: 430px !important;
+        min-height: 430px;
+      }
+      .map-hud {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 8px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -652,19 +836,13 @@
       <!-- Mercedes Benz Hackathon Branding -->
       <div class="brand-section" style="justify-content: space-between; width: 100%;">
         <div style="display: flex; align-items: center; gap: 12px;">
-          <div class="m-benz-logo">
-            <div class="m-benz-logo-spokes"></div>
-            <div class="m-benz-logo-spokes2"></div>
-          </div>
+          <img src="../mercedeslogo.png" class="m-benz-logo-img" alt="Mercedes-Benz Logo">
           <div class="brand-text">
             <h1>ClearBox</h1>
             <span>Active Safety Cockpit</span>
           </div>
         </div>
-        <!-- Back to Shell Button -->
-        <a href="../index.html" class="back-btn" id="back-btn" style="position: static; margin-left: auto;" target="_top">
-          <i class="fa-solid fa-arrow-left"></i> ClearBox Home
-        </a>
+
       </div>
 
       <!-- Safety Proximity Warning Banner -->
@@ -698,6 +876,14 @@
           <span class="telemetry-label"><i class="fa-solid fa-compass"></i> Coordinates</span>
           <div class="telemetry-val" id="telemetry-lat" style="font-size: 13px; margin-top: 4px;">--</div>
         </div>
+        <div class="telemetry-card">
+          <span class="telemetry-label"><i class="fa-solid fa-car-side"></i> Vehicle Plate</span>
+          <div class="telemetry-val" style="font-size: 15px; margin-top: 4px;">WXY 4821</div>
+        </div>
+        <div class="telemetry-card">
+          <span class="telemetry-label"><i class="fa-solid fa-satellite-dish"></i> eCall ID</span>
+          <div class="telemetry-val" style="font-size: 13px; margin-top: 4px;">MY-CB-WXY4821</div>
+        </div>
       </div>
 
       <!-- Distance Proximity Warning Meter -->
@@ -719,8 +905,50 @@
         </div>
       </div>
 
+      <div class="proximity-meter-container">
+        <div class="feed-title">Dataset Provenance</div>
+        <div style="font-size: 11px; line-height: 1.45; color: var(--text-muted);">
+          Simulated Klang Valley hotspot layer for demo. Production inputs: police crash reports, DBKL road works, insurer claims, OEM near-miss telemetry, weather, and crowdsourced hazard validation.
+        </div>
+        <div class="memory-signal-grid" aria-label="Collective Road Memory privacy and witness signals">
+          <div class="memory-signal active" id="memory-signal-network">
+            <i class="fa-solid fa-user-shield"></i>
+            <div class="memory-signal-copy">
+              <div class="memory-signal-label">Anonymous Mercedes Network</div>
+              <div class="memory-signal-value" id="memory-signal-network-value">OPTED-IN // HASHED IDS</div>
+            </div>
+          </div>
+          <div class="memory-signal" id="memory-signal-fleet">
+            <i class="fa-solid fa-warehouse"></i>
+            <div class="memory-signal-copy">
+              <div class="memory-signal-label">Fleet Reports</div>
+              <div class="memory-signal-value" id="memory-signal-fleet-value">12 RECENT VALIDATIONS</div>
+            </div>
+          </div>
+          <div class="memory-signal" id="memory-signal-car2x">
+            <i class="fa-solid fa-car-on"></i>
+            <div class="memory-signal-copy">
+              <div class="memory-signal-label">Car2X Witness Vehicles</div>
+              <div class="memory-signal-value" id="memory-signal-car2x-value">STANDBY</div>
+            </div>
+          </div>
+          <div class="memory-signal" id="memory-signal-upload">
+            <i class="fa-solid fa-cloud-arrow-up"></i>
+            <div class="memory-signal-copy">
+              <div class="memory-signal-label">Anonymized Upload</div>
+              <div class="memory-signal-value" id="memory-signal-upload-value">PRIVACY FILTER READY</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Console Simulation Controls -->
       <div class="control-panel">
+        <div class="control-row" style="margin-bottom: 8px;">
+          <button class="btn" id="btnSimulateAccident" style="border-color: var(--accent-red); background: rgba(255, 59, 48, 0.08); color: #fff; width: 100%;">
+            <i class="fa-solid fa-triangle-exclamation"></i> Simulate Accident
+          </button>
+        </div>
         <div class="control-row">
           <button class="btn active-btn" id="play-pause-btn">
             <i class="fa-solid fa-pause"></i> Pause Drive
@@ -733,8 +961,9 @@
           <span style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Simulation Speed</span>
           <div class="speed-btn-group">
             <button class="speed-btn active-speed" onclick="setSpeed(1)">1x</button>
-            <button class="speed-btn" onclick="setSpeed(2.5)">2.5x</button>
             <button class="speed-btn" onclick="setSpeed(5)">5x</button>
+            <button class="speed-btn" onclick="setSpeed(10)">10x</button>
+            <button class="speed-btn" onclick="setSpeed(25)">25x</button>
           </div>
         </div>
       </div>
@@ -760,8 +989,8 @@
   </div>
 
   <!-- Leaflet Core and Leaflet.heat Scripts -->
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-  <script src="https://cdn.jsdelivr.net/npm/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+  <script src="../assets/vendor/leaflet/leaflet.js"></script>
+  <script src="../assets/vendor/leaflet-heat.js"></script>
 
   <script>
     // --- Data Definitions ---
@@ -801,6 +1030,7 @@
     let heatLayer;
     let routePolyline;
     let carMarker;
+    let isCrashTriggered = false;
     
     // Simulation state
     let isDriving = true;
@@ -816,35 +1046,17 @@
     let lastPosition = routeCoords[0];
     let currentPosition = routeCoords[0];
 
-    // --- Setup Map ---
-    function initMap() {
-      // Center on Klang Valley (between Mid Valley & Bangsar)
-      map = L.map('map', {
-        zoomControl: false,
-        attributionControl: false
-      }).setView([3.1350, 101.6780], 14);
+    function attachHeatLayerWhenReady(attemptsLeft = 20) {
+      const mapEl = document.getElementById('map');
+      if (!map || !mapEl || mapEl.clientWidth === 0 || mapEl.clientHeight === 0) {
+        if (attemptsLeft > 0) setTimeout(() => attachHeatLayerWhenReady(attemptsLeft - 1), 150);
+        return;
+      }
 
-      // Add Zoom Control at a different position
-      L.control.zoom({
-        position: 'topright'
-      }).addTo(map);
+      map.invalidateSize();
+      if (heatLayer) map.removeLayer(heatLayer);
+      if (!L.heatLayer) return;
 
-      // Use CartoDB Dark Matter tile layer for an in-car navigation dark screen
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-        maxZoom: 20
-      }).addTo(map);
-
-      // Draw the driving route polyline (glowing cyan line)
-      routePolyline = L.polyline(routeCoords, {
-        color: '#00f0ff',
-        weight: 4,
-        opacity: 0.6,
-        lineCap: 'round',
-        lineJoin: 'round'
-      }).addTo(map);
-
-      // Initialize Heatmap using Leaflet.heat CDN
-      // Structure: [lat, lng, intensity]
       const heatPoints = hotspots.map(h => [h.lat, h.lng, 0.8]);
       heatLayer = L.heatLayer(heatPoints, {
         radius: 35,
@@ -856,6 +1068,44 @@
           0.8: '#ff3b30'
         }
       }).addTo(map);
+    }
+
+    // --- Setup Map ---
+    function initMap() {
+      // Center on Klang Valley (between Mid Valley & Bangsar)
+      map = L.map('map', {
+        zoomControl: false,
+        attributionControl: false,
+        minZoom: 12,
+        maxZoom: 16
+      }).setView([3.1350, 101.6780], 14);
+
+      // Add Zoom Control at a different position
+      L.control.zoom({
+        position: 'topright'
+      }).addTo(map);
+
+      // CartoDB Dark Matter tiles, pre-cached locally (z12-16, Klang Valley demo area)
+      // so the demo needs no internet at the pitch venue. Missing tiles fall back
+      // to a flat dark square matching the basemap background.
+      const darkTile = 'data:image/svg+xml;base64,' + btoa(
+        '<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256"><rect width="256" height="256" fill="#090a0f"/></svg>'
+      );
+      L.tileLayer('../assets/vendor/tiles/{z}/{x}/{y}.png', {
+        maxZoom: 16,
+        errorTileUrl: darkTile
+      }).addTo(map);
+
+      // Draw the driving route polyline (glowing cyan line)
+      routePolyline = L.polyline(routeCoords, {
+        color: '#00f0ff',
+        weight: 4,
+        opacity: 0.6,
+        lineCap: 'round',
+        lineJoin: 'round'
+      }).addTo(map);
+
+      attachHeatLayerWhenReady();
 
       // Place visual circular rings for each hotspot (300m danger zones)
       hotspots.forEach((h, index) => {
@@ -1156,7 +1406,14 @@
       // Drive simulation cycle (100ms updates)
       setInterval(simulateDriving, 100);
 
-      // Handle back button navigation to top window and hide if inside iframe
+      // Set iframe mode class unconditionally
+      if (window.self !== window.top) {
+        document.body.classList.add('in-iframe');
+        const brandSec = document.querySelector('.brand-section');
+        if (brandSec) brandSec.style.display = 'none';
+      }
+
+      // Handle back button navigation to top window if present
       const backBtn = document.getElementById('back-btn');
       if (backBtn) {
         if (window.self !== window.top) {
@@ -1167,12 +1424,70 @@
           window.top.location.href = "../index.html";
         });
       }
+
+      // Bind simulate accident button inside Road Memory
+      const btnSimulateAccident = document.getElementById('btnSimulateAccident');
+      if (btnSimulateAccident) {
+        btnSimulateAccident.addEventListener('click', () => {
+          if (isCrashTriggered) {
+            resetRoadDemo();
+          } else {
+            addNewIncident();
+          }
+        });
+      }
+
+      // Handle window resizing to keep Leaflet map layout correct
+      window.addEventListener('resize', () => {
+        if (map) {
+          map.invalidateSize();
+        }
+      });
     });
 
     let newAccidentMarker = null;
     let newAccidentCircle = null;
 
+    function setMemorySignalState(state) {
+      const signalIds = ['network', 'fleet', 'car2x', 'upload'];
+      signalIds.forEach(id => {
+        const signal = document.getElementById(`memory-signal-${id}`);
+        if (signal) signal.className = id === 'network' ? 'memory-signal active' : 'memory-signal';
+      });
+
+      const values = {
+        network: document.getElementById('memory-signal-network-value'),
+        fleet: document.getElementById('memory-signal-fleet-value'),
+        car2x: document.getElementById('memory-signal-car2x-value'),
+        upload: document.getElementById('memory-signal-upload-value')
+      };
+
+      if (state === 'incident') {
+        document.getElementById('memory-signal-fleet')?.classList.add('warning');
+        document.getElementById('memory-signal-car2x')?.classList.add('active');
+        document.getElementById('memory-signal-upload')?.classList.add('active');
+        if (values.network) values.network.innerText = 'BROADCASTING ANON ALERT';
+        if (values.fleet) values.fleet.innerText = '18 REPORTS CORRELATED';
+        if (values.car2x) values.car2x.innerText = '3 WITNESSES SIGNED';
+        if (values.upload) values.upload.innerText = 'UPLOADED // PII REMOVED';
+      } else {
+        if (values.network) values.network.innerText = 'OPTED-IN // HASHED IDS';
+        if (values.fleet) values.fleet.innerText = '12 RECENT VALIDATIONS';
+        if (values.car2x) values.car2x.innerText = 'STANDBY';
+        if (values.upload) values.upload.innerText = 'PRIVACY FILTER READY';
+      }
+    }
+
     function addNewIncident() {
+      isCrashTriggered = true;
+      setMemorySignalState('incident');
+      const btnSim = document.getElementById('btnSimulateAccident');
+      if (btnSim) {
+        btnSim.innerHTML = '<i class="fa-solid fa-rotate-left"></i> Reset Demo';
+        btnSim.style.borderColor = 'var(--accent-cyan)';
+        btnSim.style.background = 'rgba(0, 235, 214, 0.08)';
+      }
+
       // 1. Stop driving
       isDriving = false;
       
@@ -1255,6 +1570,15 @@
     }
 
     function resetRoadDemo() {
+      isCrashTriggered = false;
+      setMemorySignalState('baseline');
+      const btnSim = document.getElementById('btnSimulateAccident');
+      if (btnSim) {
+        btnSim.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Simulate Accident';
+        btnSim.style.borderColor = 'var(--accent-red)';
+        btnSim.style.background = 'rgba(255, 59, 48, 0.08)';
+      }
+
       // 1. Restore driving state
       isDriving = true;
       isFollowingCar = true;
@@ -1311,6 +1635,13 @@
         addNewIncident();
       } else if (event.data === 'RESET_DEMO') {
         resetRoadDemo();
+      } else if (event.data === 'MAP_VISIBLE') {
+        if (map) {
+          setTimeout(() => {
+            map.invalidateSize();
+            attachHeatLayerWhenReady();
+          }, 300);
+        }
       }
     });
   </script>
